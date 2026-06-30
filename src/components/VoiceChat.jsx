@@ -4,6 +4,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { reply } from "../ai/chat.js";
 import { summarize } from "../ai/summary.js";
+import { translateWord } from "../ai/translate.js";
 import { transcribe } from "../ai/whisper.js";
 import { matchSpoken, diffWords } from "../utils/voiceMatch.js";
 import { loadSpeaking, latestLevel, speakingProfile, CEFR_ORDER } from "../srs/speaking.js";
@@ -42,6 +43,17 @@ function speak(text) {
   }
 }
 
+// Hiện nội dung bong bóng: mỗi từ chạm được để tra nghĩa.
+function Clickable({ text, onWord }) {
+  return text.split(/(\s+)/).map((tok, i) =>
+    /[A-Za-z]/.test(tok) ? (
+      <span key={i} className="lookup-word" onClick={() => onWord(tok)}>{tok}</span>
+    ) : (
+      <span key={i}>{tok}</span>
+    )
+  );
+}
+
 function SumSection({ title, items, color }) {
   if (!items || !items.length) return null;
   return (
@@ -62,7 +74,18 @@ export default function VoiceChat({ dueWords, addWord, onBack }) {
   const [level, setLevel] = useState(() => latestLevel(loadSpeaking()) || "A2"); // mặc định = mức đã chấm, đổi tay được
   const [topic, setTopic] = useState(pickTopic); // chủ đề buổi nói (xoay vòng)
   const [summary, setSummary] = useState(null); // tổng kết cuối phiên
+  const [lookup, setLookup] = useState(null); // tra nghĩa: {term, vi, loading}
   const focus = useMemo(buildFocus, []); // điểm cần tập trung (từ hồ sơ)
+
+  // Tra nghĩa 1 từ (hoặc cả câu) theo ngữ cảnh.
+  const lookupTerm = useCallback((raw, context) => {
+    const term = String(raw).replace(/[^A-Za-z'\- ]/g, "").trim();
+    if (!term) return;
+    setLookup({ term, loading: true });
+    translateWord(term, context || term)
+      .then((vi) => setLookup({ term, vi }))
+      .catch((e) => setLookup({ term, vi: "(lỗi: " + String(e.message || e) + ")" }));
+  }, []);
 
   const recRef = useRef(null);
   const chunksRef = useRef([]);
@@ -238,10 +261,11 @@ export default function VoiceChat({ dueWords, addWord, onBack }) {
         {history.length === 0 && phase !== "thinking" && <p className="empty-msg">Chọn trình độ & chủ đề ở trên, rồi bấm “Bắt đầu buổi nói”.</p>}
         {history.map((m, i) => (
           <div key={i} className={`bubble ${m.role === "user" ? "bubble-user" : "bubble-ai"}`}>
-            {m.content}
+            <Clickable text={m.content} onWord={(w) => lookupTerm(w, m.content)} />
             {m.role === "assistant" && (
               <span style={{ display: "block", marginTop: 4 }}>
                 <button className="link-exit" onClick={() => speak(m.content)}>🔊</button>
+                <button className="link-exit" style={{ marginLeft: 10 }} onClick={() => lookupTerm(m.content, m.content)}>🌐 Dịch câu</button>
                 <button className="link-exit" style={{ marginLeft: 10 }} onClick={() => startRecording({ type: "shadow", target: m.content })}>🎯 Đọc theo</button>
                 <button className="link-exit" style={{ marginLeft: 10 }} onClick={() => setSaving({ sentence: m.content, word: "" })}>＋ Thẻ</button>
               </span>
@@ -276,6 +300,14 @@ export default function VoiceChat({ dueWords, addWord, onBack }) {
       )}
 
       {phase === "error" && <p className="empty-msg" style={{ color: "var(--red)" }}>{error}</p>}
+
+      {/* Tra nghĩa nhanh (chạm từ trong câu / Dịch câu) */}
+      {lookup && (
+        <div className="lookup-pop">
+          <span><b style={{ color: "var(--teal)" }}>{lookup.term}</b> {lookup.loading ? "— đang dịch…" : "— " + lookup.vi}</span>
+          <button className="link-exit" onClick={() => setLookup(null)}>✕</button>
+        </div>
+      )}
 
       <div className="spacer" />
 

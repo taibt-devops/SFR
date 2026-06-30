@@ -226,6 +226,20 @@ async function handleSummary(body) {
   return { wentWell: o.wentWell || [], toImprove: o.toImprove || [], suggestion: o.suggestion || text.trim() };
 }
 
+// Tra nghĩa nhanh: dịch 1 từ/cụm (hoặc cả câu) sang tiếng Việt theo NGỮ CẢNH. Dùng khi đang luyện nói.
+async function handleTranslate(body) {
+  const { word = "", context = "" } = body;
+  const text = await callClaude({
+    maxTokens: 90,
+    system:
+      "Bạn là từ điển Anh–Việt cực ngắn gọn. Cho nghĩa tiếng Việt của từ/cụm/câu tiếng Anh THEO NGỮ CẢNH câu. " +
+      "Nếu là 1 từ/cụm: trả nghĩa ngắn (kèm loại từ nếu cần). Nếu là cả câu: dịch ngắn gọn. " +
+      "CHỈ trả nghĩa tiếng Việt, KHÔNG giải thích dài dòng, KHÔNG markdown.",
+    messages: [{ role: "user", content: 'Câu: "' + context + '"\nDịch: "' + word + '"' }],
+  });
+  return { vi: text.trim() };
+}
+
 const ROUTES = {
   "/": handleChat,
   "/mine": handleMine,
@@ -233,6 +247,7 @@ const ROUTES = {
   "/coach": handleCoach,
   "/assess": handleAssess,
   "/summary": handleSummary,
+  "/translate": handleTranslate,
 };
 
 http
