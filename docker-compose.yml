@@ -15,11 +15,12 @@ services:
       - 1.1.1.1
     restart: unless-stopped
 
-  # STT local cho luyện nói — có ffmpeg, nhận webm/opus. Model tải lần đầu (cache ở volume).
+  # STT local (GPU) cho luyện nói — có ffmpeg, nhận webm/opus. Model tải lần đầu (cache ở volume).
+  # Chạy trên NVIDIA GPU (RTX 4070 Ti) với large-v3 → chính xác cao, gần tức thời.
   whisper:
-    image: onerahmet/openai-whisper-asr-webservice:latest
+    image: onerahmet/openai-whisper-asr-webservice:latest-gpu
     environment:
-      ASR_MODEL: base
+      ASR_MODEL: large-v3
       ASR_ENGINE: faster_whisper
     volumes:
       - whisper-cache:/root/.cache
@@ -29,6 +30,14 @@ services:
     dns:
       - 8.8.8.8
       - 1.1.1.1
+    # Cấp GPU NVIDIA cho container (host đã có nvidia runtime + container-toolkit).
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
     restart: unless-stopped
 
   web:
