@@ -29,6 +29,13 @@ export default function VoiceChat({ dueWords, addWord, onBack }) {
   const chunksRef = useRef([]);
   const streamRef = useRef(null);
   const modeRef = useRef({ type: "turn" });
+  const logRef = useRef(null);
+
+  // Tự cuộn khung hội thoại xuống cuối khi có tin mới / đang nghĩ (tránh tin trôi khỏi màn hình).
+  useEffect(() => {
+    const el = logRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [history, phase]);
 
   const stopTracks = useCallback(() => {
     streamRef.current?.getTracks().forEach((t) => t.stop());
@@ -115,7 +122,7 @@ export default function VoiceChat({ dueWords, addWord, onBack }) {
         ))}
       </div>
 
-      <div className="chat-log">
+      <div className="chat-log" ref={logRef}>
         {history.length === 0 && <p className="empty-msg">Bấm nút bên dưới và nói một câu tiếng Anh để bắt đầu.</p>}
         {history.map((m, i) => (
           <div key={i} className={`bubble ${m.role === "user" ? "bubble-user" : "bubble-ai"}`}>

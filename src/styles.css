@@ -107,7 +107,7 @@ select.field { cursor: pointer; }
 .streak-bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 14px; font-size: 13px; color: var(--text2); }
 .streak-bar > span { background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 6px 12px; }
 .story-text { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px; font-size: 16px; line-height: 1.7; margin-top: 16px; }
-.chat-log { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+.chat-log { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; overflow-y: auto; max-height: 52vh; }
 .bubble { max-width: 85%; padding: 10px 14px; border-radius: 14px; font-size: 14px; line-height: 1.5; }
 .bubble-user { align-self: flex-end; background: var(--teal-dim); border: 1px solid rgba(45, 212, 167, .3); }
 .bubble-ai { align-self: flex-start; background: var(--surface); border: 1px solid var(--border); }

@@ -20,23 +20,42 @@ if (!SECRET) console.warn("⚠ Chưa đặt PROXY_SECRET — bỏ qua lớp khó
 // Token OAuth (gói subscription) yêu cầu khối system mở đầu này, kèm header anthropic-beta. Giữ nguyên.
 const CODE_PREAMBLE = "You are Claude Code, Anthropic's official CLI for Claude.";
 
+const CLAUDE_TIMEOUT_MS = 30_000; // tránh treo vô hạn khi API chậm/đứt
+
 async function callClaude({ system, messages, maxTokens = 600 }) {
-  const r = await fetch(API, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      authorization: `Bearer ${TOKEN}`,
-      "anthropic-beta": "oauth-2025-04-20",
-      "anthropic-version": "2023-06-01",
-    },
-    body: JSON.stringify({
-      model: MODEL,
-      max_tokens: maxTokens,
-      system: [{ type: "text", text: CODE_PREAMBLE }, { type: "text", text: system }],
-      messages,
-    }),
-  });
-  if (!r.ok) throw new Error(`anthropic ${r.status}: ${await r.text()}`);
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), CLAUDE_TIMEOUT_MS);
+  let r;
+  try {
+    r = await fetch(API, {
+      method: "POST",
+      signal: ctrl.signal,
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${TOKEN}`,
+        "anthropic-beta": "oauth-2025-04-20",
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        max_tokens: maxTokens,
+        system: [{ type: "text", text: CODE_PREAMBLE }, { type: "text", text: system }],
+        messages,
+      }),
+    });
+  } catch (e) {
+    const err = new Error(e.name === "AbortError" ? `Claude quá hạn ${CLAUDE_TIMEOUT_MS}ms` : String(e.message || e));
+    err.status = 504;
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
+  if (!r.ok) {
+    const body = await r.text();
+    const err = new Error(`anthropic ${r.status}: ${body}`);
+    err.status = r.status; // giữ status gốc (401/403/429…) để báo rõ cho client
+    throw err;
+  }
   const data = await r.json();
   return (data.content || []).filter((b) => b.type === "text").map((b) => b.text).join("");
 }
@@ -166,9 +185,17 @@ http
       res.setHeader("content-type", "application/json");
       res.end(JSON.stringify(result));
     } catch (err) {
-      res.statusCode = 502;
+      // 401/403 từ Anthropic = token Claude Max hết hạn/không hợp lệ → báo rõ cách xử lý (C6).
+      const auth = err.status === 401 || err.status === 403;
+      res.statusCode = auth ? 401 : err.status === 504 ? 504 : err.status === 429 ? 429 : 502;
       res.setHeader("content-type", "application/json");
-      res.end(JSON.stringify({ error: String(err.message || err) }));
+      res.end(JSON.stringify({
+        error: auth
+          ? "Token Claude hết hạn hoặc không hợp lệ — chạy lại `claude setup-token`, cập nhật CLAUDE_TOKEN (env) rồi restart proxy."
+          : err.status === 429
+          ? "Claude đang giới hạn tốc độ (429) — thử lại sau giây lát."
+          : String(err.message || err),
+      }));
     }
   })
   .listen(PORT, () => console.log(`✓ Proxy Claude chạy ở http://localhost:${PORT} (model ${MODEL})`));

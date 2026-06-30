@@ -62,7 +62,6 @@ export default function App() {
     return (
       <DataManager
         userWords={vocabApi.userWords}
-        addWord={vocabApi.addWord}
         importText={vocabApi.importText}
         removeWord={vocabApi.removeWord}
         exportText={vocabApi.exportText}

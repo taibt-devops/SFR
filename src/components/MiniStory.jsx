@@ -20,6 +20,7 @@ export default function MiniStory({ dueWords, onBack }) {
   const [error, setError] = useState("");
 
   const run = useCallback(async () => {
+    if (!dueWords.length) { setStatus("empty"); return; } // không có từ due → không phải lỗi
     setStatus("loading");
     setError("");
     try {
@@ -48,6 +49,10 @@ export default function MiniStory({ dueWords, onBack }) {
       </p>
 
       {status === "loading" && <p className="empty-msg">Đang tạo mini-story…</p>}
+
+      {status === "empty" && (
+        <p className="empty-msg">Chưa có từ đến hạn để dệt thành chuyện. Hãy học thêm hoặc quay lại sau.</p>
+      )}
 
       {status === "error" && (
         <p className="empty-msg" style={{ color: "var(--red)" }}>
