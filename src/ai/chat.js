@@ -3,12 +3,13 @@
 const URL = import.meta.env.VITE_PROXY_URL;
 const SECRET = import.meta.env.VITE_PROXY_SECRET;
 
-export async function reply(history, dueWords = []) {
+export async function reply(history, dueWords = [], opts = {}) {
   if (!URL) throw new Error("Chưa cấu hình VITE_PROXY_URL (xem .env.example) và bật proxy.");
+  const { level = "A2", focus = "", topic = "" } = opts;
   const r = await fetch(URL.replace(/\/$/, ""), {
     method: "POST",
     headers: { "content-type": "application/json", "x-proxy-secret": SECRET || "" },
-    body: JSON.stringify({ history, dueWords }),
+    body: JSON.stringify({ history, dueWords, level, focus, topic }),
   });
   if (!r.ok) throw new Error("proxy lỗi " + r.status);
   const data = await r.json();

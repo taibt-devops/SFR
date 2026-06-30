@@ -76,13 +76,19 @@ function extractJsonArray(text) {
 
 // ── Handlers ──
 async function handleChat(body) {
-  const { history = [], dueWords = [] } = body;
+  const { history = [], dueWords = [], level = "A2", focus = "", topic = "" } = body;
   const text = await callClaude({
-    maxTokens: 300,
+    maxTokens: 320,
     system:
-      "Bạn là người bạn luyện nói tiếng Anh thân thiện. Trả lời NGẮN (1–3 câu), tự nhiên, " +
-      "KHÔNG markdown/emoji (sẽ bị đọc to). Nhẹ nhàng sửa lỗi. Khi hợp ngữ cảnh, gợi/ép dùng các từ: " +
-      dueWords.join(", ") + ".",
+      "Bạn là gia sư luyện NÓI tiếng Anh thân thiện, dạy theo trình độ. " +
+      "Trình độ học viên: CEFR " + level + ". ĐIỀU CHỈNH ĐỘ KHÓ cho vừa: " +
+      "A1–A2 = câu NGẮN, từ rất thông dụng, nói chậm-rõ; B1–B2 = câu dài hơn, từ đa dạng, vài cụm thành ngữ; " +
+      "C1–C2 = nói tự nhiên như người bản xứ, thành ngữ & sắc thái. " +
+      "Trả lời tiếng Anh NGẮN (1–3 câu), tự nhiên, KHÔNG markdown/emoji (sẽ bị đọc to). " +
+      (topic ? 'Chủ đề buổi nói: "' + topic + '" — bám chủ đề. ' : "") +
+      (focus ? "Hãy LÁI hội thoại để học viên luyện đúng điểm cần cải thiện: " + focus + "; sửa các lỗi đó thật nhẹ nhàng. " : "Nhẹ nhàng sửa lỗi. ") +
+      "Khi hợp ngữ cảnh, gợi/ép dùng các từ: " + dueWords.join(", ") + ". " +
+      "LUÔN kết thúc bằng MỘT câu hỏi để học viên nói tiếp.",
     messages: history,
   });
   return { text };

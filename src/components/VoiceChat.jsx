@@ -1,10 +1,34 @@
 // Luyện nói (M6 + M11): mic → Whisper → Claude → TTS. Nút bấm kích hoạt mic trong cú chạm (iOS).
 // M11: B16 đối chiếu từ due đã nói · B17 "Đọc theo" + diff phát âm · B18 lưu lỗi/câu thành thẻ.
 // Cờ "spoken" là tín hiệu mềm — KHÔNG đụng SM-2.
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { reply } from "../ai/chat.js";
 import { transcribe } from "../ai/whisper.js";
 import { matchSpoken, diffWords } from "../utils/voiceMatch.js";
+import { loadSpeaking, latestLevel, speakingProfile, CEFR_ORDER } from "../srs/speaking.js";
+
+const TOPICS = [
+  "Giới thiệu bản thân & sở thích",
+  "Một ngày thường của bạn",
+  "Món ăn / quán bạn thích",
+  "Kế hoạch cuối tuần",
+  "Một chuyến đi đáng nhớ",
+  "Công việc hoặc việc học của bạn",
+  "Phim/bài hát thích gần đây",
+  "Quan điểm: làm việc ở nhà",
+];
+const pickTopic = () => TOPICS[Math.floor(Math.random() * TOPICS.length)];
+const DIM_VI = { fluency: "trôi chảy", lexical: "vốn từ", grammar: "ngữ pháp", pronunciation: "phát âm" };
+
+// Mô tả điểm cần tập trung (từ hồ sơ nói) để gia sư lái hội thoại trúng chỗ yếu.
+function buildFocus() {
+  const p = speakingProfile(loadSpeaking());
+  if (!p) return "";
+  const parts = [];
+  if (p.weakestDim) parts.push(DIM_VI[p.weakestDim] + " (trục yếu)");
+  if (p.topTags?.length) parts.push("lỗi hay lặp: " + p.topTags.slice(0, 2).map((t) => t.tag).join(", "));
+  return parts.join(" · ");
+}
 
 function speak(text) {
   try {
@@ -24,6 +48,9 @@ export default function VoiceChat({ dueWords, addWord, onBack }) {
   const [spoken, setSpoken] = useState(() => new Set()); // từ due đã nói (B16)
   const [shadow, setShadow] = useState(null); // {target, result:[{word,ok}], heard} (B17)
   const [saving, setSaving] = useState(null); // {sentence, word} (B18)
+  const [level, setLevel] = useState(() => latestLevel(loadSpeaking()) || "A2"); // mặc định = mức đã chấm, đổi tay được
+  const [topic, setTopic] = useState(pickTopic); // chủ đề buổi nói (xoay vòng)
+  const focus = useMemo(buildFocus, []); // điểm cần tập trung (từ hồ sơ)
 
   const recRef = useRef(null);
   const chunksRef = useRef([]);
@@ -52,7 +79,7 @@ export default function VoiceChat({ dueWords, addWord, onBack }) {
       if (hit.length) setSpoken((s) => new Set([...s, ...hit]));
       const next = [...history, { role: "user", content: said }];
       setHistory(next);
-      const answer = await reply(next, dueWords);
+      const answer = await reply(next, dueWords, { level, focus, topic });
       setHistory([...next, { role: "assistant", content: answer }]);
       speak(answer);
       setPhase("idle");
@@ -112,6 +139,21 @@ export default function VoiceChat({ dueWords, addWord, onBack }) {
       <div className="study-top">
         <span className="app-title">Luyện nói</span>
         <button className="link-exit" onClick={onBack}>← Về</button>
+      </div>
+
+      {/* Lộ trình: trình độ (mặc định = mức đã chấm, đổi tay để tăng/giảm khó) + chủ đề + điểm cần luyện */}
+      <div className="voice-setup">
+        <label className="vs-row">
+          <span>Trình độ</span>
+          <select className="field" style={{ width: "auto", padding: "6px 10px" }} value={level} onChange={(e) => setLevel(e.target.value)} disabled={history.length > 0}>
+            {CEFR_ORDER.map((l) => <option key={l} value={l}>{l}</option>)}
+          </select>
+        </label>
+        <div className="vs-row">
+          <span>Chủ đề: <b style={{ color: "var(--text)" }}>{topic}</b></span>
+          {history.length === 0 && <button className="link-exit" onClick={() => setTopic(pickTopic())}>đổi</button>}
+        </div>
+        {focus && <p className="app-sub" style={{ margin: 0 }}>🎯 Luyện trúng: {focus}</p>}
       </div>
 
       {/* B16: checklist từ due đã nói */}
