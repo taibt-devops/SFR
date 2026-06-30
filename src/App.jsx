@@ -8,6 +8,7 @@ import StudySession from "./components/StudySession.jsx";
 import DataManager from "./components/DataManager.jsx";
 import MiniStory from "./components/MiniStory.jsx";
 import VoiceChat from "./components/VoiceChat.jsx";
+import SpeakingAssess from "./components/SpeakingAssess.jsx";
 
 export default function App() {
   const vocabApi = useVocab();
@@ -80,6 +81,11 @@ export default function App() {
     return <VoiceChat dueWords={dueWords} addWord={vocabApi.addWord} onBack={() => setView("home")} />;
   }
 
+  // ── Đánh giá nói (CEFR) ──
+  if (view === "assess") {
+    return <SpeakingAssess dueWords={dueWords} onBack={() => setView("home")} />;
+  }
+
   // ── Màn hình chính (Dashboard) ──
   return (
     <Dashboard
@@ -93,6 +99,7 @@ export default function App() {
       stats={study.stats}
       onStory={() => setView("story")}
       onVoice={() => setView("voice")}
+      onAssess={() => setView("assess")}
     />
   );
 }

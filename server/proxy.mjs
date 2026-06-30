@@ -155,7 +155,39 @@ async function handleCoach(body) {
   return { verdict: o.verdict || "ok", hint: o.hint || out.trim() };
 }
 
-const ROUTES = { "/": handleChat, "/mine": handleMine, "/story": handleStory, "/coach": handleCoach };
+// Đánh giá NÓI theo CEFR (GĐ1): chấm transcript + nhịp nói → mức tổng + 4 trục + mạnh/yếu/cần sửa.
+// Dùng Opus (MODEL_SMART) vì cần phán đoán chất lượng; gọi 1 lần/bài nên độ trễ chấp nhận được.
+async function handleAssess(body) {
+  const { transcript = "", seconds = 0, words = 0, wpm = 0, fillers = 0, task = "" } = body;
+  const out = await callClaude({
+    model: MODEL_SMART,
+    maxTokens: 750,
+    system:
+      "Bạn là giám khảo chấm NÓI tiếng Anh theo CEFR (A1–C2), công tâm, mang tính xây dựng. " +
+      'Học viên nói để trả lời đề: "' + task + '". ' +
+      'Bản ghi bằng Whisper (CÓ THỂ sai do phát âm/đồng âm — ĐỪNG phạt lỗi chính tả): "' + transcript + '". ' +
+      "Nhịp nói: ~" + words + " từ trong " + seconds + "s (≈" + wpm + " từ/phút), " + fillers + " filler. " +
+      "Chấm CEFR: mức TỔNG + 4 trục — fluency (trôi chảy & mạch lạc, dựa nhịp nói), lexical (vốn từ), grammar (ngữ pháp), pronunciation. " +
+      "PRONUNCIATION: KHÔNG có audio → chỉ ƯỚC LƯỢNG dè dặt từ nhịp nói + chỗ Whisper nghe nhầm; note phải ghi rõ '(ước lượng)'. " +
+      'CHỈ trả JSON: {"cefr":"A1|A2|B1|B2|C1|C2","summary":"1 câu tiếng Việt","dims":{"fluency":{"level":"..","note":".."},' +
+      '"lexical":{"level":"..","note":".."},"grammar":{"level":"..","note":".."},"pronunciation":{"level":"..","note":".."}},' +
+      '"strengths":["..",".."],"weaknesses":["..",".."],"fixes":["..",".."]}. ' +
+      "Mọi note/strengths/weaknesses/fixes bằng TIẾNG VIỆT, ngắn & cụ thể. KHÔNG thêm gì ngoài JSON.",
+    messages: [{ role: "user", content: transcript || "(học viên không nói gì)" }],
+  });
+  const o = extractJsonObject(out) || {};
+  return o.cefr
+    ? o
+    : { cefr: "?", summary: out.trim().slice(0, 300), dims: {}, strengths: [], weaknesses: [], fixes: [] };
+}
+
+const ROUTES = {
+  "/": handleChat,
+  "/mine": handleMine,
+  "/story": handleStory,
+  "/coach": handleCoach,
+  "/assess": handleAssess,
+};
 
 http
   .createServer(async (req, res) => {

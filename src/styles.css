@@ -107,6 +107,14 @@ select.field { cursor: pointer; }
 .streak-bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 14px; font-size: 13px; color: var(--text2); }
 .streak-bar > span { background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 6px 12px; }
 .story-text { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px; font-size: 16px; line-height: 1.7; margin-top: 16px; }
+
+/* Đánh giá nói (CEFR) */
+.assess-level { display: flex; align-items: center; gap: 16px; background: var(--teal-dim); border: 1px solid rgba(45, 212, 167, .32); border-radius: 18px; padding: 18px 20px; }
+.assess-cefr { font-size: 40px; font-weight: 800; color: var(--teal); line-height: 1; letter-spacing: -1px; }
+.assess-sum { font-size: 14px; color: var(--text); line-height: 1.5; }
+.assess-list { list-style: none; display: flex; flex-direction: column; gap: 7px; }
+.assess-list li { font-size: 14px; color: var(--text); padding-left: 16px; position: relative; line-height: 1.5; }
+.assess-list li::before { content: "•"; position: absolute; left: 2px; color: var(--text3); }
 .chat-log { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; overflow-y: auto; max-height: 52vh; }
 .bubble { max-width: 85%; padding: 10px 14px; border-radius: 14px; font-size: 14px; line-height: 1.5; }
 .bubble-user { align-self: flex-end; background: var(--teal-dim); border: 1px solid rgba(45, 212, 167, .3); }

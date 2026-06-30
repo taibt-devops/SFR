@@ -4,13 +4,15 @@ import { useMemo, useState } from "react";
 import { buildSession } from "../srs/sm2.js";
 import { computeStats, nextDueAt, hardCards } from "../srs/session.js";
 import { streakFor, todayReviewedFor } from "../srs/stats.js";
+import { loadSpeaking, latestLevel } from "../srs/speaking.js";
 import { dueLabel } from "../utils/format.js";
 
-export default function Dashboard({ cards, getState, onStart, onManage, onReset, productionMode, onToggleProduction, stats, onStory, onVoice }) {
+export default function Dashboard({ cards, getState, onStart, onManage, onReset, productionMode, onToggleProduction, stats, onStory, onVoice, onAssess }) {
   const now = Date.now();
   const streak = streakFor(stats, now);
   const todayDone = todayReviewedFor(stats, now);
   const goal = stats?.goal || 20;
+  const speakLevel = useMemo(() => latestLevel(loadSpeaking()), []);
   const [scope, setScope] = useState("all");
   const topics = useMemo(() => [...new Set(cards.map((c) => c.c))], [cards]);
 
@@ -48,8 +50,12 @@ export default function Dashboard({ cards, getState, onStart, onManage, onReset,
       <div className="streak-bar">
         <span>🔥 Chuỗi {streak} ngày</span>
         <span>Hôm nay {Math.min(todayDone, goal)}/{goal}</span>
-        <button className="manage-link" onClick={onStory}>Mini-story</button>
+        {speakLevel && <span>🗣️ Nói: {speakLevel}</span>}
+      </div>
+      <div className="streak-bar" style={{ marginTop: 8 }}>
+        <button className="manage-link" onClick={onAssess}>🎙️ Đánh giá nói</button>
         <button className="manage-link" onClick={onVoice}>Luyện nói</button>
+        <button className="manage-link" onClick={onStory}>Mini-story</button>
       </div>
 
       <div className="stat-grid">
