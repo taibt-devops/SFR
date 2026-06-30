@@ -12,11 +12,10 @@ const SECRET = process.env.PROXY_SECRET;
 const MODEL = "claude-opus-4-8";
 const API = "https://api.anthropic.com/v1/messages";
 
-if (!TOKEN) {
-  console.error("✗ Thiếu CLAUDE_TOKEN. Lấy bằng `claude setup-token` rồi đặt vào env của proxy.");
-  process.exit(1);
-}
-if (!SECRET) console.warn("⚠ Chưa đặt PROXY_SECRET — bỏ qua lớp khóa (chỉ nên vậy khi chạy hoàn toàn local).");
+// KHÔNG exit khi thiếu token (để container vẫn sống, frontend học-từ vẫn chạy);
+// các route gọi Claude sẽ trả 503 tới khi điền CLAUDE_TOKEN vào env và restart.
+if (!TOKEN) console.warn("⚠ Chưa có CLAUDE_TOKEN — /mine, /story, chat sẽ trả 503 tới khi điền token (env) và restart proxy.");
+if (!SECRET) console.warn("⚠ Chưa đặt PROXY_SECRET — bỏ qua lớp khóa (chỉ nên vậy khi chạy hoàn toàn local/LAN kín).");
 
 // Token OAuth (gói subscription) yêu cầu khối system mở đầu này, kèm header anthropic-beta. Giữ nguyên.
 const CODE_PREAMBLE = "You are Claude Code, Anthropic's official CLI for Claude.";
@@ -116,6 +115,11 @@ http
     if (req.method !== "POST" || !handler) {
       res.statusCode = 404;
       return res.end("not found");
+    }
+    if (!TOKEN) {
+      res.statusCode = 503;
+      res.setHeader("content-type", "application/json");
+      return res.end(JSON.stringify({ error: "Proxy chưa cấu hình CLAUDE_TOKEN trên server" }));
     }
 
     try {
