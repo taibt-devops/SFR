@@ -76,8 +76,29 @@ function extractJsonArray(text) {
 
 // ── Handlers ──
 async function handleChat(body) {
-  const { history = [], dueWords = [], level = "A2", focus = "", topic = "" } = body;
+  const { history = [], dueWords = [], level = "A2", focus = "", topic = "", opener = false } = body;
+
+  // App chủ động MỞ LỜI: chào + 1 câu hỏi mở để bắt đầu chủ đề (học viên khỏi bí "nói gì trước").
+  if (opener) {
+    const text = await callClaude({
+      maxTokens: 120,
+      system:
+        "Bạn là gia sư luyện nói tiếng Anh thân thiện. MỞ ĐẦU buổi nói: chào thật ngắn rồi đặt MỘT câu hỏi mở " +
+        'để học viên bắt đầu nói về chủ đề "' + topic + '". Mức CEFR ' + level +
+        " (A1–A2: câu rất đơn giản, chậm rõ; B1–B2: tự nhiên hơn; C1–C2: như người bản xứ). " +
+        "Tiếng Anh, 1–2 câu, KHÔNG markdown/emoji.",
+      messages: [{ role: "user", content: "Bắt đầu." }],
+    });
+    return { text };
+  }
+
+  // API yêu cầu message đầu là 'user'. Nếu lịch sử mở đầu bằng assistant (câu chào), chèn 1 user mồi.
+  let msgs = history;
+  if (msgs.length && msgs[0].role !== "user") {
+    msgs = [{ role: "user", content: "Let's begin the speaking session." }, ...msgs];
+  }
   const text = await callClaude({
+    messages: msgs,
     maxTokens: 320,
     system:
       "Bạn là gia sư luyện NÓI tiếng Anh thân thiện, dạy theo trình độ. " +
@@ -89,7 +110,6 @@ async function handleChat(body) {
       (focus ? "Hãy LÁI hội thoại để học viên luyện đúng điểm cần cải thiện: " + focus + "; sửa các lỗi đó thật nhẹ nhàng. " : "Nhẹ nhàng sửa lỗi. ") +
       "Khi hợp ngữ cảnh, gợi/ép dùng các từ: " + dueWords.join(", ") + ". " +
       "LUÔN kết thúc bằng MỘT câu hỏi để học viên nói tiếp.",
-    messages: history,
   });
   return { text };
 }

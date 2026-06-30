@@ -64,11 +64,26 @@ export default function VoiceChat({ dueWords, addWord, onBack }) {
     if (el) el.scrollTop = el.scrollHeight;
   }, [history, phase]);
 
+  const started = history.some((m) => m.role === "user"); // đã nói lượt nào chưa
+
   const stopTracks = useCallback(() => {
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
   }, []);
   useEffect(() => () => { stopTracks(); try { speechSynthesis.cancel(); } catch {} }, [stopTracks]);
+
+  // App MỞ LỜI: chào + câu hỏi đầu theo chủ đề/level (chạy khi vào & khi đổi level/chủ đề trước khi nói).
+  useEffect(() => {
+    if (started) return;
+    let cancelled = false;
+    setPhase("thinking");
+    setError("");
+    reply([], dueWords, { level, focus, topic, opener: true })
+      .then((t) => { if (!cancelled) { setHistory([{ role: "assistant", content: t }]); setPhase("idle"); } })
+      .catch((e) => { if (!cancelled) { setError("Không lấy được câu mở đầu: " + String(e.message || e)); setPhase("error"); } });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [level, topic]);
 
   async function processTurn(blob) {
     setPhase("thinking");
@@ -165,7 +180,7 @@ export default function VoiceChat({ dueWords, addWord, onBack }) {
       </div>
 
       <div className="chat-log" ref={logRef}>
-        {history.length === 0 && <p className="empty-msg">Bấm nút bên dưới và nói một câu tiếng Anh để bắt đầu.</p>}
+        {history.length === 0 && phase !== "thinking" && <p className="empty-msg">Bấm nút bên dưới và nói để bắt đầu.</p>}
         {history.map((m, i) => (
           <div key={i} className={`bubble ${m.role === "user" ? "bubble-user" : "bubble-ai"}`}>
             {m.content}
@@ -216,7 +231,7 @@ export default function VoiceChat({ dueWords, addWord, onBack }) {
         </button>
       ) : (
         <button className="cta" disabled={busy} onClick={() => startRecording({ type: "turn" })}>
-          <span className="cta-main">🎤 {history.length ? "Nói tiếp" : "Bắt đầu nói"}</span>
+          <span className="cta-main">🎤 {started ? "Nói tiếp" : "Trả lời"}</span>
         </button>
       )}
     </div>
