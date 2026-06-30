@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { buildSession } from "../srs/sm2.js";
 import { computeStats, nextDueAt, hardCards } from "../srs/session.js";
 import { streakFor, todayReviewedFor } from "../srs/stats.js";
-import { loadSpeaking, latestLevel } from "../srs/speaking.js";
+import { loadSpeaking, latestLevel, assessedToday } from "../srs/speaking.js";
 import { dueLabel } from "../utils/format.js";
 
 export default function Dashboard({ cards, getState, onStart, onManage, onReset, productionMode, onToggleProduction, stats, onStory, onVoice, onAssess, onProfile }) {
@@ -13,6 +13,8 @@ export default function Dashboard({ cards, getState, onStart, onManage, onReset,
   const todayDone = todayReviewedFor(stats, now);
   const goal = stats?.goal || 20;
   const speakLevel = useMemo(() => latestLevel(loadSpeaking()), []);
+  const didAssessToday = useMemo(() => assessedToday(loadSpeaking(), now), [now]);
+  const reviewDone = todayDone >= goal;
   const [scope, setScope] = useState("all");
   const topics = useMemo(() => [...new Set(cards.map((c) => c.c))], [cards]);
 
@@ -59,6 +61,13 @@ export default function Dashboard({ cards, getState, onStart, onManage, onReset,
         <button className="manage-link" onClick={onStory}>Mini-story</button>
       </div>
 
+      <div className="sec-lab">Lộ trình hôm nay</div>
+      <div className="plan">
+        <PlanStep done={reviewDone} track label={`📚 Ôn từ vựng — ${Math.min(todayDone, goal)}/${goal} thẻ`} onClick={() => onStart({})} />
+        <PlanStep track={false} label="🗣️ Luyện nói (hội thoại) ~5 phút" onClick={onVoice} />
+        <PlanStep done={didAssessToday} track label="🎙️ Đánh giá nói 1 bài (theo dõi CEFR)" onClick={onAssess} />
+      </div>
+
       <div className="stat-grid">
         <div className="stat stat-due"><div className="stat-num">{counts.due}</div><div className="stat-lab">Đến hạn hôm nay</div></div>
         <div className="stat"><div className="stat-num">{counts.new}</div><div className="stat-lab">Thẻ mới</div></div>
@@ -99,6 +108,10 @@ export default function Dashboard({ cards, getState, onStart, onManage, onReset,
         </button>
       )}
 
+      <p className="app-sub" style={{ textAlign: "center", marginTop: 14 }}>
+        Nhịp tuần: ôn từ + nói mỗi ngày · đánh giá nói 2–3 lần/tuần · cuối tuần xem 📈 Tiến trình để chọn điểm cần luyện.
+      </p>
+
       <button
         className="link-exit"
         style={{ alignSelf: "center", marginTop: 16 }}
@@ -109,5 +122,15 @@ export default function Dashboard({ cards, getState, onStart, onManage, onReset,
         Đặt lại tiến độ
       </button>
     </div>
+  );
+}
+
+function PlanStep({ done, track = true, label, onClick }) {
+  return (
+    <button className={`plan-step ${done ? "plan-done" : ""}`} onClick={onClick}>
+      <span className="plan-check">{track ? (done ? "✓" : "") : "·"}</span>
+      <span className="plan-label">{label}</span>
+      <span className="plan-go">{done ? "" : "→"}</span>
+    </button>
   );
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addAssessment, latestLevel, cefrIndex, speakingProfile } from "./speaking.js";
+import { addAssessment, latestLevel, cefrIndex, speakingProfile, assessedToday } from "./speaking.js";
 
 const mk = (at, cefr, tags = [], dims = {}) => ({ at, cefr, tags, dims });
 
@@ -13,6 +13,17 @@ describe("addAssessment / latestLevel", () => {
   it("latestLevel = bài hợp lệ gần nhất", () => {
     expect(latestLevel([mk(2, "?"), mk(1, "B2")])).toBe("B2");
     expect(latestLevel([])).toBe(null);
+  });
+});
+
+describe("assessedToday", () => {
+  const noon = new Date(2026, 5, 1, 12, 0, 0).getTime();
+  it("true nếu có bài trong hôm nay, false nếu chỉ có bài hôm trước", () => {
+    const earlierToday = new Date(2026, 5, 1, 8, 0, 0).getTime();
+    const yesterday = new Date(2026, 4, 31, 20, 0, 0).getTime();
+    expect(assessedToday([{ at: earlierToday, cefr: "B1" }], noon)).toBe(true);
+    expect(assessedToday([{ at: yesterday, cefr: "B1" }], noon)).toBe(false);
+    expect(assessedToday([], noon)).toBe(false);
   });
 });
 

@@ -125,6 +125,16 @@ select.field { cursor: pointer; }
 .tag-bar { flex: 1; height: 8px; background: var(--surface2); border-radius: 99px; overflow: hidden; }
 .tag-bar > i { display: block; height: 100%; background: var(--amber); border-radius: 99px; }
 .tag-count { width: 18px; text-align: right; color: var(--text2); font-variant-numeric: tabular-nums; }
+/* Lộ trình hôm nay */
+.plan { display: flex; flex-direction: column; gap: 8px; }
+.plan-step { display: flex; align-items: center; gap: 11px; width: 100%; text-align: left; background: var(--surface); border: 1px solid var(--border); border-radius: 13px; padding: 12px 14px; color: var(--text); font-size: 14px; cursor: pointer; transition: background .15s ease, border-color .15s ease; }
+.plan-step:hover { background: rgba(255, 255, 255, .04); border-color: var(--text3); }
+.plan-check { width: 22px; height: 22px; flex: 0 0 auto; border-radius: 50%; border: 1.5px solid var(--border2); display: flex; align-items: center; justify-content: center; font-size: 13px; color: var(--text3); }
+.plan-done { border-color: rgba(45, 212, 167, .4); background: var(--teal-dim); }
+.plan-done .plan-check { background: var(--teal); border-color: var(--teal); color: #06281f; font-weight: 800; }
+.plan-done .plan-label { color: var(--text2); }
+.plan-label { flex: 1; }
+.plan-go { color: var(--teal); font-weight: 700; }
 .chat-log { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; overflow-y: auto; max-height: 52vh; }
 .bubble { max-width: 85%; padding: 10px 14px; border-radius: 14px; font-size: 14px; line-height: 1.5; }
 .bubble-user { align-self: flex-end; background: var(--teal-dim); border: 1px solid rgba(45, 212, 167, .3); }

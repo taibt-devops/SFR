@@ -29,6 +29,14 @@ export function latestLevel(list) {
   return hit ? hit.cefr : null;
 }
 
+// Hôm nay đã đánh giá nói chưa (cho "Lộ trình hôm nay"). now truyền vào để test tất định.
+export function assessedToday(list = [], now = Date.now()) {
+  const d = new Date(now);
+  d.setHours(0, 0, 0, 0);
+  const start = d.getTime();
+  return list.some((e) => typeof e?.at === "number" && e.at >= start);
+}
+
 // A1→1 … C2→6 (null nếu không hợp lệ) — để vẽ biểu đồ & so sánh trục.
 export function cefrIndex(cefr) {
   const i = CEFR_ORDER.indexOf(cefr);
