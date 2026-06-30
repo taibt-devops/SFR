@@ -78,10 +78,11 @@ export default function StudySession({ card, state, progress, productionMode, on
         meaning: card.m,
         sentence: answer,
         hintVi: type === "reverse" ? card.d : "",
+        col: card.col || "",
       });
       setFeedback(fb);
     } catch (e) {
-      setFeedback("Không lấy được nhận xét: " + String(e.message || e));
+      setFeedback({ verdict: "fix", hint: "Không lấy được nhận xét: " + String(e.message || e) });
     } finally {
       setCoaching(false);
     }
@@ -149,11 +150,11 @@ export default function StudySession({ card, state, progress, productionMode, on
       {/* produce/reverse: nhận xét câu (lặp được) rồi mới hiện đáp án */}
       {phase === "prompt" && (type === "produce" || type === "reverse") && (
         <>
-          {coaching && <p className="empty-msg" style={{ marginTop: 12 }}>Đang nhận xét…</p>}
-          {feedback && <div className="story-text" style={{ fontSize: 14, marginTop: 12 }}>{feedback}</div>}
+          {coaching && <p className="empty-msg" style={{ marginTop: 12 }}>Gia sư đang xem…</p>}
+          {feedback && <CoachNote feedback={feedback} />}
           <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
             <button className="cta-ghost" style={{ marginTop: 0 }} disabled={!answer.trim() || coaching} onClick={checkSentence}>
-              {feedback ? "Kiểm tra lại" : "Kiểm tra câu"}
+              {feedback ? "Sửa xong · kiểm tra lại" : "Nhờ gia sư xem"}
             </button>
             <button className="cta-ghost" style={{ marginTop: 0 }} onClick={reveal}>Hiện đáp án</button>
           </div>
@@ -161,6 +162,25 @@ export default function StudySession({ card, state, progress, productionMode, on
       )}
 
       {phase === "revealed" && <RatingBar state={state} onRate={onRate} suggestedQ={sQ} />}
+    </div>
+  );
+}
+
+const VERDICT = {
+  good: { label: "✓ Tốt!", color: "var(--green)" },
+  ok: { label: "◐ Gần được", color: "var(--amber)" },
+  fix: { label: "✎ Thử chỉnh nhé", color: "var(--blue)" },
+};
+
+function CoachNote({ feedback }) {
+  const v = VERDICT[feedback.verdict] || VERDICT.ok;
+  return (
+    <div className="story-text" style={{ fontSize: 14, marginTop: 12, borderColor: v.color }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+        <span style={{ fontSize: 18 }}>👩‍🏫</span>
+        <b style={{ color: v.color }}>{v.label}</b>
+      </div>
+      {feedback.hint}
     </div>
   );
 }

@@ -97,20 +97,41 @@ async function handleStory(body) {
   return { text };
 }
 
-// Coach (§5.2): nhận xét câu người học tự đặt (produce/reverse) + gợi ý sửa — lặp vài lần trước khi lộ đáp án.
+// Bóc 1 object JSON ra khỏi câu trả lời (phòng khi Claude kèm chữ). Trả null nếu hỏng.
+function extractJsonObject(text) {
+  const s = text.indexOf("{");
+  const e = text.lastIndexOf("}");
+  if (s === -1 || e < s) return null;
+  try {
+    return JSON.parse(text.slice(s, e + 1));
+  } catch {
+    return null;
+  }
+}
+
+// Coach (§5.2): GỢI Ý để người học TỰ sửa câu — KHÔNG đưa câu đáp án hoàn chỉnh (giữ "productive struggle").
+// Họ đọc gợi ý → gõ lại → kiểm tra tiếp; muốn xem câu mẫu thì bấm "Hiện đáp án".
 async function handleCoach(body) {
-  const { word = "", meaning = "", sentence = "", hintVi = "" } = body;
-  const text = await callClaude({
-    maxTokens: 220,
-    system:
-      'Bạn là gia sư tiếng Anh thân thiện. Người học đang luyện dùng từ/cụm "' + word + '" (' + meaning + "). " +
-      (hintVi ? 'Ý cần diễn đạt (tiếng Việt): "' + hintVi + '". ' : "") +
-      "Nhận xét NGẮN bằng tiếng Việt (1–2 câu): câu đã đúng ngữ pháp & tự nhiên chưa, có dùng đúng từ không. " +
-      "Nếu chưa ổn, chỉ lỗi nhẹ nhàng và đưa ĐÚNG MỘT câu sửa gợi ý bằng tiếng Anh (đặt trong ngoặc kép). " +
-      "Nếu đã tốt thì khen ngắn gọn. KHÔNG markdown, KHÔNG emoji.",
+  const { word = "", meaning = "", sentence = "", hintVi = "", col = "" } = body;
+  const sys =
+    "Bạn là MỘT GIA SƯ TIẾNG ANH CHUYÊN NGHIỆP, ấm áp và khích lệ, dạy người Việt. " +
+    'Học viên đang tập dùng từ/cụm "' + word + '" (' + meaning + ").";
+  const ctx =
+    (hintVi ? ' Ý họ muốn diễn đạt: "' + hintVi + '".' : "") +
+    (col ? " Collocation hay dùng: " + col + "." : "");
+  const rule =
+    " Họ vừa viết một câu. Hãy phản hồi như gia sư thật trong lớp 1-kèm-1: nhận ra điều họ làm được, rồi GỢI Ý để họ TỰ sửa." +
+    " TUYỆT ĐỐI KHÔNG viết ra câu đúng hoàn chỉnh / câu mẫu (để họ tự nghĩ). Mỗi lần chỉ nhấn MỘT điểm quan trọng nhất, xưng \"bạn\", giọng động viên." +
+    ' CHỈ trả JSON: {"verdict":"good|ok|fix","hint":"<1-2 câu tiếng Việt ấm áp: khen điểm được + chỉ HƯỚNG cần sửa' +
+    ' (loại lỗi, từ thiếu, thì, mạo từ, collocation tự nhiên hơn...) — KHÔNG đưa nguyên câu trả lời>"}.' +
+    " verdict: good=đúng & tự nhiên (khen, mời thử câu khó hơn); ok=đúng nhưng nên hay hơn; fix=có lỗi. KHÔNG thêm gì ngoài JSON.";
+  const out = await callClaude({
+    maxTokens: 200,
+    system: sys + ctx + rule,
     messages: [{ role: "user", content: sentence || "(người học chưa nhập câu)" }],
   });
-  return { text };
+  const o = extractJsonObject(out) || {};
+  return { verdict: o.verdict || "ok", hint: o.hint || out.trim() };
 }
 
 const ROUTES = { "/": handleChat, "/mine": handleMine, "/story": handleStory, "/coach": handleCoach };
