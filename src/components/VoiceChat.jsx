@@ -72,18 +72,14 @@ export default function VoiceChat({ dueWords, addWord, onBack }) {
   }, []);
   useEffect(() => () => { stopTracks(); try { speechSynthesis.cancel(); } catch {} }, [stopTracks]);
 
-  // App MỞ LỜI: chào + câu hỏi đầu theo chủ đề/level (chạy khi vào & khi đổi level/chủ đề trước khi nói).
-  useEffect(() => {
-    if (started) return;
-    let cancelled = false;
+  // App MỞ LỜI khi NGƯỜI DÙNG bấm "Bắt đầu" (sau khi đã chọn trình độ & chủ đề) — KHÔNG tự chạy lúc vào.
+  const begin = useCallback(() => {
     setPhase("thinking");
     setError("");
     reply([], dueWords, { level, focus, topic, opener: true })
-      .then((t) => { if (!cancelled) { setHistory([{ role: "assistant", content: t }]); setPhase("idle"); } })
-      .catch((e) => { if (!cancelled) { setError("Không lấy được câu mở đầu: " + String(e.message || e)); setPhase("error"); } });
-    return () => { cancelled = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [level, topic]);
+      .then((t) => { setHistory([{ role: "assistant", content: t }]); setPhase("idle"); })
+      .catch((e) => { setError("Không lấy được câu mở đầu: " + String(e.message || e)); setPhase("error"); });
+  }, [dueWords, level, focus, topic]);
 
   async function processTurn(blob) {
     setPhase("thinking");
@@ -180,7 +176,7 @@ export default function VoiceChat({ dueWords, addWord, onBack }) {
       </div>
 
       <div className="chat-log" ref={logRef}>
-        {history.length === 0 && phase !== "thinking" && <p className="empty-msg">Bấm nút bên dưới và nói để bắt đầu.</p>}
+        {history.length === 0 && phase !== "thinking" && <p className="empty-msg">Chọn trình độ & chủ đề ở trên, rồi bấm “Bắt đầu buổi nói”.</p>}
         {history.map((m, i) => (
           <div key={i} className={`bubble ${m.role === "user" ? "bubble-user" : "bubble-ai"}`}>
             {m.content}
@@ -228,6 +224,10 @@ export default function VoiceChat({ dueWords, addWord, onBack }) {
       {phase === "recording" ? (
         <button className="cta" style={{ background: "var(--red)" }} onClick={stopRecording}>
           <span className="cta-main">■ Dừng & gửi</span>
+        </button>
+      ) : history.length === 0 ? (
+        <button className="cta" disabled={busy} onClick={begin}>
+          <span className="cta-main">🎤 {busy ? "Đang mở lời…" : "Bắt đầu buổi nói"}</span>
         </button>
       ) : (
         <button className="cta" disabled={busy} onClick={() => startRecording({ type: "turn" })}>
