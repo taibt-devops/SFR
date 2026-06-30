@@ -9,6 +9,7 @@ import DataManager from "./components/DataManager.jsx";
 import MiniStory from "./components/MiniStory.jsx";
 import VoiceChat from "./components/VoiceChat.jsx";
 import SpeakingAssess from "./components/SpeakingAssess.jsx";
+import SpeakingProfile from "./components/SpeakingProfile.jsx";
 
 export default function App() {
   const vocabApi = useVocab();
@@ -86,6 +87,11 @@ export default function App() {
     return <SpeakingAssess dueWords={dueWords} onBack={() => setView("home")} />;
   }
 
+  // ── Hồ sơ tiến trình nói (GĐ2) ──
+  if (view === "profile") {
+    return <SpeakingProfile onBack={() => setView("home")} onAssess={() => setView("assess")} />;
+  }
+
   // ── Màn hình chính (Dashboard) ──
   return (
     <Dashboard
@@ -100,6 +106,7 @@ export default function App() {
       onStory={() => setView("story")}
       onVoice={() => setView("voice")}
       onAssess={() => setView("assess")}
+      onProfile={() => setView("profile")}
     />
   );
 }

@@ -171,14 +171,16 @@ async function handleAssess(body) {
       "PRONUNCIATION: KHÔNG có audio → chỉ ƯỚC LƯỢNG dè dặt từ nhịp nói + chỗ Whisper nghe nhầm; note phải ghi rõ '(ước lượng)'. " +
       'CHỈ trả JSON: {"cefr":"A1|A2|B1|B2|C1|C2","summary":"1 câu tiếng Việt","dims":{"fluency":{"level":"..","note":".."},' +
       '"lexical":{"level":"..","note":".."},"grammar":{"level":"..","note":".."},"pronunciation":{"level":"..","note":".."}},' +
-      '"strengths":["..",".."],"weaknesses":["..",".."],"fixes":["..",".."]}. ' +
-      "Mọi note/strengths/weaknesses/fixes bằng TIẾNG VIỆT, ngắn & cụ thể. KHÔNG thêm gì ngoài JSON.",
+      '"strengths":["..",".."],"weaknesses":["..",".."],"fixes":["..",".."],"tags":["..",".."]}. ' +
+      'tags = 2–4 NHÃN LỖI để thống kê, CHỌN ĐÚNG NGUYÊN VĂN từ danh sách: ' +
+      '"mạo từ","chia động từ/thì","số ít-số nhiều","giới từ","trật tự từ","từ vựng hạn chế","liên kết-mạch lạc","phát âm","ngập ngừng-trôi chảy". ' +
+      "Nếu không có lỗi đáng kể thì tags=[]. Mọi note/strengths/weaknesses/fixes bằng TIẾNG VIỆT, ngắn & cụ thể. KHÔNG thêm gì ngoài JSON.",
     messages: [{ role: "user", content: transcript || "(học viên không nói gì)" }],
   });
   const o = extractJsonObject(out) || {};
   return o.cefr
     ? o
-    : { cefr: "?", summary: out.trim().slice(0, 300), dims: {}, strengths: [], weaknesses: [], fixes: [] };
+    : { cefr: "?", summary: out.trim().slice(0, 300), dims: {}, strengths: [], weaknesses: [], fixes: [], tags: [] };
 }
 
 const ROUTES = {

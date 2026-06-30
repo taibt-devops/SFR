@@ -115,6 +115,16 @@ select.field { cursor: pointer; }
 .assess-list { list-style: none; display: flex; flex-direction: column; gap: 7px; }
 .assess-list li { font-size: 14px; color: var(--text); padding-left: 16px; position: relative; line-height: 1.5; }
 .assess-list li::before { content: "•"; position: absolute; left: 2px; color: var(--text3); }
+/* biểu đồ tiến bộ CEFR */
+.trend { display: flex; align-items: flex-end; gap: 6px; height: 96px; margin-top: 18px; }
+.trend-bar { flex: 1; min-width: 12px; background: var(--teal-dim); border: 1px solid rgba(45, 212, 167, .35); border-bottom: none; border-radius: 6px 6px 0 0; position: relative; min-height: 8px; }
+.trend-bar > span { position: absolute; top: -16px; left: 0; right: 0; text-align: center; font-size: 9.5px; color: var(--text2); font-weight: 600; }
+/* top lỗi hay lặp */
+.tag-row { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+.tag-name { width: 120px; flex: 0 0 auto; color: var(--text); }
+.tag-bar { flex: 1; height: 8px; background: var(--surface2); border-radius: 99px; overflow: hidden; }
+.tag-bar > i { display: block; height: 100%; background: var(--amber); border-radius: 99px; }
+.tag-count { width: 18px; text-align: right; color: var(--text2); font-variant-numeric: tabular-nums; }
 .chat-log { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; overflow-y: auto; max-height: 52vh; }
 .bubble { max-width: 85%; padding: 10px 14px; border-radius: 14px; font-size: 14px; line-height: 1.5; }
 .bubble-user { align-self: flex-end; background: var(--teal-dim); border: 1px solid rgba(45, 212, 167, .3); }
