@@ -188,6 +188,16 @@ export default function VoiceChat({ dueWords, addWord, onBack }) {
     setHistory([]); setSpoken(new Set()); setShadow(null); setSummary(null); setError("");
     setTopic(pickTopic()); setPhase("idle");
   }
+  // Bỏ lượt vừa rồi (câu đáp của app + lời mình nói) để thu lại — khi Whisper nghe nhầm.
+  function redoLast() {
+    setHistory((h) => {
+      const out = [...h];
+      if (out.length && out[out.length - 1].role === "assistant") out.pop();
+      if (out.length && out[out.length - 1].role === "user") out.pop();
+      return out;
+    });
+    setError("");
+  }
 
   const busy = phase === "thinking";
   const shadowing = phase === "recording" && modeRef.current.type === "shadow";
@@ -324,6 +334,9 @@ export default function VoiceChat({ dueWords, addWord, onBack }) {
         <button className="cta" disabled={busy} onClick={() => startRecording({ type: "turn" })}>
           <span className="cta-main">🎤 {started ? "Nói tiếp" : "Trả lời"}</span>
         </button>
+      )}
+      {started && phase === "idle" && (
+        <button className="cta-ghost" onClick={redoLast}>↺ Nói lại lượt vừa rồi</button>
       )}
     </div>
   );
