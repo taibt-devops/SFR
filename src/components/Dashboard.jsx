@@ -2,7 +2,7 @@
 // Thuần UI — dùng helper thuần computeStats/nextDueAt/buildSession (đã có test).
 import { useMemo, useState } from "react";
 import { buildSession } from "../srs/sm2.js";
-import { computeStats, nextDueAt } from "../srs/session.js";
+import { computeStats, nextDueAt, hardCards } from "../srs/session.js";
 import { streakFor, todayReviewedFor } from "../srs/stats.js";
 import { dueLabel } from "../utils/format.js";
 
@@ -14,7 +14,7 @@ export default function Dashboard({ cards, getState, onStart, onManage, onReset,
   const [scope, setScope] = useState("all");
   const topics = useMemo(() => [...new Set(cards.map((c) => c.c))], [cards]);
 
-  const { counts, sessionNew, sessionDue, nextDue } = useMemo(() => {
+  const { counts, sessionNew, sessionDue, nextDue, hard } = useMemo(() => {
     const now = Date.now();
     const scoped = scope === "all" ? cards : cards.filter((c) => c.c === scope);
     // Số sẽ thực sự vào phiên = buildSession (tôn trọng newLimit/maxReviews) — nguồn chân lý duy nhất.
@@ -29,6 +29,7 @@ export default function Dashboard({ cards, getState, onStart, onManage, onReset,
       sessionNew: sNew,
       sessionDue: plan.length - sNew,
       nextDue: nextDueAt(scoped, getState),
+      hard: hardCards(scoped, getState, { limit: 20 }),
     };
   }, [cards, getState, scope]);
 
@@ -83,6 +84,12 @@ export default function Dashboard({ cards, getState, onStart, onManage, onReset,
           Không có thẻ đến hạn trong phạm vi này.
           <br />Thẻ đến hạn kế tiếp: <b>{dueLabel(nextDue)}</b>
         </p>
+      )}
+
+      {hard.length > 0 && (
+        <button className="cta-ghost" onClick={() => onStart({ cards: hard })}>
+          🔁 Ôn thẻ khó ({hard.length}) — từ hay quên
+        </button>
       )}
 
       <button

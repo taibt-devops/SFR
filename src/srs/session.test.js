@@ -5,6 +5,7 @@ import {
   isSessionDone,
   computeStats,
   nextDueAt,
+  hardCards,
   MASTERED_INTERVAL,
 } from "./session.js";
 import { DAY } from "./sm2.js";
@@ -63,6 +64,31 @@ describe("computeStats (§1.6)", () => {
     const s = computeStats(cards, getState, NOW);
     // n1, n2 (mới → due) + overdue (due ≤ now) = 3; learn & master chưa đến hạn
     expect(s.due).toBe(3);
+  });
+});
+
+describe("hardCards", () => {
+  const cards = [{ id: "fresh" }, { id: "easy" }, { id: "lapsed2" }, { id: "lapsed1" }, { id: "loweEf" }];
+  const states = {
+    easy: { seen: true, lapses: 0, ef: 2.6 }, // không khó
+    lapsed2: { seen: true, lapses: 2, ef: 2.0 },
+    lapsed1: { seen: true, lapses: 1, ef: 2.3 },
+    loweEf: { seen: true, lapses: 0, ef: 1.6 }, // ef thấp → khó
+  };
+  const getState = (id) => states[id];
+
+  it("lọc thẻ khó (lapses≥1 hoặc ef≤2.0), bỏ thẻ mới & thẻ dễ", () => {
+    const out = hardCards(cards, getState).map((c) => c.id);
+    expect(out).not.toContain("fresh");
+    expect(out).not.toContain("easy");
+    expect(out).toContain("lapsed2");
+    expect(out).toContain("lapsed1");
+    expect(out).toContain("loweEf");
+  });
+
+  it("sắp khó nhất trước (lapses desc, rồi ef asc) và tôn trọng limit", () => {
+    const out = hardCards(cards, getState, { limit: 2 }).map((c) => c.id);
+    expect(out).toEqual(["lapsed2", "lapsed1"]); // lapses 2 trước, rồi lapses 1
   });
 });
 

@@ -9,7 +9,8 @@ import http from "node:http";
 const PORT = Number(process.env.PROXY_PORT) || 8787;
 const TOKEN = process.env.CLAUDE_TOKEN;
 const SECRET = process.env.PROXY_SECRET;
-const MODEL = "claude-opus-4-8";
+const MODEL_SMART = "claude-opus-4-8"; // chất lượng cao — dùng cho mining
+const MODEL_FAST = "claude-sonnet-4-6"; // độ trễ thấp — chat/coach/mini-story
 const API = "https://api.anthropic.com/v1/messages";
 
 // KHÔNG exit khi thiếu token (để container vẫn sống, frontend học-từ vẫn chạy);
@@ -22,7 +23,7 @@ const CODE_PREAMBLE = "You are Claude Code, Anthropic's official CLI for Claude.
 
 const CLAUDE_TIMEOUT_MS = 30_000; // tránh treo vô hạn khi API chậm/đứt
 
-async function callClaude({ system, messages, maxTokens = 600 }) {
+async function callClaude({ system, messages, maxTokens = 600, model = MODEL_FAST }) {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), CLAUDE_TIMEOUT_MS);
   let r;
@@ -37,7 +38,7 @@ async function callClaude({ system, messages, maxTokens = 600 }) {
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: MODEL,
+        model,
         max_tokens: maxTokens,
         system: [{ type: "text", text: CODE_PREAMBLE }, { type: "text", text: system }],
         messages,
@@ -90,6 +91,7 @@ async function handleChat(body) {
 async function handleMine(body) {
   const { text = "", level = "intermediate" } = body;
   const out = await callClaude({
+    model: MODEL_SMART, // mining cần chất lượng trích từ → dùng Opus
     maxTokens: 2000,
     system:
       "Bạn trích từ vựng tiếng Anh ĐÁNG HỌC (mức " + level + ") từ đoạn văn người dùng cung cấp. " +
@@ -198,4 +200,4 @@ http
       }));
     }
   })
-  .listen(PORT, () => console.log(`✓ Proxy Claude chạy ở http://localhost:${PORT} (model ${MODEL})`));
+  .listen(PORT, () => console.log(`✓ Proxy Claude chạy ở http://localhost:${PORT} (fast: ${MODEL_FAST}, smart: ${MODEL_SMART})`));

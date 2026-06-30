@@ -42,6 +42,23 @@ export function computeStats(cards, getState, now = Date.now()) {
   return { new: fresh, learning, mastered, due };
 }
 
+// ───────── Thẻ khó ─────────
+// Thẻ "khó" = đã seen VÀ hay quên (lapses ≥ minLapses) HOẶC ease thấp (ef ≤ efMax).
+// Trả danh sách đã sắp KHÓ NHẤT TRƯỚC (lapses desc, rồi ef asc), tối đa `limit`. Không phụ thuộc `due`
+// (đây là phiên "luyện riêng thẻ khó", muốn drill bất kể đến hạn hay chưa).
+export function hardCards(cards, getState, { limit = 20, minLapses = 1, efMax = 2.0 } = {}) {
+  const scored = [];
+  for (const c of cards) {
+    const st = getState(c.id);
+    if (!st || !st.seen) continue;
+    const lapses = st.lapses || 0;
+    const ef = typeof st.ef === "number" ? st.ef : 2.5;
+    if (lapses >= minLapses || ef <= efMax) scored.push({ c, lapses, ef });
+  }
+  scored.sort((a, b) => b.lapses - a.lapses || a.ef - b.ef);
+  return scored.slice(0, limit).map((s) => s.c);
+}
+
 // Thời điểm đến hạn kế tiếp = min(`due`) trong các thẻ đã `seen` — cho màn "hoàn thành"/dashboard
 // khi không còn thẻ đến hạn. Trả null nếu chưa có thẻ nào seen.
 export function nextDueAt(cards, getState) {

@@ -17,7 +17,10 @@ export function useStudy(cards) {
 
   const start = useCallback(
     (opts = {}) => {
-      const q = buildSession(cards, getState, { now: Date.now(), ...opts });
+      // opts.cards = danh sách thẻ định sẵn (vd "ôn thẻ khó", đã sắp xếp → KHÔNG build/shuffle lại).
+      const q = opts.cards
+        ? opts.cards.slice(0, opts.limit || opts.cards.length)
+        : buildSession(cards, getState, { now: Date.now(), ...opts });
       setQueue(q);
       setTotal(q.length);
       setLapsedIds(new Set());
