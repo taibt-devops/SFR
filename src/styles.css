@@ -135,6 +135,14 @@ select.field { cursor: pointer; }
 .plan-done .plan-label { color: var(--text2); }
 .plan-label { flex: 1; }
 .plan-go { color: var(--teal); font-weight: 700; }
+/* Hero luyện nói (trang chủ speaking-first) */
+.hero { background: linear-gradient(160deg, rgba(45, 212, 167, .16), var(--surface) 70%); border: 1px solid rgba(45, 212, 167, .3); border-radius: 20px; padding: 18px; margin-top: 14px; box-shadow: 0 12px 30px rgba(0, 0, 0, .35); }
+.hero-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+.hero-lab { font-size: 12px; color: var(--text2); }
+.hero-level { font-size: 38px; font-weight: 800; color: var(--teal); line-height: 1; letter-spacing: -1px; }
+.hero-meta { display: flex; flex-direction: column; gap: 5px; align-items: flex-end; font-size: 12.5px; color: var(--text2); }
+.hero .cta { box-shadow: 0 8px 20px rgba(45, 212, 167, .25); }
+.hero .btn-row { margin-top: 10px; }
 .chat-log { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; overflow-y: auto; max-height: 52vh; }
 .bubble { max-width: 85%; padding: 10px 14px; border-radius: 14px; font-size: 14px; line-height: 1.5; }
 .bubble-user { align-self: flex-end; background: var(--teal-dim); border: 1px solid rgba(45, 212, 167, .3); }
