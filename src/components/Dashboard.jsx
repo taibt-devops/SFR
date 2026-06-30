@@ -68,7 +68,7 @@ export default function Dashboard({ cards, getState, onStart, onManage, onReset,
 
       <label className="prod-toggle">
         <input type="checkbox" checked={productionMode} onChange={onToggleProduction} />
-        Chế độ sản xuất (đặt câu trước khi lật)
+        Tự đặt câu trước khi xem đáp án (luyện chủ động)
       </label>
 
       <div className="spacer" />
