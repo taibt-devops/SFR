@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup — Phrasal Verbs (Spaced Repetition)</title>
+<style>
+  :root{
+    --bg:#14161B; --screen:#0F1115; --surface:#1A1D24; --surface2:#232831;
+    --border:rgba(255,255,255,.08); --border2:rgba(255,255,255,.15);
+    --text:#ECEEF1; --text2:#9CA3AF; --text3:#6B7280;
+    --teal:#2DD4A7; --teal-dim:rgba(45,212,167,.14);
+    --red:#F87171; --amber:#FBBF24; --green:#34D399; --blue:#60A5FA;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  body{font-family:-apple-system,"Segoe UI",Roboto,system-ui,sans-serif;background:var(--bg);color:var(--text);
+    line-height:1.45;padding:40px 20px 56px;-webkit-font-smoothing:antialiased}
+  .page{max-width:1080px;margin:0 auto}
+  .header{text-align:center;margin-bottom:38px}
+  .header h1{font-size:24px;font-weight:600;letter-spacing:-.3px}
+  .header p{color:var(--text2);font-size:14px;margin-top:6px}
+
+  .frames{display:flex;gap:30px;flex-wrap:wrap;justify-content:center}
+  .device{display:flex;flex-direction:column;align-items:center;gap:14px}
+  .device > figcaption{font-size:13px;color:var(--text2);letter-spacing:.2px}
+  .phone{width:300px;background:#05060a;border:1px solid #2a2d35;border-radius:36px;padding:9px;
+    box-shadow:0 24px 60px rgba(0,0,0,.5)}
+  .screen{background:var(--screen);border-radius:28px;height:600px;overflow:hidden;display:flex;flex-direction:column}
+
+  .sbar{display:flex;justify-content:space-between;align-items:center;padding:12px 22px 4px;font-size:12px;
+    color:var(--text2);font-weight:500;flex:0 0 auto}
+  .batt{display:inline-flex;align-items:center;gap:5px}
+  .batt .b{width:22px;height:11px;border:1px solid var(--text3);border-radius:3px;position:relative}
+  .batt .b::after{content:"";position:absolute;inset:1.5px;width:80%;background:var(--text2);border-radius:1px}
+
+  .body{flex:1;display:flex;flex-direction:column;padding:14px 18px 20px;min-height:0}
+  .spacer{flex:1}
+  .sec-lab{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin:18px 2px 9px;font-weight:600}
+
+  /* ---- dashboard ---- */
+  .app-head{display:flex;align-items:center;gap:11px;margin-top:4px}
+  .logo{width:38px;height:38px;border-radius:11px;background:var(--teal-dim);border:1px solid rgba(45,212,167,.3);
+    display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+  .logo svg{width:20px;height:20px}
+  .app-title{font-size:18px;font-weight:600;letter-spacing:-.2px}
+  .app-sub{font-size:12px;color:var(--text2)}
+
+  .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:18px}
+  .stat{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:13px 14px}
+  .stat-due{background:var(--teal-dim);border-color:rgba(45,212,167,.32)}
+  .stat-num{font-size:26px;font-weight:700;letter-spacing:-.5px}
+  .stat-due .stat-num{color:var(--teal)}
+  .stat-lab{font-size:12px;color:var(--text2);margin-top:1px}
+
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{font-size:12.5px;padding:7px 12px;border-radius:999px;background:var(--surface);
+    border:1px solid var(--border);color:var(--text2)}
+  .chip-on{background:#fff;color:#0F1115;border-color:#fff;font-weight:600}
+
+  .cta{width:100%;border:none;border-radius:15px;background:var(--teal);color:#06281f;
+    padding:13px;display:flex;flex-direction:column;align-items:center;gap:1px;cursor:pointer}
+  .cta-main{font-size:16px;font-weight:700;letter-spacing:.2px}
+  .cta-sub{font-size:12px;font-weight:600;opacity:.7}
+  .cta-ghost{width:100%;margin-top:9px;border:1px solid var(--border2);border-radius:15px;background:transparent;
+    color:var(--text2);padding:11px;font-size:14px;font-weight:500;cursor:pointer}
+
+  /* ---- study ---- */
+  .study-top{display:flex;justify-content:space-between;align-items:center;margin-top:2px}
+  .cat-tag{display:inline-flex;align-items:center;gap:7px;font-size:12px;color:var(--text2);font-weight:500}
+  .cat-tag .dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+  .prog-txt{font-size:12px;color:var(--text3);font-weight:600;font-variant-numeric:tabular-nums}
+  .pbar{height:4px;border-radius:99px;background:var(--surface2);margin-top:9px;overflow:hidden}
+  .pbar > i{display:block;height:100%;width:30%;background:var(--teal);border-radius:99px}
+
+  .flashcard{background:var(--surface);border:1px solid var(--border);border-radius:18px;
+    margin-top:14px;padding:20px 18px;display:flex;flex-direction:column;align-items:center;text-align:center;flex:1;justify-content:center}
+  .fc-hint{font-size:10.5px;letter-spacing:.6px;text-transform:uppercase;color:var(--text3);margin-bottom:14px}
+  .fc-verb{font-size:27px;font-weight:700;letter-spacing:-.4px}
+  .fc-mean{font-size:15px;color:var(--teal);margin-top:6px;font-weight:500}
+  .fc-div{width:46px;height:1px;background:var(--border2);margin:16px 0}
+  .fc-en{font-size:13.5px;color:var(--text);font-style:italic;line-height:1.5}
+  .fc-vi{font-size:12.5px;color:var(--text2);margin-top:7px;line-height:1.5}
+
+  .rate-hint{text-align:center;font-size:12px;color:var(--text2);margin:13px 0 9px}
+  .rate-row{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+  .rate{border:none;border-radius:12px;padding:9px 4px 8px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer}
+  .r-lab{font-size:12px;font-weight:700}
+  .r-int{font-size:10px;font-weight:600;opacity:.85}
+  .r-again{background:rgba(248,113,113,.14);color:var(--red)}
+  .r-hard{background:rgba(251,191,36,.14);color:var(--amber)}
+  .r-good{background:rgba(52,211,153,.14);color:var(--green)}
+  .r-easy{background:rgba(96,165,250,.14);color:var(--blue)}
+  .kbd-hint{text-align:center;font-size:11px;color:var(--text3);margin-top:11px}
+
+  /* ---- done ---- */
+  .done-check{width:64px;height:64px;border-radius:50%;background:var(--teal-dim);border:1px solid rgba(45,212,167,.35);
+    display:flex;align-items:center;justify-content:center;margin:30px auto 0}
+  .done-check svg{width:30px;height:30px}
+  .done-title{text-align:center;font-size:21px;font-weight:700;margin-top:18px}
+  .done-sub{text-align:center;font-size:13.5px;color:var(--text2);margin-top:4px}
+  .done-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:24px}
+  .ds{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:15px;text-align:center}
+  .ds-num{font-size:28px;font-weight:700}
+  .ds-lab{font-size:12px;color:var(--text2);margin-top:2px}
+  .next-due{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-top:10px;
+    display:flex;justify-content:space-between;align-items:center}
+  .nd-lab{font-size:12.5px;color:var(--text2)}
+  .nd-val{font-size:13.5px;font-weight:600;color:var(--teal)}
+
+  /* ---- notes ---- */
+  .notes{max-width:760px;margin:46px auto 0;background:var(--surface);border:1px solid var(--border);
+    border-radius:16px;padding:22px 24px}
+  .notes h2{font-size:15px;font-weight:600;margin-bottom:12px}
+  .notes ul{list-style:none;display:flex;flex-direction:column;gap:9px}
+  .notes li{font-size:13.5px;color:var(--text2);padding-left:18px;position:relative;line-height:1.55}
+  .notes li::before{content:"";position:absolute;left:0;top:8px;width:6px;height:6px;border-radius:50%;background:var(--teal)}
+  .notes b{color:var(--text);font-weight:600}
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="header">
+    <h1>Phrasal Verbs — mockup giao diện</h1>
+    <p>App flashcard ôn theo lịch SM-2 · 3 màn hình chính</p>
+  </header>
+
+  <div class="frames">
+
+    <!-- SCREEN 1: DASHBOARD -->
+    <figure class="device">
+      <div class="phone"><div class="screen">
+        <div class="sbar"><span>9:41</span><span class="batt">5G <span class="b"></span></span></div>
+        <div class="body">
+          <div class="app-head">
+            <div class="logo">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#2DD4A7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></svg>
+            </div>
+            <div>
+              <div class="app-title">Phrasal Verbs</div>
+              <div class="app-sub">225 cụm động từ · ôn theo lịch</div>
+            </div>
+          </div>
+
+          <div class="stat-grid">
+            <div class="stat stat-due"><div class="stat-num">23</div><div class="stat-lab">Đến hạn hôm nay</div></div>
+            <div class="stat"><div class="stat-num">18</div><div class="stat-lab">Thẻ mới</div></div>
+            <div class="stat"><div class="stat-num">41</div><div class="stat-lab">Đang học</div></div>
+            <div class="stat"><div class="stat-num">12</div><div class="stat-lab">Đã thuộc</div></div>
+          </div>
+
+          <div class="sec-lab">Chủ đề</div>
+          <div class="chips">
+            <span class="chip chip-on">Tất cả</span>
+            <span class="chip">Giao tiếp hằng ngày</span>
+            <span class="chip">Công việc</span>
+            <span class="chip">Du lịch</span>
+            <span class="chip">Sức khỏe</span>
+          </div>
+
+          <div class="spacer"></div>
+
+          <button class="cta">
+            <span class="cta-main">Ôn 23 thẻ</span>
+            <span class="cta-sub">18 mới + 5 ôn lại</span>
+          </button>
+        </div>
+      </div></div>
+      <figcaption>Màn hình chính</figcaption>
+    </figure>
+
+    <!-- SCREEN 2: STUDY (FLIPPED) -->
+    <figure class="device">
+      <div class="phone"><div class="screen">
+        <div class="sbar"><span>9:43</span><span class="batt">5G <span class="b"></span></span></div>
+        <div class="body">
+          <div class="study-top">
+            <span class="cat-tag"><i class="dot" style="background:var(--blue)"></i> Công việc & Sự nghiệp</span>
+            <span class="prog-txt">7 / 23</span>
+          </div>
+          <div class="pbar"><i></i></div>
+
+          <div class="flashcard">
+            <div class="fc-hint">đã lật · chạm để lật lại</div>
+            <div class="fc-verb">carry out</div>
+            <div class="fc-mean">thực hiện, tiến hành</div>
+            <div class="fc-div"></div>
+            <div class="fc-en">"We need to carry out more tests before the launch."</div>
+            <div class="fc-vi">→ Chúng ta cần tiến hành thêm vài bài kiểm tra trước khi ra mắt.</div>
+          </div>
+
+          <div class="rate-hint">Bạn nhớ từ này tới mức nào?</div>
+          <div class="rate-row">
+            <button class="rate r-again"><span class="r-lab">Chưa nhớ</span><span class="r-int">lại</span></button>
+            <button class="rate r-hard"><span class="r-lab">Khó</span><span class="r-int">4 ngày</span></button>
+            <button class="rate r-good"><span class="r-lab">Tốt</span><span class="r-int">10 ngày</span></button>
+            <button class="rate r-easy"><span class="r-lab">Dễ</span><span class="r-int">21 ngày</span></button>
+          </div>
+          <div class="kbd-hint">Space để lật · phím 1–4 để đánh giá</div>
+        </div>
+      </div></div>
+      <figcaption>Đang ôn (đã lật thẻ)</figcaption>
+    </figure>
+
+    <!-- SCREEN 3: COMPLETION -->
+    <figure class="device">
+      <div class="phone"><div class="screen">
+        <div class="sbar"><span>9:58</span><span class="batt">5G <span class="b"></span></span></div>
+        <div class="body">
+          <div class="done-check">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#2DD4A7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+          </div>
+          <div class="done-title">Hoàn thành phiên!</div>
+          <div class="done-sub">Bạn đã ôn 23 thẻ hôm nay</div>
+
+          <div class="done-stats">
+            <div class="ds"><div class="ds-num" style="color:var(--green)">17</div><div class="ds-lab">Nhớ tốt</div></div>
+            <div class="ds"><div class="ds-num" style="color:var(--amber)">6</div><div class="ds-lab">Cần ôn lại</div></div>
+          </div>
+
+          <div class="next-due">
+            <span class="nd-lab">Thẻ đến hạn kế tiếp</span>
+            <span class="nd-val">Ngày mai · 14 thẻ</span>
+          </div>
+
+          <div class="spacer"></div>
+          <button class="cta"><span class="cta-main">Về màn hình chính</span></button>
+          <button class="cta-ghost">Ôn lại 6 thẻ khó</button>
+        </div>
+      </div></div>
+      <figcaption>Hoàn thành phiên</figcaption>
+    </figure>
+
+  </div>
+
+  <footer class="notes">
+    <h2>Ghi chú thiết kế (cho Claude Code)</h2>
+    <ul>
+      <li>Giao diện <b>tối</b>; màu nhấn chủ đạo <b>teal</b>. Mỗi chủ đề có một màu nhãn riêng (chấm tròn cạnh tên).</li>
+      <li>Mặt trước thẻ chỉ hiện <b>phrasal verb</b>; chạm hoặc <b>Space</b> để lật ra nghĩa + ví dụ — lúc đó mới hiện 4 nút đánh giá.</li>
+      <li>Bốn nút đánh giá có màu phân biệt (<b>Chưa nhớ / Khó / Tốt / Dễ</b>) và <b>hiện trước khoảng cách ôn kế tiếp</b> theo SM-2.</li>
+      <li>Màn chính: 4 số liệu (<b>Đến hạn / Mới / Đang học / Đã thuộc</b>) + chọn chủ đề + nút "Ôn N thẻ" kèm phân tích mới/ôn lại.</li>
+      <li>Màn hoàn thành: tổng kết phiên + thời điểm thẻ đến hạn kế tiếp + lối tắt ôn lại thẻ khó.</li>
+      <li>Responsive cho điện thoại; phím tắt <b>Space</b> (lật) và <b>1–4</b> (đánh giá).</li>
+    </ul>
+  </footer>
+</div>
+</body>
+</html>
