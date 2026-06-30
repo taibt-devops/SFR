@@ -8,6 +8,11 @@ services:
     env_file: .env          # CLAUDE_TOKEN, PROXY_SECRET → runtime của proxy
     expose:
       - "8787"
+    # DNS công khai: host Ubuntu dùng systemd-resolved (127.0.0.53) mà container không tới được
+    # → cần resolver riêng cho proxy ra api.anthropic.com (tránh EAI_AGAIN).
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
     restart: unless-stopped
 
   web:
