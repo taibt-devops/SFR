@@ -1,22 +1,13 @@
-// Client STT — gửi audio tới whisper.cpp server local (KHÔNG ra internet; KHÔNG phải Claude).
-// Cấu hình VITE_WHISPER_URL (mặc định endpoint /inference của whisper-server, cổng 8080).
-//
-// LƯU Ý FORMAT: whisper.cpp thường cần WAV 16kHz. MediaRecorder trình duyệt xuất webm/opus →
-// whisper-server của bạn cần build có ffmpeg để tự chuyển, HOẶC dùng wrapper chuyển sang wav.
-// Nếu transcript rỗng/sai, đây là chỗ kiểm tra đầu tiên.
-const WURL = import.meta.env.VITE_WHISPER_URL || "http://localhost:8080/inference";
+// Client STT — gửi audio tới whisper service (openai-whisper-asr-webservice).
+// Service này có ffmpeg → nhận thẳng webm/opus từ MediaRecorder (encode=true), khỏi convert wav.
+// Cùng origin: VITE_WHISPER_URL=/whisper/asr → nginx route tới container whisper. KHÔNG ra internet.
+const WURL = import.meta.env.VITE_WHISPER_URL || "/whisper/asr";
 
 export async function transcribe(blob) {
   const fd = new FormData();
-  fd.append("file", blob, "speech.webm");
-  fd.append("response_format", "json");
-  fd.append("temperature", "0");
-  const r = await fetch(WURL, { method: "POST", body: fd });
+  fd.append("audio_file", blob, "speech.webm");
+  const url = WURL + (WURL.includes("?") ? "&" : "?") + "encode=true&task=transcribe&language=en&output=txt";
+  const r = await fetch(url, { method: "POST", body: fd });
   if (!r.ok) throw new Error("whisper lỗi " + r.status);
-  const ct = r.headers.get("content-type") || "";
-  if (ct.includes("application/json")) {
-    const d = await r.json();
-    return (d.text || "").trim();
-  }
   return (await r.text()).trim();
 }

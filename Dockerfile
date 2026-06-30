@@ -7,8 +7,10 @@ COPY . .
 # VITE_* được "nướng" vào bundle lúc build. /api = cùng origin (nginx reverse-proxy → container proxy).
 ARG VITE_PROXY_URL=/api
 ARG VITE_PROXY_SECRET=
+ARG VITE_WHISPER_URL=/whisper/asr
 ENV VITE_PROXY_URL=$VITE_PROXY_URL \
-    VITE_PROXY_SECRET=$VITE_PROXY_SECRET
+    VITE_PROXY_SECRET=$VITE_PROXY_SECRET \
+    VITE_WHISPER_URL=$VITE_WHISPER_URL
 RUN npm run build
 
 FROM nginx:alpine

@@ -15,6 +15,18 @@ services:
       - 1.1.1.1
     restart: unless-stopped
 
+  # STT local cho luyện nói — có ffmpeg, nhận webm/opus. Model tải lần đầu (cache ở volume).
+  whisper:
+    image: onerahmet/openai-whisper-asr-webservice:latest
+    environment:
+      ASR_MODEL: base
+      ASR_ENGINE: faster_whisper
+    volumes:
+      - whisper-cache:/root/.cache
+    expose:
+      - "9000"
+    restart: unless-stopped
+
   web:
     build:
       context: .
@@ -22,8 +34,13 @@ services:
       args:
         VITE_PROXY_URL: /api
         VITE_PROXY_SECRET: ${PROXY_SECRET}   # nướng vào bundle; phải KHỚP PROXY_SECRET của proxy
+        VITE_WHISPER_URL: /whisper/asr
     ports:
       - "8088:80"
     depends_on:
       - proxy
+      - whisper
     restart: unless-stopped
+
+volumes:
+  whisper-cache:
