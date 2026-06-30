@@ -3,6 +3,7 @@
 // Thuần UI — logic chọn kiểu/sinh cloze/so khớp ở srs/cardTypes.js; SM-2 không đổi.
 import { useCallback, useEffect, useMemo, useState } from "react";
 import RatingBar from "./RatingBar.jsx";
+import { coachSentence } from "../ai/coach.js";
 import {
   makeCloze,
   checkAnswer,
@@ -55,13 +56,36 @@ export default function StudySession({ card, state, progress, productionMode, on
   const [phase, setPhase] = useState("prompt"); // "prompt" | "revealed"
   const [answer, setAnswer] = useState("");
   const [graded, setGraded] = useState(null); // {correct} cho kiểu auto
+  const [feedback, setFeedback] = useState(null); // nhận xét coach cho produce/reverse
+  const [coaching, setCoaching] = useState(false);
 
   // reset khi đổi thẻ HOẶC đổi kiểu (thẻ lapsed quay lại có thể đổi kiểu)
   useEffect(() => {
     setPhase("prompt");
     setAnswer("");
     setGraded(null);
+    setFeedback(null);
+    setCoaching(false);
   }, [card, type]);
+
+  const checkSentence = useCallback(async () => {
+    if (!answer.trim()) return;
+    setCoaching(true);
+    setFeedback(null);
+    try {
+      const fb = await coachSentence({
+        word: card.v,
+        meaning: card.m,
+        sentence: answer,
+        hintVi: type === "reverse" ? card.d : "",
+      });
+      setFeedback(fb);
+    } catch (e) {
+      setFeedback("Không lấy được nhận xét: " + String(e.message || e));
+    } finally {
+      setCoaching(false);
+    }
+  }, [answer, card, type]);
 
   const expected = type === "cloze" ? cloze?.answer : type === "listen" ? card.v : null;
 
@@ -115,10 +139,25 @@ export default function StudySession({ card, state, progress, productionMode, on
         )}
       </div>
 
-      {phase === "prompt" && type !== "recall" && (
+      {/* cloze/listen: tự chấm khi bấm Kiểm tra */}
+      {phase === "prompt" && isAutoGraded(type) && (
         <button className="cta" style={{ marginTop: 14 }} onClick={reveal}>
-          <span className="cta-main">{isAutoGraded(type) ? "Kiểm tra" : "Hiện đáp án"}</span>
+          <span className="cta-main">Kiểm tra</span>
         </button>
+      )}
+
+      {/* produce/reverse: nhận xét câu (lặp được) rồi mới hiện đáp án */}
+      {phase === "prompt" && (type === "produce" || type === "reverse") && (
+        <>
+          {coaching && <p className="empty-msg" style={{ marginTop: 12 }}>Đang nhận xét…</p>}
+          {feedback && <div className="story-text" style={{ fontSize: 14, marginTop: 12 }}>{feedback}</div>}
+          <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+            <button className="cta-ghost" style={{ marginTop: 0 }} disabled={!answer.trim() || coaching} onClick={checkSentence}>
+              {feedback ? "Kiểm tra lại" : "Kiểm tra câu"}
+            </button>
+            <button className="cta-ghost" style={{ marginTop: 0 }} onClick={reveal}>Hiện đáp án</button>
+          </div>
+        </>
       )}
 
       {phase === "revealed" && <RatingBar state={state} onRate={onRate} suggestedQ={sQ} />}

@@ -97,7 +97,23 @@ async function handleStory(body) {
   return { text };
 }
 
-const ROUTES = { "/": handleChat, "/mine": handleMine, "/story": handleStory };
+// Coach (§5.2): nhận xét câu người học tự đặt (produce/reverse) + gợi ý sửa — lặp vài lần trước khi lộ đáp án.
+async function handleCoach(body) {
+  const { word = "", meaning = "", sentence = "", hintVi = "" } = body;
+  const text = await callClaude({
+    maxTokens: 220,
+    system:
+      'Bạn là gia sư tiếng Anh thân thiện. Người học đang luyện dùng từ/cụm "' + word + '" (' + meaning + "). " +
+      (hintVi ? 'Ý cần diễn đạt (tiếng Việt): "' + hintVi + '". ' : "") +
+      "Nhận xét NGẮN bằng tiếng Việt (1–2 câu): câu đã đúng ngữ pháp & tự nhiên chưa, có dùng đúng từ không. " +
+      "Nếu chưa ổn, chỉ lỗi nhẹ nhàng và đưa ĐÚNG MỘT câu sửa gợi ý bằng tiếng Anh (đặt trong ngoặc kép). " +
+      "Nếu đã tốt thì khen ngắn gọn. KHÔNG markdown, KHÔNG emoji.",
+    messages: [{ role: "user", content: sentence || "(người học chưa nhập câu)" }],
+  });
+  return { text };
+}
+
+const ROUTES = { "/": handleChat, "/mine": handleMine, "/story": handleStory, "/coach": handleCoach };
 
 http
   .createServer(async (req, res) => {
