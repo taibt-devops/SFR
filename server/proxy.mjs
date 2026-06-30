@@ -108,8 +108,11 @@ async function handleChat(body) {
       "Trả lời tiếng Anh NGẮN (1–3 câu), tự nhiên, KHÔNG markdown/emoji (sẽ bị đọc to). " +
       (topic ? 'Chủ đề buổi nói: "' + topic + '" — bám chủ đề. ' : "") +
       (focus ? "Hãy LÁI hội thoại để học viên luyện đúng điểm cần cải thiện: " + focus + "; sửa các lỗi đó thật nhẹ nhàng. " : "Nhẹ nhàng sửa lỗi. ") +
+      "QUAN TRỌNG: nếu câu của học viên KHÔNG rõ nghĩa, rời rạc, hoặc có vẻ bị nghe nhầm (chữ lộn xộn), " +
+      "ĐỪNG giả vờ hiểu. Hãy nói nhẹ nhàng rằng bạn chưa nghe rõ, đưa MỘT cách nói lại đơn giản & đúng (một câu mẫu ngắn họ có thể lặp theo), " +
+      "rồi mời họ thử nói lại — KHÔNG chuyển chủ đề khi chưa hiểu họ. " +
       "Khi hợp ngữ cảnh, gợi/ép dùng các từ: " + dueWords.join(", ") + ". " +
-      "LUÔN kết thúc bằng MỘT câu hỏi để học viên nói tiếp.",
+      "LUÔN kết thúc bằng MỘT câu hỏi hoặc lời mời nói lại.",
   });
   return { text };
 }
