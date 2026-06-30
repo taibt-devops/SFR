@@ -25,6 +25,10 @@ services:
       - whisper-cache:/root/.cache
     expose:
       - "9000"
+    # DNS công khai để tải model từ HuggingFace (host systemd-resolved → container không resolve được).
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
     restart: unless-stopped
 
   web:
