@@ -209,12 +209,30 @@ async function handleAssess(body) {
     : { cefr: "?", summary: out.trim().slice(0, 300), dims: {}, strengths: [], weaknesses: [], fixes: [], tags: [] };
 }
 
+// Tổng kết cuối buổi luyện nói: phân tích các câu HỌC VIÊN đã nói → làm tốt / cần luyện / gợi ý buổi sau.
+async function handleSummary(body) {
+  const { history = [], level = "A2", topic = "" } = body;
+  const said = history.filter((m) => m.role === "user").map((m) => m.content).join(" / ");
+  const text = await callClaude({
+    maxTokens: 360,
+    system:
+      'Bạn là gia sư tiếng Anh. Đây là các câu HỌC VIÊN đã nói trong buổi (CEFR ' + level + ', chủ đề "' + topic + '"): "' +
+      said + '". Tổng kết NGẮN, ấm áp, bằng TIẾNG VIỆT. ' +
+      'CHỈ trả JSON: {"wentWell":["..",".."],"toImprove":["..",".."],"suggestion":"1 câu gợi ý cụ thể cho buổi sau"}. ' +
+      "wentWell = 1–2 điều họ làm tốt; toImprove = 1–2 điểm cụ thể cần luyện. KHÔNG markdown/emoji, KHÔNG thêm gì ngoài JSON.",
+    messages: [{ role: "user", content: said || "(học viên nói rất ít)" }],
+  });
+  const o = extractJsonObject(text) || {};
+  return { wentWell: o.wentWell || [], toImprove: o.toImprove || [], suggestion: o.suggestion || text.trim() };
+}
+
 const ROUTES = {
   "/": handleChat,
   "/mine": handleMine,
   "/story": handleStory,
   "/coach": handleCoach,
   "/assess": handleAssess,
+  "/summary": handleSummary,
 };
 
 http

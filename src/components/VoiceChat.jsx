@@ -3,6 +3,7 @@
 // Cờ "spoken" là tín hiệu mềm — KHÔNG đụng SM-2.
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { reply } from "../ai/chat.js";
+import { summarize } from "../ai/summary.js";
 import { transcribe } from "../ai/whisper.js";
 import { matchSpoken, diffWords } from "../utils/voiceMatch.js";
 import { loadSpeaking, latestLevel, speakingProfile, CEFR_ORDER } from "../srs/speaking.js";
@@ -41,6 +42,16 @@ function speak(text) {
   }
 }
 
+function SumSection({ title, items, color }) {
+  if (!items || !items.length) return null;
+  return (
+    <>
+      <div className="sec-lab" style={{ color }}>{title}</div>
+      <ul className="assess-list">{items.map((x, i) => <li key={i}>{x}</li>)}</ul>
+    </>
+  );
+}
+
 export default function VoiceChat({ dueWords, addWord, onBack }) {
   const [history, setHistory] = useState([]);
   const [phase, setPhase] = useState("idle"); // idle | recording | thinking | error
@@ -50,6 +61,7 @@ export default function VoiceChat({ dueWords, addWord, onBack }) {
   const [saving, setSaving] = useState(null); // {sentence, word} (B18)
   const [level, setLevel] = useState(() => latestLevel(loadSpeaking()) || "A2"); // mặc định = mức đã chấm, đổi tay được
   const [topic, setTopic] = useState(pickTopic); // chủ đề buổi nói (xoay vòng)
+  const [summary, setSummary] = useState(null); // tổng kết cuối phiên
   const focus = useMemo(buildFocus, []); // điểm cần tập trung (từ hồ sơ)
 
   const recRef = useRef(null);
@@ -142,14 +154,61 @@ export default function VoiceChat({ dueWords, addWord, onBack }) {
     setError(r.ok ? "" : r.error || "Lưu lỗi");
   }
 
+  function endSession() {
+    setPhase("thinking");
+    setError("");
+    summarize({ history, level, topic })
+      .then((s) => { setSummary(s); setPhase("idle"); })
+      .catch((e) => { setError("Không tổng kết được: " + String(e.message || e)); setPhase("error"); });
+  }
+  function newSession() {
+    setHistory([]); setSpoken(new Set()); setShadow(null); setSummary(null); setError("");
+    setTopic(pickTopic()); setPhase("idle");
+  }
+
   const busy = phase === "thinking";
   const shadowing = phase === "recording" && modeRef.current.type === "shadow";
+
+  // ── Màn tổng kết cuối phiên ──
+  if (summary) {
+    return (
+      <div className="app">
+        <div className="study-top">
+          <span className="app-title">Tổng kết buổi nói</span>
+          <button className="link-exit" onClick={onBack}>← Về</button>
+        </div>
+
+        <div className="sec-lab" style={{ marginTop: 14 }}>Từ đang ôn đã dùng ({spoken.size}/{dueWords.length})</div>
+        <div className="chips">
+          {dueWords.length === 0 && <span className="app-sub">—</span>}
+          {dueWords.map((w) => (
+            <span key={w} className={`chip ${spoken.has(w) ? "chip-on" : ""}`}>{spoken.has(w) ? "✓ " : ""}{w}</span>
+          ))}
+        </div>
+
+        <SumSection title="✅ Làm tốt" items={summary.wentWell} color="var(--green)" />
+        <SumSection title="🔧 Cần luyện" items={summary.toImprove} color="var(--amber)" />
+        {summary.suggestion && (
+          <p className="empty-msg" style={{ marginTop: 18, textAlign: "left", color: "var(--text)" }}>
+            💡 <b>Buổi sau:</b> {summary.suggestion}
+          </p>
+        )}
+
+        <div className="spacer" />
+        <button className="cta" onClick={newSession}><span className="cta-main">Buổi mới</span></button>
+        <button className="cta-ghost" onClick={onBack}>Về trang chủ</button>
+      </div>
+    );
+  }
 
   return (
     <div className="app">
       <div className="study-top">
         <span className="app-title">Luyện nói</span>
-        <button className="link-exit" onClick={onBack}>← Về</button>
+        <span>
+          {started && <button className="link-exit" style={{ marginRight: 14, color: "var(--teal)" }} onClick={endSession}>Kết thúc</button>}
+          <button className="link-exit" onClick={onBack}>← Về</button>
+        </span>
       </div>
 
       {/* Lộ trình: trình độ (mặc định = mức đã chấm, đổi tay để tăng/giảm khó) + chủ đề + điểm cần luyện */}
