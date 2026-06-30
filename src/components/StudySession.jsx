@@ -152,11 +152,11 @@ export default function StudySession({ card, state, progress, productionMode, on
         <>
           {coaching && <p className="empty-msg" style={{ marginTop: 12 }}>Gia sư đang xem…</p>}
           {feedback && <CoachNote feedback={feedback} />}
-          <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-            <button className="cta-ghost" style={{ marginTop: 0 }} disabled={!answer.trim() || coaching} onClick={checkSentence}>
+          <div className="btn-row">
+            <button className="cta-ghost cta-accent" disabled={!answer.trim() || coaching} onClick={checkSentence}>
               {feedback ? "Sửa xong · kiểm tra lại" : "Nhờ gia sư xem"}
             </button>
-            <button className="cta-ghost" style={{ marginTop: 0 }} onClick={reveal}>Hiện đáp án</button>
+            <button className="cta-ghost" onClick={reveal}>Hiện đáp án</button>
           </div>
         </>
       )}
@@ -167,20 +167,19 @@ export default function StudySession({ card, state, progress, productionMode, on
 }
 
 const VERDICT = {
-  good: { label: "✓ Tốt!", color: "var(--green)" },
-  ok: { label: "◐ Gần được", color: "var(--amber)" },
-  fix: { label: "✎ Thử chỉnh nhé", color: "var(--blue)" },
+  good: { label: "Tốt!", color: "var(--green)", tint: "rgba(52,211,153,.10)" },
+  ok: { label: "Gần được", color: "var(--amber)", tint: "rgba(251,191,36,.10)" },
+  fix: { label: "Thử chỉnh nhé", color: "var(--blue)", tint: "rgba(96,165,250,.10)" },
 };
 
 function CoachNote({ feedback }) {
   const v = VERDICT[feedback.verdict] || VERDICT.ok;
   return (
-    <div className="story-text" style={{ fontSize: 14, marginTop: 12, borderColor: v.color }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-        <span style={{ fontSize: 18 }}>👩‍🏫</span>
-        <b style={{ color: v.color }}>{v.label}</b>
+    <div className="coach-note" style={{ borderColor: v.color, background: v.tint }}>
+      <div className="coach-head" style={{ color: v.color }}>
+        <span className="coach-ava">👩‍🏫</span> Gia sư · {v.label}
       </div>
-      {feedback.hint}
+      <div className="coach-body">{feedback.hint}</div>
     </div>
   );
 }
@@ -208,9 +207,12 @@ function PromptFace({ type, card, cloze, answer, setAnswer, onSpeak, onSubmit })
   if (type === "reverse") {
     return (
       <>
-        <div className="fc-hint">Dịch sang tiếng Anh (nói/viết)</div>
-        <div className="fc-vi" style={{ fontSize: 15, color: "var(--text)" }}>{card.d}</div>
-        <textarea className="field" rows={2} style={{ marginTop: 14 }} autoFocus placeholder="câu tiếng Anh của bạn…" value={answer} onChange={(e) => setAnswer(e.target.value)} />
+        <div className="fc-hint">Dịch sang tiếng Anh — dùng từ này</div>
+        <div className="fc-verb" style={{ fontSize: 24 }}>{card.v}</div>
+        <div className="fc-mean">{card.m}</div>
+        <div className="fc-div" />
+        <div className="fc-vi" style={{ fontSize: 15, color: "var(--text)" }}>“{card.d}”</div>
+        <textarea className="field" rows={2} style={{ marginTop: 16 }} autoFocus placeholder="câu tiếng Anh của bạn…" value={answer} onChange={(e) => setAnswer(e.target.value)} />
       </>
     );
   }
