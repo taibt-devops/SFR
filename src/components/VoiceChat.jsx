@@ -8,7 +8,7 @@ import { translateWord } from "../ai/translate.js";
 import { transcribe } from "../ai/whisper.js";
 import { matchSpoken, diffWords } from "../utils/voiceMatch.js";
 import ContextBar from "./ContextBar.jsx";
-import { loadSpeaking, speakingProfile, CEFR_ORDER } from "../srs/speaking.js";
+import { loadSpeaking, speakingProfile } from "../srs/speaking.js";
 
 const TOPICS = [
   "Giới thiệu bản thân & sở thích",
@@ -72,8 +72,8 @@ export default function VoiceChat({ dueWords, addWord, level: levelProp, topic: 
   const [spoken, setSpoken] = useState(() => new Set()); // từ due đã nói (B16)
   const [shadow, setShadow] = useState(null); // {target, result:[{word,ok}], heard} (B17)
   const [saving, setSaving] = useState(null); // {sentence, word} (B18)
-  const [level, setLevel] = useState(levelProp || "A2"); // mặc định lấy từ trang chủ, đổi tay được
-  const [topic, setTopic] = useState(() => topicProp || pickTopic()); // chủ đề đã chọn ở trang chủ (hoặc tự xoay)
+  const [level] = useState(levelProp || "A2"); // trình độ lấy từ trang chủ
+  const [topic, setTopic] = useState(() => topicProp || pickTopic()); // chủ đề lấy từ trang chủ (hoặc tự xoay nếu "Tất cả")
   const [summary, setSummary] = useState(null); // tổng kết cuối phiên
   const [lookup, setLookup] = useState(null); // tra nghĩa: {term, vi, loading}
   const focus = useMemo(buildFocus, []); // điểm cần tập trung (từ hồ sơ)
@@ -187,7 +187,7 @@ export default function VoiceChat({ dueWords, addWord, level: levelProp, topic: 
   }
   function newSession() {
     setHistory([]); setSpoken(new Set()); setShadow(null); setSummary(null); setError("");
-    setTopic(pickTopic()); setPhase("idle");
+    setTopic(topicProp || pickTopic()); setPhase("idle");
   }
   // Bỏ lượt vừa rồi (câu đáp của app + lời mình nói) để thu lại — khi Whisper nghe nhầm.
   function redoLast() {
@@ -245,21 +245,7 @@ export default function VoiceChat({ dueWords, addWord, level: levelProp, topic: 
         </span>
       </div>
       <ContextBar label={topic} level={level} />
-
-      {/* Lộ trình: trình độ (mặc định = mức đã chấm, đổi tay để tăng/giảm khó) + chủ đề + điểm cần luyện */}
-      <div className="voice-setup">
-        <label className="vs-row">
-          <span>Trình độ</span>
-          <select className="field" style={{ width: "auto", padding: "6px 10px" }} value={level} onChange={(e) => setLevel(e.target.value)} disabled={history.length > 0}>
-            {CEFR_ORDER.map((l) => <option key={l} value={l}>{l}</option>)}
-          </select>
-        </label>
-        <div className="vs-row">
-          <span>Chủ đề: <b style={{ color: "var(--text)" }}>{topic}</b></span>
-          {history.length === 0 && <button className="link-exit" onClick={() => setTopic(pickTopic())}>đổi</button>}
-        </div>
-        {focus && <p className="app-sub" style={{ margin: 0 }}>🎯 Luyện trúng: {focus}</p>}
-      </div>
+      {focus && <p className="app-sub" style={{ marginTop: 6 }}>🎯 Luyện trúng: {focus}</p>}
 
       {/* B16: checklist từ due đã nói */}
       <div className="chips" style={{ marginTop: 10 }}>
