@@ -1,6 +1,6 @@
 // Client gọi proxy /patterns → mẫu câu cho chủ đề. Có cache localStorage (không gọi lại mỗi lần xem).
+import { authHeaders } from "./auth.js";
 const URL = import.meta.env.VITE_PROXY_URL;
-const SECRET = import.meta.env.VITE_PROXY_SECRET;
 const CACHE_KEY = "phrasal-patterns-v1";
 
 function loadCache() {
@@ -21,7 +21,7 @@ export async function getPatterns(topic, level = "A2") {
   if (!URL) throw new Error("Chưa cấu hình VITE_PROXY_URL (xem .env.example) và bật proxy.");
   const r = await fetch(URL.replace(/\/$/, "") + "/patterns", {
     method: "POST",
-    headers: { "content-type": "application/json", "x-proxy-secret": SECRET || "" },
+    headers: authHeaders(),
     body: JSON.stringify({ topic, level }),
   });
   if (!r.ok) throw new Error("proxy lỗi " + r.status);

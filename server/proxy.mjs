@@ -280,6 +280,12 @@ http
       return res.end("unauthorized");
     }
 
+    // Xác thực đăng nhập (mật khẩu = PROXY_SECRET): secret đúng mới tới đây → trả OK. Không cần token.
+    if ((req.url || "/").split("?")[0] === "/ping") {
+      res.setHeader("content-type", "application/json");
+      return res.end(JSON.stringify({ ok: true }));
+    }
+
     const handler = ROUTES[(req.url || "/").split("?")[0]];
     if (req.method !== "POST" || !handler) {
       res.statusCode = 404;

@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import { buildSession } from "./srs/sm2.js";
 import { latestLevel, loadSpeaking } from "./srs/speaking.js";
+import { isAuthed } from "./ai/auth.js";
+import Login from "./components/Login.jsx";
 import { useStudy } from "./hooks/useStudy.js";
 import { useVocab } from "./hooks/useVocab.js";
 import { dueLabel } from "./utils/format.js";
@@ -14,6 +16,12 @@ import ProgressTopics from "./components/ProgressTopics.jsx";
 import TopicDetail from "./components/TopicDetail.jsx";
 
 export default function App() {
+  const [authed, setAuthed] = useState(isAuthed);
+  if (!authed) return <Login onSuccess={() => setAuthed(true)} />;
+  return <AppMain />;
+}
+
+function AppMain() {
   const vocabApi = useVocab();
   const study = useStudy(vocabApi.vocab);
   const [view, setView] = useState("home"); // "home" | "data" | "story" | "voice" | "assess" | "profile"
