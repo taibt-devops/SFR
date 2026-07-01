@@ -6,6 +6,7 @@ import RatingBar from "./RatingBar.jsx";
 import ContextBar from "./ContextBar.jsx";
 import { speak } from "../utils/tts.js";
 import { useShadow } from "../hooks/useShadow.js";
+import { getIpa, cachedIpa } from "../ai/ipa.js";
 import { coachSentence } from "../ai/coach.js";
 import {
   makeCloze,
@@ -18,11 +19,33 @@ import {
 
 const KEY_TO_Q = { 1: 2, 2: 3, 3: 4, 4: 5 };
 
+// Dòng phát âm: IPA (lấy on-demand, cache) + nút 🔊 đọc từ.
+function IpaLine({ word }) {
+  const [ipa, setIpa] = useState(() => cachedIpa(word) || "");
+  const [loading, setLoading] = useState(false);
+  useEffect(() => {
+    const c = cachedIpa(word);
+    if (c) { setIpa(c); return; }
+    let alive = true;
+    setIpa("");
+    setLoading(true);
+    getIpa(word).then((v) => alive && setIpa(v)).catch(() => {}).finally(() => alive && setLoading(false));
+    return () => { alive = false; };
+  }, [word]);
+  return (
+    <div className="fc-ipa">
+      <button className="ipa-play" onClick={() => speak(word)} aria-label="Đọc to">🔊</button>
+      {(ipa || loading) && <span className="ipa-txt">{loading ? "…" : ipa}</span>}
+    </div>
+  );
+}
+
 function Back({ card }) {
   const cols = (card.col || "").split(" · ").map((s) => s.trim()).filter(Boolean);
   return (
     <>
       <div className="fc-verb">{card.v}</div>
+      <IpaLine word={card.v} />
       <div className="fc-mean">{card.m}</div>
       <div className="fc-div" />
       <div className="fc-en">“{card.e}”</div>

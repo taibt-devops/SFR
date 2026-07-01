@@ -243,6 +243,20 @@ async function handleTranslate(body) {
   return { vi: text.trim() };
 }
 
+// Phiên âm IPA (General American) của 1 từ/cụm — cho mặt sau thẻ. Client cache localStorage.
+async function handleIpa(body) {
+  const { word = "" } = body;
+  const text = await callClaude({
+    maxTokens: 40,
+    system:
+      "Bạn cho phiên âm IPA (General American) của từ/cụm tiếng Anh. " +
+      "CHỈ trả chuỗi IPA đặt trong dấu /.../, KHÔNG kèm chữ thường, KHÔNG giải thích, KHÔNG markdown. " +
+      "Ví dụ: 'reliable' → /rɪˈlaɪəbəl/ ; 'carry out' → /ˈkæri aʊt/",
+    messages: [{ role: "user", content: word }],
+  });
+  return { ipa: text.trim() };
+}
+
 // Mẫu câu/cấu trúc hữu ích để NÓI về một chủ đề, ở đúng trình độ — cho màn Chi tiết chủ đề.
 async function handlePatterns(body) {
   const { topic = "", level = "A2" } = body;
@@ -265,6 +279,7 @@ const ROUTES = {
   "/assess": handleAssess,
   "/summary": handleSummary,
   "/translate": handleTranslate,
+  "/ipa": handleIpa,
   "/patterns": handlePatterns,
 };
 
