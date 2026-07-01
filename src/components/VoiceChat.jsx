@@ -11,6 +11,7 @@ import ContextBar from "./ContextBar.jsx";
 import TtsControls from "./TtsControls.jsx";
 import { speak } from "../utils/tts.js";
 import { loadSpeaking, speakingProfile } from "../srs/speaking.js";
+import { loadCoachNotes, saveCoachNotes, addCoachNote, priorFocusText } from "../srs/coachMemory.js";
 
 const TOPICS = [
   "Giới thiệu bản thân & sở thích",
@@ -104,7 +105,9 @@ export default function VoiceChat({ dueWords, addWord, level: levelProp, topic: 
   const begin = useCallback(() => {
     setPhase("thinking");
     setError("");
-    reply([], dueWords, { level, focus, topic, opener: true })
+    // Trí nhớ liên buổi: nhắc điểm cần luyện (điểm yếu hồ sơ + toImprove buổi trước).
+    const recall = [focus, priorFocusText(loadCoachNotes())].filter(Boolean).join(" · ");
+    reply([], dueWords, { level, focus, topic, opener: true, recall })
       .then((t) => { setHistory([{ role: "assistant", content: t }]); setPhase("idle"); })
       .catch((e) => { setError("Không lấy được câu mở đầu: " + String(e.message || e)); setPhase("error"); });
   }, [dueWords, level, focus, topic]);
@@ -176,7 +179,12 @@ export default function VoiceChat({ dueWords, addWord, level: levelProp, topic: 
     setPhase("thinking");
     setError("");
     summarize({ history, level, topic })
-      .then((s) => { setSummary(s); setPhase("idle"); })
+      .then((s) => {
+        setSummary(s);
+        // Lưu tổng kết → trí nhớ gia sư (mở đầu buổi sau nhắc lại + "bài tập buổi sau" ở trang chủ).
+        saveCoachNotes(addCoachNote(loadCoachNotes(), { at: Date.now(), topic, level, ...s }));
+        setPhase("idle");
+      })
       .catch((e) => { setError("Không tổng kết được: " + String(e.message || e)); setPhase("error"); });
   }
   function newSession() {

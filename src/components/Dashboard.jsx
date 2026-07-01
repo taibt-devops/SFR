@@ -5,6 +5,7 @@ import { buildSession } from "../srs/sm2.js";
 import { computeStats, nextDueAt, hardCards } from "../srs/session.js";
 import { streakFor, todayReviewedFor } from "../srs/stats.js";
 import { loadSpeaking, latestLevel, assessedToday, CEFR_ORDER } from "../srs/speaking.js";
+import { loadCoachNotes, latestNote } from "../srs/coachMemory.js";
 import { dueLabel } from "../utils/format.js";
 
 export default function Dashboard({ cards, getState, onStart, onManage, onReset, productionMode, onToggleProduction, stats, scope, onScope, level, onLevel, onStory, onVoice, onAssess, onProfile }) {
@@ -13,6 +14,7 @@ export default function Dashboard({ cards, getState, onStart, onManage, onReset,
   const todayDone = todayReviewedFor(stats, now);
   const goal = stats?.goal || 20;
   const speakLevel = useMemo(() => latestLevel(loadSpeaking()), []);
+  const lastNote = useMemo(() => latestNote(loadCoachNotes()), []); // buổi nói gần nhất (bài tập buổi sau)
   const didAssessToday = useMemo(() => assessedToday(loadSpeaking(), now), [now]);
   const reviewDone = todayDone >= goal;
   const topics = useMemo(() => [...new Set(cards.map((c) => c.c))], [cards]);
@@ -89,6 +91,17 @@ export default function Dashboard({ cards, getState, onStart, onManage, onReset,
         </button>
         {hint && <p className="app-sub" style={{ color: "var(--amber)", marginTop: 8, marginBottom: 0 }}>{hint}</p>}
       </div>
+
+      {/* TỪ BUỔI TRƯỚC — gia sư nhắc lại (bài tập buổi sau) */}
+      {lastNote && (lastNote.suggestion || lastNote.toImprove?.length > 0) && (
+        <div className="carry-note">
+          <div className="carry-head">📌 Từ buổi nói trước</div>
+          {lastNote.suggestion && <div className="carry-body">{lastNote.suggestion}</div>}
+          {lastNote.toImprove?.length > 0 && (
+            <div className="carry-sub">Cần luyện: {lastNote.toImprove.slice(0, 2).join(" · ")}</div>
+          )}
+        </div>
+      )}
 
       {/* LỘ TRÌNH HÔM NAY */}
       <div className="sec-lab">Lộ trình hôm nay</div>

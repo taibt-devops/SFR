@@ -76,17 +76,20 @@ function extractJsonArray(text) {
 
 // ── Handlers ──
 async function handleChat(body) {
-  const { history = [], dueWords = [], level = "A2", focus = "", topic = "", opener = false } = body;
+  const { history = [], dueWords = [], level = "A2", focus = "", topic = "", opener = false, recall = "" } = body;
 
   // App chủ động MỞ LỜI: chào + 1 câu hỏi mở để bắt đầu chủ đề (học viên khỏi bí "nói gì trước").
   if (opener) {
     const text = await callClaude({
-      maxTokens: 120,
+      maxTokens: 150,
       system:
-        "Bạn là gia sư luyện nói tiếng Anh thân thiện. MỞ ĐẦU buổi nói: chào thật ngắn rồi đặt MỘT câu hỏi mở " +
-        'để học viên bắt đầu nói về chủ đề "' + topic + '". Mức CEFR ' + level +
+        "Bạn là gia sư luyện nói tiếng Anh thân thiện, NHỚ học viên qua các buổi. MỞ ĐẦU buổi nói. " +
+        (recall
+          ? "Buổi trước học viên cần luyện: " + recall + ". Hãy nhắc lại điều này thật NHẸ & ẤM ÁP bằng tiếng Anh (1 câu ngắn, kiểu 'Last time we worked on… let's keep an eye on it today'), RỒI "
+          : "") +
+        'đặt MỘT câu hỏi mở để học viên bắt đầu nói về chủ đề "' + topic + '". Mức CEFR ' + level +
         " (A1–A2: câu rất đơn giản, chậm rõ; B1–B2: tự nhiên hơn; C1–C2: như người bản xứ). " +
-        "Tiếng Anh, 1–2 câu, KHÔNG markdown/emoji.",
+        "Tiếng Anh, " + (recall ? "2–3 câu" : "1–2 câu") + ", KHÔNG markdown/emoji.",
       messages: [{ role: "user", content: "Bắt đầu." }],
     });
     return { text };

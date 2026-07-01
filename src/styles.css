@@ -110,6 +110,10 @@ select.field:hover { border-color: var(--text3); }
 /* Chủ đề chưa chọn (đang "Tất cả") → viền teal nhấp nháy nhẹ mời chọn để bắt đầu */
 .tts-box { background: var(--surface); border: 1px solid var(--border); border-radius: 13px; padding: 12px 14px; margin-top: 8px; }
 .shadow-box { margin-top: 12px; }
+.carry-note { margin-top: 16px; background: var(--teal-dim); border: 1px solid rgba(45, 212, 167, .32); border-radius: 14px; padding: 12px 14px; }
+.carry-head { font-size: 12px; color: var(--teal); font-weight: 700; }
+.carry-body { font-size: 14px; color: var(--text); margin-top: 4px; }
+.carry-sub { font-size: 12.5px; color: var(--text2); margin-top: 4px; }
 .fc-ipa { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 6px; }
 .fc-ipa .ipa-txt { font-size: 15px; color: var(--text2); letter-spacing: .3px; }
 .ipa-play { border: 1px solid var(--border2); background: var(--teal-dim); color: var(--teal); border-radius: 999px; width: 34px; height: 34px; font-size: 15px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
