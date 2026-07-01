@@ -6,6 +6,7 @@ import {
   suggestedQ,
   availableTypes,
   pickType,
+  pickAdaptiveType,
   isAutoGraded,
 } from "./cardTypes.js";
 
@@ -76,6 +77,30 @@ describe("availableTypes / pickType", () => {
     expect(pickType(card, 0)).toBe(t[0]);
     expect(pickType(card, t.length)).toBe(t[0]); // cuộn vòng
     expect(t).toContain(pickType(card, 99));
+  });
+
+  it("pickAdaptiveType theo độ thuộc: mới→nhận diện, đang học→cloze, đã cứng→sản xuất", () => {
+    // thẻ mới (không state) hoặc vừa quên (reps 0) → recall/listen
+    expect(["recall", "listen"]).toContain(pickAdaptiveType(card, undefined, 0));
+    expect(["recall", "listen"]).toContain(pickAdaptiveType(card, { seen: true, reps: 0 }, 1));
+    // đang học (reps 1–2) → cloze/recall
+    expect(["cloze", "recall"]).toContain(pickAdaptiveType(card, { seen: true, reps: 2 }, 0));
+    // đã cứng (reps ≥ 3) → produce/reverse
+    expect(["produce", "reverse"]).toContain(pickAdaptiveType(card, { seen: true, reps: 4 }, 0));
+  });
+
+  it("pickAdaptiveType fallback khi tầng không có kiểu hợp lệ (thiếu cloze/d)", () => {
+    const plain = { v: "reliable", e: "I rely on her." }; // không cloze, không d
+    // đang học: tầng [cloze, recall] → chỉ recall hợp lệ
+    expect(pickAdaptiveType(plain, { seen: true, reps: 2 }, 0)).toBe("recall");
+    // đã cứng: tầng [produce, reverse] → thiếu d nên chỉ produce
+    expect(pickAdaptiveType(plain, { seen: true, reps: 5 }, 0)).toBe("produce");
+  });
+
+  it("pickAdaptiveType tất định theo seed", () => {
+    const a = pickAdaptiveType(card, { seen: true, reps: 4 }, 3);
+    const b = pickAdaptiveType(card, { seen: true, reps: 4 }, 3);
+    expect(a).toBe(b);
   });
 
   it("isAutoGraded: cloze & listen auto, còn lại thủ công", () => {

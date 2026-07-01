@@ -11,7 +11,7 @@ import {
   checkAnswer,
   suggestedQ,
   availableTypes,
-  pickType,
+  pickAdaptiveType,
   isAutoGraded,
 } from "../srs/cardTypes.js";
 
@@ -41,8 +41,8 @@ export default function StudySession({ card, state, progress, productionMode, sc
       const prod = availableTypes(card).filter((t) => t === "produce" || t === "reverse");
       if (prod.length) return prod[seed % prod.length];
     }
-    return pickType(card, seed);
-  }, [card, productionMode, seed]);
+    return pickAdaptiveType(card, state, seed); // kiểu ôn theo độ thuộc (state đã lưu)
+  }, [card, productionMode, seed, state]);
 
   const [phase, setPhase] = useState("prompt"); // "prompt" | "revealed"
   const [answer, setAnswer] = useState("");

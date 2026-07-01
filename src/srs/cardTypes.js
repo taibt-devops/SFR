@@ -53,3 +53,18 @@ export function pickType(card, seed = 0) {
   const i = ((Math.floor(seed) % t.length) + t.length) % t.length;
   return t[i];
 }
+
+// Chọn kiểu theo ĐỘ THUỘC (adaptive) từ SR state đã lưu — KHÔNG ghi ngược vào state (chỉ đổi CÁCH HỎI).
+//  • Mới / vừa quên (reps < 1)  → nhận diện nhẹ: recall, listen
+//  • Đang học (reps 1–2)        → gợi nhớ trong ngữ cảnh: cloze, recall
+//  • Đã cứng (reps ≥ 3)         → sản xuất: produce, reverse
+// Chỉ lấy kiểu HỢP LỆ cho thẻ; nếu tầng không có kiểu nào hợp lệ → fallback mọi kiểu hợp lệ. Tất định theo seed.
+export function pickAdaptiveType(card, state, seed = 0) {
+  const avail = availableTypes(card);
+  const reps = state?.seen ? state.reps || 0 : -1; // -1 = thẻ mới/chưa thấy
+  const tier = reps < 1 ? ["recall", "listen"] : reps < 3 ? ["cloze", "recall"] : ["produce", "reverse"];
+  const pool = tier.filter((t) => avail.includes(t));
+  const use = pool.length ? pool : avail;
+  const i = ((Math.floor(seed) % use.length) + use.length) % use.length;
+  return use[i];
+}
