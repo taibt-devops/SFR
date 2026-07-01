@@ -10,7 +10,8 @@ import DataManager from "./components/DataManager.jsx";
 import MiniStory from "./components/MiniStory.jsx";
 import VoiceChat from "./components/VoiceChat.jsx";
 import SpeakingAssess from "./components/SpeakingAssess.jsx";
-import SpeakingProfile from "./components/SpeakingProfile.jsx";
+import ProgressTopics from "./components/ProgressTopics.jsx";
+import TopicDetail from "./components/TopicDetail.jsx";
 
 export default function App() {
   const vocabApi = useVocab();
@@ -20,6 +21,12 @@ export default function App() {
   // Thiết lập buổi học CHUNG (chọn ở trang chủ) → chi phối cả ôn từ lẫn luyện nói.
   const [scope, setScope] = useState("all"); // chủ đề (danh mục từ vựng, hoặc "all")
   const [level, setLevel] = useState(() => latestLevel(loadSpeaking()) || "A2"); // trình độ nói (CEFR)
+  const [topicView, setTopicView] = useState(null); // chủ đề đang xem chi tiết ở Tiến trình
+
+  // Hành động từ Chi tiết chủ đề: chốt chủ đề rồi mở màn tương ứng.
+  const goTopicAssess = (t) => { setScope(t); setView("assess"); };
+  const goTopicVoice = (t) => { setScope(t); setView("voice"); };
+  const goTopicReview = (t) => { setScope(t); study.start({ scope: t }); };
 
   // Từ due theo ĐÚNG chủ đề đã chọn — làm nhiên liệu cho luyện nói / mini-story.
   const dueWords = useMemo(
@@ -91,12 +98,32 @@ export default function App() {
 
   // ── Đánh giá nói (CEFR) ──
   if (view === "assess") {
-    return <SpeakingAssess dueWords={dueWords} topic={speakTopic} scopeLabel={scopeLabel} onBack={() => setView("home")} />;
+    return <SpeakingAssess dueWords={dueWords} topic={speakTopic} topicId={scope === "all" ? "" : scope} scopeLabel={scopeLabel} onBack={() => setView("home")} />;
   }
 
-  // ── Hồ sơ tiến trình nói (GĐ2) ──
-  if (view === "profile") {
-    return <SpeakingProfile onBack={() => setView("home")} onAssess={() => setView("assess")} />;
+  // ── Tiến trình: danh sách chủ đề → chi tiết ──
+  if (view === "progress") {
+    return (
+      <ProgressTopics
+        cards={vocabApi.vocab}
+        getState={study.getState}
+        onBack={() => setView("home")}
+        onTopic={(t) => { setTopicView(t); setView("topicDetail"); }}
+      />
+    );
+  }
+  if (view === "topicDetail" && topicView) {
+    return (
+      <TopicDetail
+        topic={topicView}
+        cards={vocabApi.vocab}
+        getState={study.getState}
+        onBack={() => setView("progress")}
+        onAssess={goTopicAssess}
+        onVoice={goTopicVoice}
+        onReview={goTopicReview}
+      />
+    );
   }
 
   // ── Màn hình chính (Dashboard) ──
@@ -117,7 +144,7 @@ export default function App() {
       onStory={() => setView("story")}
       onVoice={() => setView("voice")}
       onAssess={() => setView("assess")}
-      onProfile={() => setView("profile")}
+      onProfile={() => setView("progress")}
     />
   );
 }

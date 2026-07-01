@@ -21,7 +21,7 @@ const pickTask = () => TASKS[Math.floor(Math.random() * TASKS.length)];
 
 const DIM_LABEL = { fluency: "Trôi chảy", lexical: "Vốn từ", grammar: "Ngữ pháp", pronunciation: "Phát âm" };
 
-export default function SpeakingAssess({ dueWords, topic, scopeLabel, onBack }) {
+export default function SpeakingAssess({ dueWords, topic, topicId = "", scopeLabel, onBack }) {
   const [task, setTask] = useState(() => (topic ? "Talk about: " + topic : pickTask()));
   const [phase, setPhase] = useState("ready"); // ready | recording | working | result | error
   const [working, setWorking] = useState(""); // nhãn bước đang chạy
@@ -53,7 +53,7 @@ export default function SpeakingAssess({ dueWords, topic, scopeLabel, onBack }) 
       const r = await assessSpeaking({ ...stats, transcript: said, task });
       setResult(r);
       setPhase("result");
-      const entry = { at: Date.now(), task, stats, ...r };
+      const entry = { at: Date.now(), task, topic: topicId, stats, ...r };
       const list = addAssessment(loadSpeaking(), entry);
       saveSpeaking(list);
       setLast(latestLevel(list));

@@ -243,6 +243,20 @@ async function handleTranslate(body) {
   return { vi: text.trim() };
 }
 
+// Mẫu câu/cấu trúc hữu ích để NÓI về một chủ đề, ở đúng trình độ — cho màn Chi tiết chủ đề.
+async function handlePatterns(body) {
+  const { topic = "", level = "A2" } = body;
+  const out = await callClaude({
+    maxTokens: 500,
+    system:
+      'Đưa 5 MẪU CÂU/cấu trúc tiếng Anh hữu ích & tự nhiên để NÓI về chủ đề "' + topic + '" ở mức CEFR ' + level + ". " +
+      'CHỈ trả JSON mảng: [{"en":"mẫu câu/cấu trúc tiếng Anh","vi":"nghĩa tiếng Việt ngắn"}]. ' +
+      "Thực dụng, dễ dùng khi hội thoại. KHÔNG thêm gì ngoài JSON.",
+    messages: [{ role: "user", content: "chủ đề: " + topic }],
+  });
+  return { patterns: extractJsonArray(out) };
+}
+
 const ROUTES = {
   "/": handleChat,
   "/mine": handleMine,
@@ -251,6 +265,7 @@ const ROUTES = {
   "/assess": handleAssess,
   "/summary": handleSummary,
   "/translate": handleTranslate,
+  "/patterns": handlePatterns,
 };
 
 http

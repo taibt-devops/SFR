@@ -23,6 +23,11 @@ export function addAssessment(list, entry) {
   return [entry, ...list].slice(0, 100);
 }
 
+// Các bài đánh giá thuộc 1 chủ đề (topicId = danh mục từ vựng, hoặc "" cho chủ đề tự do/Tất cả).
+export function assessmentsForTopic(list = [], topicId) {
+  return list.filter((e) => (e?.topic || "") === (topicId || ""));
+}
+
 // Mức nói hiện tại = lần đánh giá gần nhất hợp lệ (theo CEFR_ORDER).
 export function latestLevel(list) {
   const hit = list.find((e) => CEFR_ORDER.includes(e?.cefr));

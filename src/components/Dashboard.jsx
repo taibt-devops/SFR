@@ -40,12 +40,16 @@ export default function Dashboard({ cards, getState, onStart, onManage, onReset,
 
   return (
     <div className="app">
-      <div className="app-head" style={{ justifyContent: "space-between" }}>
+      <div className="app-head" style={{ justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
         <div>
           <div className="app-title">Luyện nói tiếng Anh</div>
           <div className="app-sub">Nói là chính · từ vựng làm nền · chấm CEFR</div>
         </div>
-        <button className="manage-link" onClick={onManage}>Từ vựng</button>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+          <button className="manage-link" onClick={onAssess}>🎯 Đánh giá</button>
+          <button className="manage-link" onClick={onProfile}>📈 Tiến trình</button>
+          <button className="manage-link" onClick={onManage}>Từ vựng</button>
+        </div>
       </div>
 
       {/* HERO = Thiết lập buổi học (chủ đề + trình độ) → chi phối cả ôn từ lẫn luyện nói */}
@@ -74,10 +78,6 @@ export default function Dashboard({ cards, getState, onStart, onManage, onReset,
           <span className="cta-main">🎙️ Luyện nói</span>
           <span className="cta-sub">theo chủ đề & trình độ ở trên</span>
         </button>
-        <div className="btn-row">
-          <button className="cta-ghost cta-accent" onClick={onAssess}>🎯 Đánh giá CEFR</button>
-          <button className="cta-ghost" onClick={onProfile}>📈 Tiến trình</button>
-        </div>
       </div>
 
       {/* LỘ TRÌNH HÔM NAY */}
