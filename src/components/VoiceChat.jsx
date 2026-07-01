@@ -173,7 +173,9 @@ export default function VoiceChat({ dueWords, addWord, level: levelProp, topic: 
 
   function saveCard() {
     if (!saving?.word.trim()) return;
-    const r = addWord({ c: "Sổ lỗi (luyện nói)", v: saving.word.trim(), m: "", e: saving.sentence, d: "", col: "" });
+    // Lưu vào ĐÚNG chủ đề đang luyện (topicProp). Chỉ khi không xác định được mới gom "Sổ lỗi".
+    const c = (topicProp && topicProp.trim()) || "Sổ lỗi (luyện nói)";
+    const r = addWord({ c, v: saving.word.trim(), m: "", e: saving.sentence, d: "", col: "" });
     setSaving(null);
     setError(r.ok ? "" : r.error || "Lưu lỗi");
   }

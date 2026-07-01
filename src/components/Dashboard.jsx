@@ -1,6 +1,6 @@
 // Màn hình chính: 4 số liệu (§1.6) + chọn chủ đề (scope) + nút "Ôn N thẻ".
 // Thuần UI — dùng helper thuần computeStats/nextDueAt/buildSession (đã có test).
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { buildSession } from "../srs/sm2.js";
 import { computeStats, nextDueAt, hardCards } from "../srs/session.js";
 import { streakFor, todayReviewedFor } from "../srs/stats.js";
@@ -38,6 +38,12 @@ export default function Dashboard({ cards, getState, onStart, onManage, onReset,
 
   const total = sessionNew + sessionDue;
 
+  // Luyện nói / Đánh giá bắt buộc chọn 1 chủ đề cụ thể (để từ lưu đúng topic + theo dõi CEFR theo topic).
+  const [hint, setHint] = useState("");
+  const needTopic = scope === "all";
+  const goVoice = () => (needTopic ? setHint("Hãy chọn một chủ đề cụ thể ở trên để luyện nói.") : onVoice());
+  const goAssess = () => (needTopic ? setHint("Hãy chọn một chủ đề cụ thể ở trên để đánh giá.") : onAssess());
+
   return (
     <div className="app">
       <div className="app-head" style={{ justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
@@ -46,7 +52,7 @@ export default function Dashboard({ cards, getState, onStart, onManage, onReset,
           <div className="app-sub">Nói là chính · từ vựng làm nền · chấm CEFR</div>
         </div>
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-          <button className="manage-link" onClick={onAssess}>🎯 Đánh giá</button>
+          <button className="manage-link" onClick={goAssess}>🎯 Đánh giá</button>
           <button className="manage-link" onClick={onProfile}>📈 Tiến trình</button>
           <button className="manage-link" onClick={onManage}>Từ vựng</button>
         </div>
@@ -63,7 +69,7 @@ export default function Dashboard({ cards, getState, onStart, onManage, onReset,
         </div>
         <label className="vs-row">
           <span>Chủ đề</span>
-          <select className="field" style={{ width: "62%" }} value={scope} onChange={(e) => onScope(e.target.value)}>
+          <select className="field" style={{ width: "62%" }} value={scope} onChange={(e) => { onScope(e.target.value); setHint(""); }}>
             <option value="all">Tất cả ({cards.length} từ)</option>
             {topics.map((t) => <option key={t} value={t}>{t}</option>)}
           </select>
@@ -74,17 +80,18 @@ export default function Dashboard({ cards, getState, onStart, onManage, onReset,
             {CEFR_ORDER.map((l) => <option key={l} value={l}>{l}</option>)}
           </select>
         </label>
-        <button className="cta" style={{ marginTop: 14 }} onClick={onVoice}>
+        <button className="cta" style={{ marginTop: 14, opacity: needTopic ? 0.55 : 1 }} onClick={goVoice}>
           <span className="cta-main">🎙️ Luyện nói</span>
-          <span className="cta-sub">theo chủ đề & trình độ ở trên</span>
+          <span className="cta-sub">{needTopic ? "chọn một chủ đề cụ thể ở trên" : "theo chủ đề & trình độ ở trên"}</span>
         </button>
+        {hint && <p className="app-sub" style={{ color: "var(--amber)", marginTop: 8, marginBottom: 0 }}>{hint}</p>}
       </div>
 
       {/* LỘ TRÌNH HÔM NAY */}
       <div className="sec-lab">Lộ trình hôm nay</div>
       <div className="plan">
-        <PlanStep track={false} label="🎙️ Luyện nói (hội thoại) ~5 phút" onClick={onVoice} />
-        <PlanStep done={didAssessToday} track label="🎯 Đánh giá nói 1 bài (theo dõi CEFR)" onClick={onAssess} />
+        <PlanStep track={false} label="🎙️ Luyện nói (hội thoại) ~5 phút" onClick={goVoice} />
+        <PlanStep done={didAssessToday} track label="🎯 Đánh giá nói 1 bài (theo dõi CEFR)" onClick={goAssess} />
         <PlanStep done={reviewDone} track label={`📚 Ôn từ vựng — ${Math.min(todayDone, goal)}/${goal} thẻ`} onClick={() => onStart({ scope })} />
       </div>
 
