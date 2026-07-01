@@ -85,7 +85,7 @@ export default function Dashboard({ cards, getState, onStart, onManage, onReset,
       <div className="plan">
         <PlanStep track={false} label="🎙️ Luyện nói (hội thoại) ~5 phút" onClick={onVoice} />
         <PlanStep done={didAssessToday} track label="🎯 Đánh giá nói 1 bài (theo dõi CEFR)" onClick={onAssess} />
-        <PlanStep done={reviewDone} track label={`📚 Ôn từ vựng — ${Math.min(todayDone, goal)}/${goal} thẻ`} onClick={() => onStart({})} />
+        <PlanStep done={reviewDone} track label={`📚 Ôn từ vựng — ${Math.min(todayDone, goal)}/${goal} thẻ`} onClick={() => onStart({ scope })} />
       </div>
 
       {/* TỪ VỰNG — nền cho luyện nói (theo chủ đề đã chọn ở trên) */}
