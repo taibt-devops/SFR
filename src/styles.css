@@ -100,7 +100,19 @@ button { font-family: inherit; }
 .field { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 11px; color: var(--text); font-size: 14px; padding: 11px 13px; resize: vertical; }
 .field::placeholder { color: var(--text3); }
 .field:focus { outline: none; border-color: rgba(45, 212, 167, .4); }
-select.field { cursor: pointer; }
+select.field {
+  cursor: pointer; -webkit-appearance: none; appearance: none; padding-right: 34px;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238b93a1' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 13px center;
+  transition: border-color .15s ease, box-shadow .2s ease;
+}
+select.field:hover { border-color: var(--text3); }
+/* Chủ đề chưa chọn (đang "Tất cả") → viền teal nhấp nháy nhẹ mời chọn để bắt đầu */
+.field-attn { border-color: rgba(45, 212, 167, .6) !important; animation: attnPulse 2.2s ease-in-out infinite; }
+@keyframes attnPulse {
+  0%, 100% { box-shadow: 0 0 0 2px rgba(45, 212, 167, .10); }
+  50% { box-shadow: 0 0 0 4px rgba(45, 212, 167, .24); }
+}
 .prod-toggle { display: flex; align-items: center; gap: 9px; font-size: 14px; color: var(--text); margin-top: 14px; cursor: pointer; }
 .prod-toggle input { width: 16px; height: 16px; accent-color: var(--teal); }
 .rate-suggest { outline: 2px solid currentColor; outline-offset: 1px; }

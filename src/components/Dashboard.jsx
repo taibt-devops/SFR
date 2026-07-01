@@ -69,7 +69,7 @@ export default function Dashboard({ cards, getState, onStart, onManage, onReset,
         </div>
         <label className="vs-row">
           <span>Chủ đề</span>
-          <select className="field" style={{ width: "62%" }} value={scope} onChange={(e) => { onScope(e.target.value); setHint(""); }}>
+          <select className={`field${needTopic ? " field-attn" : ""}`} style={{ width: "62%" }} value={scope} onChange={(e) => { onScope(e.target.value); setHint(""); }}>
             <option value="all">Tất cả ({cards.length} từ)</option>
             {topics.map((t) => <option key={t} value={t}>{t}</option>)}
           </select>
