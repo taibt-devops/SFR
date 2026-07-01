@@ -3,6 +3,7 @@
 // Thuần UI — logic chọn kiểu/sinh cloze/so khớp ở srs/cardTypes.js; SM-2 không đổi.
 import { useCallback, useEffect, useMemo, useState } from "react";
 import RatingBar from "./RatingBar.jsx";
+import ContextBar from "./ContextBar.jsx";
 import { coachSentence } from "../ai/coach.js";
 import {
   makeCloze,
@@ -42,7 +43,7 @@ function Back({ card }) {
   );
 }
 
-export default function StudySession({ card, state, progress, productionMode, onRate, onExit }) {
+export default function StudySession({ card, state, progress, productionMode, scopeLabel, onRate, onExit }) {
   const cloze = useMemo(() => makeCloze(card), [card]);
   const seed = progress.current + (card.v?.length || 0);
   const type = useMemo(() => {
@@ -113,6 +114,7 @@ export default function StudySession({ card, state, progress, productionMode, on
 
   return (
     <div className="app">
+      {scopeLabel && <ContextBar label={scopeLabel} />}
       <div className="study-top">
         <span className="cat-tag"><i className="dot" /> {card.c}</span>
         <span className="prog-txt">

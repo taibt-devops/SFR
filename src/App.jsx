@@ -27,6 +27,7 @@ export default function App() {
     [vocabApi.vocab, study.getState, scope]
   );
   const speakTopic = scope === "all" ? "" : scope; // chủ đề hội thoại = chủ đề đã chọn (rỗng = để tự xoay)
+  const scopeLabel = scope === "all" ? "Tất cả chủ đề" : scope; // nhãn hiển thị ngữ cảnh
 
   // ── Đang ôn ──
   if (study.started && !study.done) {
@@ -36,6 +37,7 @@ export default function App() {
         state={study.state}
         progress={study.progress}
         productionMode={productionMode}
+        scopeLabel={scopeLabel}
         onRate={study.rate}
         onExit={study.exit}
       />
@@ -79,7 +81,7 @@ export default function App() {
 
   // ── Mini-story ──
   if (view === "story") {
-    return <MiniStory dueWords={dueWords} onBack={() => setView("home")} />;
+    return <MiniStory dueWords={dueWords} scopeLabel={scopeLabel} onBack={() => setView("home")} />;
   }
 
   // ── Luyện nói ── (dùng trình độ + chủ đề đã chọn ở trang chủ)
@@ -89,7 +91,7 @@ export default function App() {
 
   // ── Đánh giá nói (CEFR) ──
   if (view === "assess") {
-    return <SpeakingAssess dueWords={dueWords} topic={speakTopic} onBack={() => setView("home")} />;
+    return <SpeakingAssess dueWords={dueWords} topic={speakTopic} scopeLabel={scopeLabel} onBack={() => setView("home")} />;
   }
 
   // ── Hồ sơ tiến trình nói (GĐ2) ──

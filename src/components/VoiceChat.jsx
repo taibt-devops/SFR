@@ -7,6 +7,7 @@ import { summarize } from "../ai/summary.js";
 import { translateWord } from "../ai/translate.js";
 import { transcribe } from "../ai/whisper.js";
 import { matchSpoken, diffWords } from "../utils/voiceMatch.js";
+import ContextBar from "./ContextBar.jsx";
 import { loadSpeaking, speakingProfile, CEFR_ORDER } from "../srs/speaking.js";
 
 const TOPICS = [
@@ -243,6 +244,7 @@ export default function VoiceChat({ dueWords, addWord, level: levelProp, topic: 
           <button className="link-exit" onClick={onBack}>← Về</button>
         </span>
       </div>
+      <ContextBar label={topic} level={level} />
 
       {/* Lộ trình: trình độ (mặc định = mức đã chấm, đổi tay để tăng/giảm khó) + chủ đề + điểm cần luyện */}
       <div className="voice-setup">

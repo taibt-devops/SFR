@@ -5,6 +5,7 @@ import { transcribe } from "../ai/whisper.js";
 import { assessSpeaking } from "../ai/assess.js";
 import { speechStats } from "../utils/fluency.js";
 import { loadSpeaking, saveSpeaking, addAssessment, latestLevel } from "../srs/speaking.js";
+import ContextBar from "./ContextBar.jsx";
 
 const TASKS = [
   "Describe your typical morning routine.",
@@ -20,7 +21,7 @@ const pickTask = () => TASKS[Math.floor(Math.random() * TASKS.length)];
 
 const DIM_LABEL = { fluency: "Trôi chảy", lexical: "Vốn từ", grammar: "Ngữ pháp", pronunciation: "Phát âm" };
 
-export default function SpeakingAssess({ dueWords, topic, onBack }) {
+export default function SpeakingAssess({ dueWords, topic, scopeLabel, onBack }) {
   const [task, setTask] = useState(() => (topic ? "Talk about: " + topic : pickTask()));
   const [phase, setPhase] = useState("ready"); // ready | recording | working | result | error
   const [working, setWorking] = useState(""); // nhãn bước đang chạy
@@ -100,6 +101,7 @@ export default function SpeakingAssess({ dueWords, topic, onBack }) {
         <span className="app-title">Đánh giá nói (CEFR)</span>
         <button className="link-exit" onClick={onBack}>← Về</button>
       </div>
+      {scopeLabel && <ContextBar label={scopeLabel} />}
       {last && <p className="app-sub" style={{ marginTop: 6 }}>Trình độ gần nhất: <b style={{ color: "var(--teal)" }}>{last}</b></p>}
 
       {phase !== "result" && (

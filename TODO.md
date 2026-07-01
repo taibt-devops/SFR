@@ -60,6 +60,32 @@
 
 ---
 
+## M13 — Rà soát PHƯƠNG PHÁP HỌC (chưa làm — ĐÁNH GIÁ LẠI trước khi code)
+
+> Nguồn: audit 8 nguyên lý học (SRS · recall · difficulty · production · input/story · chunking · interleaving · self-reference) ngày 2026-07-01. Chấm: ✅ chuẩn · 🟡 một phần · 🔴 cho có. **KHÔNG code cho tới khi chủ dự án duyệt từng mục** (nhiều mục đụng UX/pedagogy, cần quyết định chủ đích — không tự suy diễn theo CLAUDE.md).
+>
+> **Sợi chỉ đỏ:** kiểu ôn chọn bằng `seed` xoay vòng ([cardTypes.js `pickType`], [StudySession.jsx:47]) — KHÔNG theo độ thành thạo từng thẻ. Sửa đúng chỗ này vá cùng lúc #1+#2+#3.
+
+- [ ] **T1 🔴 Desirable difficulty — `pickType` thích ứng theo `reps/ef`** *(tác động cao nhất)*
+  - Hiện: thẻ mới toanh vẫn có thể bị produce/cloze/listen ngay lần đầu → test-before-teach, gây nản.
+  - Đề xuất (CẦN DUYỆT bậc thang): lần đầu (`!seen`/`reps=0`)→recall; `reps≥1`→cloze/listen; `reps≥2` & ef ổn→produce/reverse.
+  - Thuần trong `srs/cardTypes.js`, thêm test, KHÔNG đụng SM-2. Đọc spec §5.1 trước.
+- [ ] **T2 🟡 Active recall — "recall" bớt thụ động**
+  - Hiện: recall chỉ lật thẻ + tự chấm (dựa tính trung thực). Cân nhắc: buộc nghĩ-rồi-lật (đếm giờ) HOẶC gõ nghĩa. *(Quyết định UX — hỏi trước.)*
+- [ ] **T3 🟡 Production — gate produce sau `reps≥2` + prompt self-reference**
+  - Gộp với T1 (thứ tự) + đổi prompt produce → "đặt câu VỀ CHÍNH BẠN" (kích self-reference, xem T8).
+- [ ] **T4 🟡 Input/story — đưa câu ngữ cảnh vào đầu thẻ MỚI + lưu/tái dùng story**
+  - Hiện MiniStory tách rời, sinh xong không lưu. Cân nhắc: thẻ mới hiện `e` (câu) trước khi lộ nghĩa; lưu story để nghe lại. *(Đụng luồng học chính — cần duyệt.)*
+- [ ] **T5 🟡 Chunking — card-type "điền/hỏi collocation" (dùng `col`)**
+  - Hiện chỉ cloze khai thác chunk; `col` chỉ hiện thụ động mặt sau. Cân nhắc kiểu ôn hỏi theo cụm.
+- [ ] **T6 🟡 Self-reference ở flashcard** — sửa 1 dòng prompt produce (gộp T3).
+- [ ] **T7 ✅→tinh chỉnh SRS — xen kẽ new/due trong `buildSession`**
+  - Hiện thẻ mới xếp CUỐI hết ([sm2.js:74]). Cân nhắc trộn xen kẽ. Nhỏ, có test. *(SM-2 core — cẩn trọng, giữ C1/C3.)*
+
+> **Đã CHUẨN, không cần đụng:** SRS core (SM-2 đúng §1.3, C1/C3), Interleaving (trộn chủ đề + xoay kiểu).
+
+---
+
 ## Archive
 - M1 hoàn tất (scaffold + sm2 + storage + vocab, có test).
 

@@ -2,6 +2,7 @@
 // Auto-tạo khi mở (1 lần). TTS chỉ phát trong cú chạm người dùng (iOS) — nút "Đọc to".
 import { useCallback, useEffect, useState } from "react";
 import { miniStory } from "../ai/story.js";
+import ContextBar from "./ContextBar.jsx";
 
 function speak(text) {
   try {
@@ -14,7 +15,7 @@ function speak(text) {
   }
 }
 
-export default function MiniStory({ dueWords, onBack }) {
+export default function MiniStory({ dueWords, scopeLabel, onBack }) {
   const [status, setStatus] = useState("loading"); // loading | error | done
   const [text, setText] = useState("");
   const [error, setError] = useState("");
@@ -44,6 +45,7 @@ export default function MiniStory({ dueWords, onBack }) {
         <span className="app-title">Mini-story hôm nay</span>
         <button className="link-exit" onClick={onBack}>← Về</button>
       </div>
+      {scopeLabel && <ContextBar label={scopeLabel} />}
       <p className="app-sub" style={{ marginTop: 6 }}>
         Dùng từ đang ôn: {dueWords.slice(0, 8).join(", ") || "—"}
       </p>
