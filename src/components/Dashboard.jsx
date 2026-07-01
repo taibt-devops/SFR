@@ -4,8 +4,10 @@ import { useMemo, useState } from "react";
 import { buildSession } from "../srs/sm2.js";
 import { computeStats, nextDueAt, hardCards } from "../srs/session.js";
 import { streakFor, todayReviewedFor } from "../srs/stats.js";
-import { loadSpeaking, latestLevel, assessedToday, CEFR_ORDER } from "../srs/speaking.js";
+import { loadSpeaking, latestLevel, assessedToday, speakingProfile, CEFR_ORDER } from "../srs/speaking.js";
 import { loadCoachNotes, latestNote } from "../srs/coachMemory.js";
+
+const DIM_VI = { fluency: "trôi chảy", lexical: "vốn từ", grammar: "ngữ pháp", pronunciation: "phát âm" };
 import { dueLabel } from "../utils/format.js";
 
 export default function Dashboard({ cards, getState, onStart, onManage, onReset, productionMode, onToggleProduction, stats, scope, onScope, level, onLevel, onStory, onVoice, onAssess, onProfile }) {
@@ -15,6 +17,7 @@ export default function Dashboard({ cards, getState, onStart, onManage, onReset,
   const goal = stats?.goal || 20;
   const speakLevel = useMemo(() => latestLevel(loadSpeaking()), []);
   const lastNote = useMemo(() => latestNote(loadCoachNotes()), []); // buổi nói gần nhất (bài tập buổi sau)
+  const profile = useMemo(() => speakingProfile(loadSpeaking()), []); // điểm yếu để cá nhân hoá lộ trình
   const didAssessToday = useMemo(() => assessedToday(loadSpeaking(), now), [now]);
   const reviewDone = todayDone >= goal;
   const topics = useMemo(() => [...new Set(cards.map((c) => c.c))], [cards]);
@@ -39,6 +42,18 @@ export default function Dashboard({ cards, getState, onStart, onManage, onReset,
   }, [cards, getState, scope]);
 
   const total = sessionNew + sessionDue;
+
+  // ── Lộ trình cá nhân hoá theo điểm yếu (#3) — dùng dữ liệu đã có, không gọi API ──
+  const weakLabel = profile?.weakestDim ? DIM_VI[profile.weakestDim] : "";
+  const tagText = profile?.topTags?.slice(0, 2).map((t) => t.tag).join(", ") || "";
+  const improveText = lastNote?.toImprove?.slice(0, 2).join(", ") || "";
+  const focusText = tagText || improveText; // điểm cần luyện (tags gộp > toImprove buổi trước)
+  const targetLabel = weakLabel ? `${weakLabel}${tagText ? ` (${tagText})` : ""}` : "";
+  const voiceSub = focusText ? `tập trung: ${focusText}` : "kể tự nhiên, mình sẽ sửa nhẹ";
+  const assessSub = profile
+    ? `xem ${weakLabel || "khả năng nói"} lên chưa (đang ${speakLevel || "?"})`
+    : "làm bài đầu tiên để biết trình độ";
+  const reviewSub = hard.length > 0 ? `ưu tiên ${hard.length} thẻ khó` : undefined;
 
   // Luyện nói / Đánh giá bắt buộc chọn 1 chủ đề cụ thể (để từ lưu đúng topic + theo dõi CEFR theo topic).
   const [hint, setHint] = useState("");
@@ -103,12 +118,12 @@ export default function Dashboard({ cards, getState, onStart, onManage, onReset,
         </div>
       )}
 
-      {/* LỘ TRÌNH HÔM NAY */}
-      <div className="sec-lab">Lộ trình hôm nay</div>
+      {/* LỘ TRÌNH HÔM NAY — cá nhân hoá theo điểm yếu */}
+      <div className="sec-lab">Lộ trình hôm nay{targetLabel && <span className="plan-target"> · 🎯 mục tiêu: {targetLabel}</span>}</div>
       <div className="plan">
-        <PlanStep track={false} label="🎙️ Luyện nói (hội thoại) ~5 phút" onClick={goVoice} />
-        <PlanStep done={didAssessToday} track label="🎯 Đánh giá nói 1 bài (theo dõi CEFR)" onClick={goAssess} />
-        <PlanStep done={reviewDone} track label={`📚 Ôn từ vựng — ${Math.min(todayDone, goal)}/${goal} thẻ`} onClick={() => onStart({ scope })} />
+        <PlanStep track={false} label="🎙️ Luyện nói ~5 phút" sub={voiceSub} onClick={goVoice} />
+        <PlanStep done={didAssessToday} track label="🎯 Đánh giá nói 1 bài" sub={assessSub} onClick={goAssess} />
+        <PlanStep done={reviewDone} track label={`📚 Ôn từ vựng — ${Math.min(todayDone, goal)}/${goal} thẻ`} sub={reviewSub} onClick={() => onStart({ scope })} />
       </div>
 
       {/* TỪ VỰNG — nền cho luyện nói (theo chủ đề đã chọn ở trên) */}
@@ -151,11 +166,14 @@ export default function Dashboard({ cards, getState, onStart, onManage, onReset,
   );
 }
 
-function PlanStep({ done, track = true, label, onClick }) {
+function PlanStep({ done, track = true, label, sub, onClick }) {
   return (
     <button className={`plan-step ${done ? "plan-done" : ""}`} onClick={onClick}>
       <span className="plan-check">{track ? (done ? "✓" : "") : "·"}</span>
-      <span className="plan-label">{label}</span>
+      <span className="plan-label">
+        {label}
+        {sub && <span className="plan-sub">{sub}</span>}
+      </span>
       <span className="plan-go">{done ? "" : "→"}</span>
     </button>
   );
