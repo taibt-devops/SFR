@@ -20,8 +20,8 @@ const pickTask = () => TASKS[Math.floor(Math.random() * TASKS.length)];
 
 const DIM_LABEL = { fluency: "Trôi chảy", lexical: "Vốn từ", grammar: "Ngữ pháp", pronunciation: "Phát âm" };
 
-export default function SpeakingAssess({ dueWords, onBack }) {
-  const [task, setTask] = useState(pickTask);
+export default function SpeakingAssess({ dueWords, topic, onBack }) {
+  const [task, setTask] = useState(() => (topic ? "Talk about: " + topic : pickTask()));
   const [phase, setPhase] = useState("ready"); // ready | recording | working | result | error
   const [working, setWorking] = useState(""); // nhãn bước đang chạy
   const [result, setResult] = useState(null);

@@ -1,13 +1,13 @@
 // Màn hình chính: 4 số liệu (§1.6) + chọn chủ đề (scope) + nút "Ôn N thẻ".
 // Thuần UI — dùng helper thuần computeStats/nextDueAt/buildSession (đã có test).
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { buildSession } from "../srs/sm2.js";
 import { computeStats, nextDueAt, hardCards } from "../srs/session.js";
 import { streakFor, todayReviewedFor } from "../srs/stats.js";
-import { loadSpeaking, latestLevel, assessedToday } from "../srs/speaking.js";
+import { loadSpeaking, latestLevel, assessedToday, CEFR_ORDER } from "../srs/speaking.js";
 import { dueLabel } from "../utils/format.js";
 
-export default function Dashboard({ cards, getState, onStart, onManage, onReset, productionMode, onToggleProduction, stats, onStory, onVoice, onAssess, onProfile }) {
+export default function Dashboard({ cards, getState, onStart, onManage, onReset, productionMode, onToggleProduction, stats, scope, onScope, level, onLevel, onStory, onVoice, onAssess, onProfile }) {
   const now = Date.now();
   const streak = streakFor(stats, now);
   const todayDone = todayReviewedFor(stats, now);
@@ -15,7 +15,6 @@ export default function Dashboard({ cards, getState, onStart, onManage, onReset,
   const speakLevel = useMemo(() => latestLevel(loadSpeaking()), []);
   const didAssessToday = useMemo(() => assessedToday(loadSpeaking(), now), [now]);
   const reviewDone = todayDone >= goal;
-  const [scope, setScope] = useState("all");
   const topics = useMemo(() => [...new Set(cards.map((c) => c.c))], [cards]);
 
   const { counts, sessionNew, sessionDue, nextDue, hard } = useMemo(() => {
@@ -49,21 +48,31 @@ export default function Dashboard({ cards, getState, onStart, onManage, onReset,
         <button className="manage-link" onClick={onManage}>Từ vựng</button>
       </div>
 
-      {/* HERO: luyện nói */}
+      {/* HERO = Thiết lập buổi học (chủ đề + trình độ) → chi phối cả ôn từ lẫn luyện nói */}
       <div className="hero">
         <div className="hero-top">
-          <div>
-            <div className="hero-lab">Trình độ nói</div>
-            <div className="hero-level">{speakLevel || "—"}</div>
-          </div>
+          <div className="hero-lab">Buổi học hôm nay</div>
           <div className="hero-meta">
             <span>🔥 {streak} ngày</span>
-            <span>Hôm nay {Math.min(todayDone, goal)}/{goal} thẻ</span>
+            {speakLevel && <span>🗣️ đã chấm: {speakLevel}</span>}
           </div>
         </div>
-        <button className="cta" onClick={onVoice}>
+        <label className="vs-row">
+          <span>Chủ đề</span>
+          <select className="field" style={{ width: "62%" }} value={scope} onChange={(e) => onScope(e.target.value)}>
+            <option value="all">Tất cả ({cards.length} từ)</option>
+            {topics.map((t) => <option key={t} value={t}>{t}</option>)}
+          </select>
+        </label>
+        <label className="vs-row" style={{ marginTop: 8 }}>
+          <span>Trình độ nói</span>
+          <select className="field" style={{ width: "auto" }} value={level} onChange={(e) => onLevel(e.target.value)}>
+            {CEFR_ORDER.map((l) => <option key={l} value={l}>{l}</option>)}
+          </select>
+        </label>
+        <button className="cta" style={{ marginTop: 14 }} onClick={onVoice}>
           <span className="cta-main">🎙️ Luyện nói</span>
-          <span className="cta-sub">hội thoại với gia sư AI</span>
+          <span className="cta-sub">theo chủ đề & trình độ ở trên</span>
         </button>
         <div className="btn-row">
           <button className="cta-ghost cta-accent" onClick={onAssess}>🎯 Đánh giá CEFR</button>
@@ -79,17 +88,11 @@ export default function Dashboard({ cards, getState, onStart, onManage, onReset,
         <PlanStep done={reviewDone} track label={`📚 Ôn từ vựng — ${Math.min(todayDone, goal)}/${goal} thẻ`} onClick={() => onStart({})} />
       </div>
 
-      {/* TỪ VỰNG — nền cho luyện nói (phụ) */}
-      <div className="sec-lab">Từ vựng — nền cho luyện nói</div>
+      {/* TỪ VỰNG — nền cho luyện nói (theo chủ đề đã chọn ở trên) */}
+      <div className="sec-lab">Từ vựng {scope === "all" ? "" : `· ${scope}`}</div>
       <p className="app-sub" style={{ marginBottom: 10 }}>
         Đến hạn {counts.due} · Mới {counts.new} · Đã thuộc {counts.mastered} · tổng {cards.length} từ
       </p>
-      <select className="field" value={scope} onChange={(e) => setScope(e.target.value)}>
-        <option value="all">Tất cả ({cards.length} thẻ)</option>
-        {topics.map((t) => (
-          <option key={t} value={t}>{t}</option>
-        ))}
-      </select>
       <label className="prod-toggle">
         <input type="checkbox" checked={productionMode} onChange={onToggleProduction} />
         Tự đặt câu trước khi xem đáp án (luyện chủ động)

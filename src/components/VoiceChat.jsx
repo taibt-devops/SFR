@@ -7,7 +7,7 @@ import { summarize } from "../ai/summary.js";
 import { translateWord } from "../ai/translate.js";
 import { transcribe } from "../ai/whisper.js";
 import { matchSpoken, diffWords } from "../utils/voiceMatch.js";
-import { loadSpeaking, latestLevel, speakingProfile, CEFR_ORDER } from "../srs/speaking.js";
+import { loadSpeaking, speakingProfile, CEFR_ORDER } from "../srs/speaking.js";
 
 const TOPICS = [
   "Giới thiệu bản thân & sở thích",
@@ -64,15 +64,15 @@ function SumSection({ title, items, color }) {
   );
 }
 
-export default function VoiceChat({ dueWords, addWord, onBack }) {
+export default function VoiceChat({ dueWords, addWord, level: levelProp, topic: topicProp, onBack }) {
   const [history, setHistory] = useState([]);
   const [phase, setPhase] = useState("idle"); // idle | recording | thinking | error
   const [error, setError] = useState("");
   const [spoken, setSpoken] = useState(() => new Set()); // từ due đã nói (B16)
   const [shadow, setShadow] = useState(null); // {target, result:[{word,ok}], heard} (B17)
   const [saving, setSaving] = useState(null); // {sentence, word} (B18)
-  const [level, setLevel] = useState(() => latestLevel(loadSpeaking()) || "A2"); // mặc định = mức đã chấm, đổi tay được
-  const [topic, setTopic] = useState(pickTopic); // chủ đề buổi nói (xoay vòng)
+  const [level, setLevel] = useState(levelProp || "A2"); // mặc định lấy từ trang chủ, đổi tay được
+  const [topic, setTopic] = useState(() => topicProp || pickTopic()); // chủ đề đã chọn ở trang chủ (hoặc tự xoay)
   const [summary, setSummary] = useState(null); // tổng kết cuối phiên
   const [lookup, setLookup] = useState(null); // tra nghĩa: {term, vi, loading}
   const focus = useMemo(buildFocus, []); // điểm cần tập trung (từ hồ sơ)

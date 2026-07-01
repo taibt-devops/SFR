@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { buildSession } from "./srs/sm2.js";
+import { latestLevel, loadSpeaking } from "./srs/speaking.js";
 import { useStudy } from "./hooks/useStudy.js";
 import { useVocab } from "./hooks/useVocab.js";
 import { dueLabel } from "./utils/format.js";
@@ -14,14 +15,18 @@ import SpeakingProfile from "./components/SpeakingProfile.jsx";
 export default function App() {
   const vocabApi = useVocab();
   const study = useStudy(vocabApi.vocab);
-  const [view, setView] = useState("home"); // "home" | "data" | "story"
+  const [view, setView] = useState("home"); // "home" | "data" | "story" | "voice" | "assess" | "profile"
   const [productionMode, setProductionMode] = useState(false); // §5.2 — đặt câu trước khi lật
+  // Thiết lập buổi học CHUNG (chọn ở trang chủ) → chi phối cả ôn từ lẫn luyện nói.
+  const [scope, setScope] = useState("all"); // chủ đề (danh mục từ vựng, hoặc "all")
+  const [level, setLevel] = useState(() => latestLevel(loadSpeaking()) || "A2"); // trình độ nói (CEFR)
 
-  // Vài từ due để cấp ngữ cảnh cho mini-story (ưu tiên thẻ đến hạn, sau đó thẻ mới).
+  // Từ due theo ĐÚNG chủ đề đã chọn — làm nhiên liệu cho luyện nói / mini-story.
   const dueWords = useMemo(
-    () => buildSession(vocabApi.vocab, study.getState, { newLimit: 4, maxReviews: 4 }).slice(0, 8).map((c) => c.v),
-    [vocabApi.vocab, study.getState]
+    () => buildSession(vocabApi.vocab, study.getState, { scope, newLimit: 4, maxReviews: 4 }).slice(0, 8).map((c) => c.v),
+    [vocabApi.vocab, study.getState, scope]
   );
+  const speakTopic = scope === "all" ? "" : scope; // chủ đề hội thoại = chủ đề đã chọn (rỗng = để tự xoay)
 
   // ── Đang ôn ──
   if (study.started && !study.done) {
@@ -77,14 +82,14 @@ export default function App() {
     return <MiniStory dueWords={dueWords} onBack={() => setView("home")} />;
   }
 
-  // ── Luyện nói ──
+  // ── Luyện nói ── (dùng trình độ + chủ đề đã chọn ở trang chủ)
   if (view === "voice") {
-    return <VoiceChat dueWords={dueWords} addWord={vocabApi.addWord} onBack={() => setView("home")} />;
+    return <VoiceChat dueWords={dueWords} addWord={vocabApi.addWord} level={level} topic={speakTopic} onBack={() => setView("home")} />;
   }
 
   // ── Đánh giá nói (CEFR) ──
   if (view === "assess") {
-    return <SpeakingAssess dueWords={dueWords} onBack={() => setView("home")} />;
+    return <SpeakingAssess dueWords={dueWords} topic={speakTopic} onBack={() => setView("home")} />;
   }
 
   // ── Hồ sơ tiến trình nói (GĐ2) ──
@@ -103,6 +108,10 @@ export default function App() {
       productionMode={productionMode}
       onToggleProduction={() => setProductionMode((v) => !v)}
       stats={study.stats}
+      scope={scope}
+      onScope={setScope}
+      level={level}
+      onLevel={setLevel}
       onStory={() => setView("story")}
       onVoice={() => setView("voice")}
       onAssess={() => setView("assess")}
