@@ -60,20 +60,19 @@
 
 ---
 
-## M13 — Rà soát PHƯƠNG PHÁP HỌC (chưa làm — ĐÁNH GIÁ LẠI trước khi code)
+## M13 — Rà soát PHƯƠNG PHÁP HỌC (T1 ✅ xong · T2–T7 chưa làm — ĐÁNH GIÁ LẠI trước khi code)
 
 > Nguồn: audit 8 nguyên lý học (SRS · recall · difficulty · production · input/story · chunking · interleaving · self-reference) ngày 2026-07-01. Chấm: ✅ chuẩn · 🟡 một phần · 🔴 cho có. **KHÔNG code cho tới khi chủ dự án duyệt từng mục** (nhiều mục đụng UX/pedagogy, cần quyết định chủ đích — không tự suy diễn theo CLAUDE.md).
 >
-> **Sợi chỉ đỏ:** kiểu ôn chọn bằng `seed` xoay vòng ([cardTypes.js `pickType`], [StudySession.jsx:47]) — KHÔNG theo độ thành thạo từng thẻ. Sửa đúng chỗ này vá cùng lúc #1+#2+#3.
+> **Sợi chỉ đỏ:** ~~kiểu ôn chọn bằng `seed` xoay vòng — KHÔNG theo độ thành thạo từng thẻ~~ → **ĐÃ VÁ ở T1** (dùng `pickAdaptiveType` theo `reps`).
 
-- [ ] **T1 🔴 Desirable difficulty — `pickType` thích ứng theo `reps/ef`** *(tác động cao nhất)*
-  - Hiện: thẻ mới toanh vẫn có thể bị produce/cloze/listen ngay lần đầu → test-before-teach, gây nản.
-  - Đề xuất (CẦN DUYỆT bậc thang): lần đầu (`!seen`/`reps=0`)→recall; `reps≥1`→cloze/listen; `reps≥2` & ef ổn→produce/reverse.
-  - Thuần trong `srs/cardTypes.js`, thêm test, KHÔNG đụng SM-2. Đọc spec §5.1 trước.
+- [x] **T1 🔴 Desirable difficulty — `pickType` thích ứng theo `reps`** *(tác động cao nhất)* — ✅ **XONG** (commit `03b4cfc`, 2026-07-01)
+  - Cũ: thẻ mới toanh có thể bị produce/cloze/listen ngay lần đầu → test-before-teach, gây nản.
+  - Đã làm: [`cardTypes.pickAdaptiveType(card, state, seed)`](src/srs/cardTypes.js) — mới/vừa quên (reps<1)→recall/listen; đang học (reps 1–2)→cloze/recall; đã cứng (reps≥3)→produce/reverse. Fallback kiểu hợp lệ nếu tầng trống. [StudySession.jsx] dùng hàm này thay `pickType`. Thuần + 3 test (69 pass), KHÔNG đụng SM-2. (Bậc thang dùng `reps` thay vì `reps+ef` cho đơn giản/tất định.)
 - [ ] **T2 🟡 Active recall — "recall" bớt thụ động**
   - Hiện: recall chỉ lật thẻ + tự chấm (dựa tính trung thực). Cân nhắc: buộc nghĩ-rồi-lật (đếm giờ) HOẶC gõ nghĩa. *(Quyết định UX — hỏi trước.)*
-- [ ] **T3 🟡 Production — gate produce sau `reps≥2` + prompt self-reference**
-  - Gộp với T1 (thứ tự) + đổi prompt produce → "đặt câu VỀ CHÍNH BẠN" (kích self-reference, xem T8).
+- [ ] **T3 🟡 Production — ~~gate produce sau `reps≥2`~~ (XONG ở T1) + prompt self-reference** *(còn lại: prompt)*
+  - Phần gate produce theo `reps` đã nằm trong T1. Còn lại: đổi prompt produce → "đặt câu VỀ CHÍNH BẠN" (kích self-reference, gộp T6).
 - [ ] **T4 🟡 Input/story — đưa câu ngữ cảnh vào đầu thẻ MỚI + lưu/tái dùng story**
   - Hiện MiniStory tách rời, sinh xong không lưu. Cân nhắc: thẻ mới hiện `e` (câu) trước khi lộ nghĩa; lưu story để nghe lại. *(Đụng luồng học chính — cần duyệt.)*
 - [ ] **T5 🟡 Chunking — card-type "điền/hỏi collocation" (dùng `col`)**
