@@ -8,6 +8,8 @@ import { translateWord } from "../ai/translate.js";
 import { transcribe } from "../ai/whisper.js";
 import { matchSpoken, diffWords } from "../utils/voiceMatch.js";
 import ContextBar from "./ContextBar.jsx";
+import TtsControls from "./TtsControls.jsx";
+import { speak } from "../utils/tts.js";
 import { loadSpeaking, speakingProfile } from "../srs/speaking.js";
 
 const TOPICS = [
@@ -33,16 +35,6 @@ function buildFocus() {
   return parts.join(" · ");
 }
 
-function speak(text) {
-  try {
-    speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = "en-US";
-    speechSynthesis.speak(u);
-  } catch {
-    /* không hỗ trợ TTS */
-  }
-}
 
 // Hiện nội dung bong bóng: mỗi từ chạm được để tra nghĩa.
 function Clickable({ text, onWord }) {
@@ -248,6 +240,7 @@ export default function VoiceChat({ dueWords, addWord, level: levelProp, topic: 
       </div>
       <ContextBar label={topic} level={level} />
       {focus && <p className="app-sub" style={{ marginTop: 6 }}>🎯 Luyện trúng: {focus}</p>}
+      <TtsControls />
 
       {/* B16: checklist từ due đã nói */}
       <div className="chips" style={{ marginTop: 10 }}>

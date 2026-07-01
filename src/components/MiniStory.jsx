@@ -3,17 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { miniStory } from "../ai/story.js";
 import ContextBar from "./ContextBar.jsx";
-
-function speak(text) {
-  try {
-    speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = "en-US";
-    speechSynthesis.speak(u);
-  } catch {
-    /* không hỗ trợ TTS */
-  }
-}
+import { speak } from "../utils/tts.js";
 
 export default function MiniStory({ dueWords, scopeLabel, onBack }) {
   const [status, setStatus] = useState("loading"); // loading | error | done

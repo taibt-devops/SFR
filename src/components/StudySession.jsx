@@ -4,6 +4,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import RatingBar from "./RatingBar.jsx";
 import ContextBar from "./ContextBar.jsx";
+import { speak } from "../utils/tts.js";
 import { coachSentence } from "../ai/coach.js";
 import {
   makeCloze,
@@ -15,17 +16,6 @@ import {
 } from "../srs/cardTypes.js";
 
 const KEY_TO_Q = { 1: 2, 2: 3, 3: 4, 4: 5 };
-
-function speak(text) {
-  try {
-    speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = "en-US";
-    speechSynthesis.speak(u);
-  } catch {
-    /* trình duyệt không hỗ trợ TTS — bỏ qua */
-  }
-}
 
 function Back({ card }) {
   const cols = (card.col || "").split(" · ").map((s) => s.trim()).filter(Boolean);

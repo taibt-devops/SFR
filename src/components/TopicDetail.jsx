@@ -4,19 +4,9 @@ import { useMemo, useState } from "react";
 import { computeStats } from "../srs/session.js";
 import { loadSpeaking, speakingProfile, assessmentsForTopic } from "../srs/speaking.js";
 import { getPatterns, cachedPatterns } from "../ai/patterns.js";
+import { speak } from "../utils/tts.js";
 
 const DIM = { fluency: "Trôi chảy", lexical: "Vốn từ", grammar: "Ngữ pháp", pronunciation: "Phát âm" };
-
-function speak(t) {
-  try {
-    speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(t);
-    u.lang = "en-US";
-    speechSynthesis.speak(u);
-  } catch {
-    /* không hỗ trợ TTS */
-  }
-}
 
 export default function TopicDetail({ topic, cards, getState, onBack, onAssess, onVoice, onReview }) {
   const vocab = useMemo(() => {
