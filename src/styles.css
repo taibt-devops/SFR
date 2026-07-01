@@ -149,7 +149,10 @@ select.field { cursor: pointer; }
 /* tra nghĩa khi chạm từ */
 .lookup-word { cursor: pointer; border-bottom: 1px dotted rgba(255, 255, 255, .25); }
 .lookup-word:active, .lookup-word:hover { color: var(--teal); border-bottom-color: var(--teal); }
-.lookup-pop { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: var(--surface2); border: 1px solid var(--border2); border-radius: 12px; padding: 10px 14px; margin-top: 10px; font-size: 14px; line-height: 1.45; }
+.lookup-pop { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; background: var(--surface2); border: 1px solid var(--border2); border-radius: 12px; padding: 10px 14px; margin-top: 10px; font-size: 14px; line-height: 1.45; max-height: 42vh; overflow-y: auto; }
+/* span dài (dịch cả câu) phải co & xuống dòng — min-width:0 chống lỗi flex tràn ngang (iOS Safari); ✕ không bị bóp */
+.lookup-pop > span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.lookup-pop > .link-exit { flex-shrink: 0; }
 /* dải ngữ cảnh đầu màn con */
 .ctx-bar { align-self: flex-start; font-size: 12.5px; color: var(--text2); background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 6px 13px; margin-top: 10px; }
 /* Tiến trình — hàng chủ đề */
