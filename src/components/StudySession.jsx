@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import RatingBar from "./RatingBar.jsx";
 import ContextBar from "./ContextBar.jsx";
 import { speak } from "../utils/tts.js";
+import { useShadow } from "../hooks/useShadow.js";
 import { coachSentence } from "../ai/coach.js";
 import {
   makeCloze,
@@ -153,7 +154,37 @@ export default function StudySession({ card, state, progress, productionMode, sc
         </>
       )}
 
+      {phase === "revealed" && <ShadowPractice word={card.v} example={card.e} />}
       {phase === "revealed" && <RatingBar state={state} onRate={onRate} suggestedQ={sQ} />}
+    </div>
+  );
+}
+
+// "Đọc theo": nghe mẫu → đọc lại → tô đỏ từ chưa khớp. Đọc câu ví dụ (connected speech) nếu có, không thì đọc từ.
+function ShadowPractice({ word, example }) {
+  const { phase, result, error, start, stop } = useShadow();
+  const target = (example || "").trim() || word;
+  return (
+    <div className="shadow-box">
+      <div className="btn-row">
+        <button className="cta-ghost" style={{ marginTop: 0 }} onClick={() => speak(target)}>🔊 Nghe</button>
+        {phase === "recording" ? (
+          <button className="cta-ghost cta-accent" style={{ marginTop: 0 }} onClick={stop}>■ Dừng</button>
+        ) : (
+          <button className="cta-ghost cta-accent" style={{ marginTop: 0 }} disabled={phase === "thinking"} onClick={() => start(target)}>
+            {phase === "thinking" ? "Đang nghe…" : "🎯 Đọc theo"}
+          </button>
+        )}
+      </div>
+      {error && <p className="app-sub" style={{ color: "var(--red)", marginTop: 8 }}>{error}</p>}
+      {result && (
+        <p className="app-sub" style={{ marginTop: 8 }}>
+          Đọc theo — từ đỏ là chưa khớp:{" "}
+          {result.result.map((x, i) => (
+            <span key={i} style={{ color: x.ok ? "var(--green)" : "var(--red)" }}>{x.word} </span>
+          ))}
+        </p>
+      )}
     </div>
   );
 }
