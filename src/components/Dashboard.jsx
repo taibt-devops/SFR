@@ -105,8 +105,11 @@ export default function Dashboard({ cards, getState, onStart, onManage, onReset,
       </p>
       <label className="prod-toggle">
         <input type="checkbox" checked={productionMode} onChange={onToggleProduction} />
-        Tự đặt câu trước khi xem đáp án (luyện chủ động)
+        Chế độ chuyên sâu — ép tự đặt câu mọi thẻ
       </label>
+      <p className="app-sub" style={{ marginTop: 4 }}>
+        Bật khi từ đã quen. Để tắt thì app tự chọn kiểu ôn theo độ thuộc (từ mới → nhận diện, thuộc dần → tự đặt câu).
+      </p>
       {total > 0 ? (
         <button className="cta-ghost cta-accent" onClick={() => onStart({ scope })}>
           Ôn {total} thẻ · {sessionNew} mới + {sessionDue} ôn lại
