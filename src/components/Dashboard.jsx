@@ -69,10 +69,13 @@ export default function Dashboard({ cards, getState, onStart, onManage, onReset,
         </div>
         <label className="vs-row">
           <span>Chủ đề</span>
-          <select className={`field${needTopic ? " field-attn" : ""}`} style={{ width: "62%" }} value={scope} onChange={(e) => { onScope(e.target.value); setHint(""); }}>
-            <option value="all">Tất cả ({cards.length} từ)</option>
-            {topics.map((t) => <option key={t} value={t}>{t}</option>)}
-          </select>
+          <span className="field-wrap" style={{ width: "62%" }}>
+            {needTopic && <span className="point-hand" aria-hidden="true">👉</span>}
+            <select className={`field${needTopic ? " field-attn" : ""}`} style={{ flex: 1, width: "100%" }} value={scope} onChange={(e) => { onScope(e.target.value); setHint(""); }}>
+              <option value="all">Tất cả ({cards.length} từ)</option>
+              {topics.map((t) => <option key={t} value={t}>{t}</option>)}
+            </select>
+          </span>
         </label>
         <label className="vs-row" style={{ marginTop: 8 }}>
           <span>Trình độ nói</span>

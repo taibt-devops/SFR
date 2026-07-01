@@ -108,6 +108,10 @@ select.field {
 }
 select.field:hover { border-color: var(--text3); }
 /* Chủ đề chưa chọn (đang "Tất cả") → viền teal nhấp nháy nhẹ mời chọn để bắt đầu */
+.field-wrap { display: flex; align-items: center; gap: 6px; }
+/* bàn tay chỉ vào ô Chủ đề khi chưa chọn — nhún qua lại mời chọn */
+.point-hand { font-size: 19px; line-height: 1; flex-shrink: 0; animation: pointNudge 1s ease-in-out infinite; }
+@keyframes pointNudge { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(5px); } }
 .field-attn { border-color: rgba(45, 212, 167, .6) !important; animation: attnPulse 2.2s ease-in-out infinite; }
 @keyframes attnPulse {
   0%, 100% { box-shadow: 0 0 0 2px rgba(45, 212, 167, .10); }
