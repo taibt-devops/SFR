@@ -8,17 +8,29 @@ export default function ProgressTopics({ cards, getState, onBack, onTopic }) {
     const m = {};
     for (const c of cards) {
       const t = c.c;
-      if (!m[t]) m[t] = { topic: t, total: 0, seen: 0, mastered: 0 };
+      if (!m[t]) m[t] = { topic: t, total: 0, seen: 0, mastered: 0, recentAt: 0 };
       m[t].total++;
       const st = getState(c.id);
       if (st?.seen) {
         m[t].seen++;
         if ((st.interval || 0) >= 21) m[t].mastered++;
+        if (st.lastReviewed > m[t].recentAt) m[t].recentAt = st.lastReviewed; // hoạt động ôn từ gần nhất
       }
     }
-    const arr = Object.values(m).map((r) => ({ ...r, cefr: latestLevel(assessmentsForTopic(list, r.topic)) }));
-    // Ưu tiên: đã đánh giá nói > đã học từ nhiều > A→Z.
-    arr.sort((a, b) => Number(!!b.cefr) - Number(!!a.cefr) || b.seen - a.seen || a.topic.localeCompare(b.topic));
+    const arr = Object.values(m).map((r) => {
+      const asr = assessmentsForTopic(list, r.topic);
+      // recentAt = mốc gần nhất giữa ôn từ (lastReviewed) và luyện nói (assessment.at)
+      const recentAt = asr.reduce((mx, e) => (typeof e?.at === "number" && e.at > mx ? e.at : mx), r.recentAt);
+      return { ...r, recentAt, cefr: latestLevel(asr) };
+    });
+    // Ưu tiên: vừa học/luyện gần nhất lên đầu > đã đánh giá nói > học từ nhiều > A→Z.
+    arr.sort(
+      (a, b) =>
+        b.recentAt - a.recentAt ||
+        Number(!!b.cefr) - Number(!!a.cefr) ||
+        b.seen - a.seen ||
+        a.topic.localeCompare(b.topic)
+    );
     return arr;
   }, [cards, getState, list]);
 
