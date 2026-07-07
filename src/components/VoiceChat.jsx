@@ -71,14 +71,15 @@ export default function VoiceChat({ dueWords, addWord, level: levelProp, topic: 
   const [lookup, setLookup] = useState(null); // tra nghĩa: {term, vi, loading}
   const focus = useMemo(buildFocus, []); // điểm cần tập trung (từ hồ sơ)
 
-  // Tra nghĩa 1 từ (hoặc cả câu) theo ngữ cảnh.
+  // Tra nghĩa 1 từ (hoặc cả câu) theo ngữ cảnh. Giữ ctx để nút "＋ Thêm" điền sẵn câu ví dụ.
   const lookupTerm = useCallback((raw, context) => {
     const term = String(raw).replace(/[^A-Za-z'\- ]/g, "").trim();
     if (!term) return;
-    setLookup({ term, loading: true });
-    translateWord(term, context || term)
-      .then((vi) => setLookup({ term, vi }))
-      .catch((e) => setLookup({ term, vi: "(lỗi: " + String(e.message || e) + ")" }));
+    const ctx = context || term;
+    setLookup({ term, ctx, loading: true });
+    translateWord(term, ctx)
+      .then((vi) => setLookup({ term, ctx, vi }))
+      .catch((e) => setLookup({ term, ctx, vi: "(lỗi: " + String(e.message || e) + ")", err: true }));
   }, []);
 
   const recRef = useRef(null);
@@ -338,6 +339,14 @@ export default function VoiceChat({ dueWords, addWord, level: levelProp, topic: 
       {lookup && (
         <div className="lookup-pop">
           <span><b style={{ color: "var(--teal)" }}>{lookup.term}</b> {lookup.loading ? "— đang dịch…" : "— " + lookup.vi}</span>
+          {/* Thêm từ vừa tra vào từ vựng của chủ đề: mở popup điền sẵn từ + nghĩa + câu ngữ cảnh */}
+          {!lookup.loading && !lookup.err && (
+            <button className="link-exit" style={{ color: "var(--teal)", flexShrink: 0, fontWeight: 700 }}
+              onClick={() => {
+                setSaving({ word: lookup.term, m: lookup.vi, sentence: lookup.ctx === lookup.term ? "" : lookup.ctx });
+                setLookup(null);
+              }}>＋ Thêm</button>
+          )}
           <button className="link-exit" onClick={() => setLookup(null)}>✕</button>
         </div>
       )}
