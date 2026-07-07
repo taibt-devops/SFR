@@ -92,7 +92,7 @@ export default function WarmupTalk({ onBack }) {
     <div className="app">
       <div className="study-top">
         <span className="app-title">🎤 Khởi động 1 phút</span>
-        <button className="link-exit" onClick={onBack}>← Về</button>
+        <button className="btn-back" onClick={onBack}>← Về</button>
       </div>
       <p className="app-sub" style={{ marginTop: 6 }}>Nói tiếng Anh tự do, không cần hoàn hảo — chỉ đo tốc độ & độ mượt.</p>
 

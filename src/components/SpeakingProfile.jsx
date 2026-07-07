@@ -12,7 +12,7 @@ export default function SpeakingProfile({ onBack, onAssess }) {
     <div className="app">
       <div className="study-top">
         <span className="app-title">Tiến trình nói</span>
-        <button className="link-exit" onClick={onBack}>← Về</button>
+        <button className="btn-back" onClick={onBack}>← Về</button>
       </div>
 
       {!p ? (

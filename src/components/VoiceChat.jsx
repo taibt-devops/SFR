@@ -254,7 +254,7 @@ export default function VoiceChat({ dueWords, addWord, level: levelProp, topic: 
       <div className="app">
         <div className="study-top">
           <span className="app-title">Tổng kết buổi nói</span>
-          <button className="link-exit" onClick={onBack}>← Về</button>
+          <button className="btn-back" onClick={onBack}>← Về</button>
         </div>
 
         {/* Roleplay: đạt mục tiêu tình huống chưa */}
@@ -313,7 +313,7 @@ export default function VoiceChat({ dueWords, addWord, level: levelProp, topic: 
             })}
           >＋ Từ vựng</button>
           {started && <button className="link-exit" style={{ color: "var(--teal)" }} onClick={endSession}>Kết thúc</button>}
-          <button className="link-exit" onClick={onBack}>← Về</button>
+          <button className="btn-back" onClick={onBack}>← Về</button>
         </span>
       </div>
       <ContextBar label={scn ? scn.title : topic} level={level} />

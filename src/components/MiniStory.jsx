@@ -33,7 +33,7 @@ export default function MiniStory({ dueWords, scopeLabel, onBack }) {
     <div className="app">
       <div className="study-top">
         <span className="app-title">Mini-story hôm nay</span>
-        <button className="link-exit" onClick={onBack}>← Về</button>
+        <button className="btn-back" onClick={onBack}>← Về</button>
       </div>
       {scopeLabel && <ContextBar label={scopeLabel} />}
       <p className="app-sub" style={{ marginTop: 6 }}>

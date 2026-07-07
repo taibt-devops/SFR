@@ -99,7 +99,7 @@ export default function SpeakingAssess({ dueWords, topic, topicId = "", scopeLab
     <div className="app">
       <div className="study-top">
         <span className="app-title">Đánh giá nói (CEFR)</span>
-        <button className="link-exit" onClick={onBack}>← Về</button>
+        <button className="btn-back" onClick={onBack}>← Về</button>
       </div>
       {scopeLabel && <ContextBar label={scopeLabel} />}
       {last && <p className="app-sub" style={{ marginTop: 6 }}>Trình độ gần nhất: <b style={{ color: "var(--teal)" }}>{last}</b></p>}

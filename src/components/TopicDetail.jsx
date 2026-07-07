@@ -34,7 +34,7 @@ export default function TopicDetail({ topic, cards, getState, onBack, onAssess, 
     <div className="app">
       <div className="study-top">
         <span className="app-title" style={{ fontSize: 17 }}>{topic}</span>
-        <button className="link-exit" onClick={onBack}>← Tiến trình</button>
+        <button className="btn-back" onClick={onBack}>← Tiến trình</button>
       </div>
 
       {/* TỪ VỰNG */}

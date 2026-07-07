@@ -17,7 +17,7 @@ export default function DataManager({ userWords, importText, removeWord, exportT
     <div className="app">
       <div className="study-top">
         <span className="app-title">Quản lý từ vựng</span>
-        <button className="link-exit" onClick={onBack}>← Về</button>
+        <button className="btn-back" onClick={onBack}>← Về</button>
       </div>
 
       <MiningPanel importText={importText} />

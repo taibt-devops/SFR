@@ -38,7 +38,7 @@ export default function ProgressTopics({ cards, getState, onBack, onTopic }) {
     <div className="app">
       <div className="study-top">
         <span className="app-title">Tiến trình</span>
-        <button className="link-exit" onClick={onBack}>← Về</button>
+        <button className="btn-back" onClick={onBack}>← Về</button>
       </div>
       <p className="app-sub" style={{ marginTop: 6 }}>Chọn chủ đề để xem đã luyện được gì.</p>
       <div style={{ display: "flex", flexDirection: "column", gap: 7, marginTop: 12 }}>
