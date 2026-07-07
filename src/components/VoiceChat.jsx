@@ -241,22 +241,21 @@ export default function VoiceChat({ dueWords, addWord, level: levelProp, topic: 
     <div className="app">
       <div className="study-top">
         <span className="app-title">Luyện nói</span>
-        <span>
-          {started && <button className="link-exit" style={{ marginRight: 14, color: "var(--teal)" }} onClick={endSession}>Kết thúc</button>}
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 14 }}>
+          {/* Góc phải: mở popup thêm từ vựng (tự điền câu gần nhất của gia sư làm ví dụ) */}
+          <button
+            className="pill-add"
+            title="Thêm từ vựng vào deck"
+            onClick={() => setSaving({
+              sentence: [...history].reverse().find((m) => m.role === "assistant")?.content || "",
+              word: "",
+            })}
+          >＋ Từ vựng</button>
+          {started && <button className="link-exit" style={{ color: "var(--teal)" }} onClick={endSession}>Kết thúc</button>}
           <button className="link-exit" onClick={onBack}>← Về</button>
         </span>
       </div>
       <ContextBar label={topic} level={level} />
-      {/* Icon nổi góc phải: mở popup thêm từ vựng (tự điền câu gần nhất của gia sư làm ví dụ) */}
-      <button
-        className="fab-add"
-        title="Thêm từ vựng"
-        aria-label="Thêm từ vựng"
-        onClick={() => setSaving({
-          sentence: [...history].reverse().find((m) => m.role === "assistant")?.content || "",
-          word: "",
-        })}
-      >＋</button>
       {focus && <p className="app-sub" style={{ marginTop: 6 }}>🎯 Luyện trúng: {focus}</p>}
       <TtsControls />
 
