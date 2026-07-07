@@ -8,6 +8,7 @@ import {
   pickType,
   pickAdaptiveType,
   isAutoGraded,
+  checkSpokenWord,
 } from "./cardTypes.js";
 
 const card = {
@@ -108,5 +109,27 @@ describe("availableTypes / pickType", () => {
     expect(isAutoGraded("listen")).toBe(true);
     expect(isAutoGraded("recall")).toBe(false);
     expect(isAutoGraded("produce")).toBe(false);
+    expect(isAutoGraded("speak")).toBe(false); // chấm qua mic, không qua ô gõ + nút Kiểm tra
+  });
+});
+
+describe("speak (nhìn nghĩa → nói từ)", () => {
+  it("availableTypes có speak khi thẻ có nghĩa m, không thì loại", () => {
+    expect(availableTypes(card)).toContain("speak");
+    expect(availableTypes({ v: "reliable", e: "I rely on her." })).not.toContain("speak");
+  });
+
+  it("checkSpokenWord: transcript chứa NGUYÊN VĂN v (bỏ hoa thường/dấu câu) → đúng", () => {
+    expect(checkSpokenWord("We should Carry Out the plan.", "carry out")).toBe(true);
+    expect(checkSpokenWord("carry out", "carry out")).toBe(true);
+    expect(checkSpokenWord("I carried it out.", "carry out")).toBe(false); // biến cách ≠ nguyên văn
+    expect(checkSpokenWord("", "carry out")).toBe(false);
+  });
+
+  it("speak nằm trong tầng adaptive đang học & đã cứng (tất định theo seed)", () => {
+    expect(pickAdaptiveType(card, { seen: true, reps: 2 }, 2)).toBe("speak");
+    expect(pickAdaptiveType(card, { seen: true, reps: 4 }, 2)).toBe("speak");
+    // thẻ mới KHÔNG gặp speak
+    expect(pickAdaptiveType(card, undefined, 2)).not.toBe("speak");
   });
 });
