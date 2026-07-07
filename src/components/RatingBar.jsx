@@ -2,11 +2,12 @@
 // Thuần presentational. `suggestedQ` (tùy chọn): kết quả auto-chấm gợi ý — KHÔNG ép, người học vẫn quyết.
 import { preview } from "../srs/sm2.js";
 
+// Nhãn = 4 mức trả lời câu "Bạn nhớ tới mức nào?" (spec gọi: Chưa nhớ / Khó / Tốt / Dễ — q không đổi).
 const BUTTONS = [
-  { q: 2, lab: "Chưa nhớ", cls: "r-again" },
-  { q: 3, lab: "Khó", cls: "r-hard" },
-  { q: 4, lab: "Tốt", cls: "r-good" },
-  { q: 5, lab: "Dễ", cls: "r-easy" },
+  { q: 2, lab: "Quên rồi", cls: "r-again" },
+  { q: 3, lab: "Suýt quên", cls: "r-hard" },
+  { q: 4, lab: "Nhớ được", cls: "r-good" },
+  { q: 5, lab: "Nhớ ngay", cls: "r-easy" },
 ];
 
 function intervalLabel(state, q) {
