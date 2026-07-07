@@ -1,0 +1,2 @@
+# Shell script phải giữ LF, nếu không bash báo lỗi '\r' trên checkout Windows (autocrlf).
+*.sh text eol=lf
