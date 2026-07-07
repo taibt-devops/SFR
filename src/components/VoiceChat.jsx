@@ -14,6 +14,7 @@ import { useShadow } from "../hooks/useShadow.js";
 import { loadSpeaking, speakingProfile } from "../srs/speaking.js";
 import { loadCoachNotes, saveCoachNotes, addCoachNote, priorFocusText } from "../srs/coachMemory.js";
 import { pickScenario } from "../data/scenarios.js";
+import { genScenario } from "../ai/scenario.js";
 
 const TOPICS = [
   "Giới thiệu bản thân & sở thích",
@@ -98,7 +99,20 @@ export default function VoiceChat({ dueWords, addWord, level: levelProp, topic: 
   const [saving, setSaving] = useState(null); // {sentence, word} (B18)
   const [level] = useState(levelProp || "A2"); // trình độ lấy từ trang chủ
   const [topic, setTopic] = useState(() => topicProp || pickTopic()); // chủ đề lấy từ trang chủ (hoặc tự xoay nếu "Tất cả")
-  const [scn, setScn] = useState(() => (roleplay ? pickScenario() : null)); // tình huống đóng vai (#4)
+  // Tình huống đóng vai (#4): có chủ đề cụ thể → Claude SINH theo chủ đề; "Tất cả" → kịch bản soạn tay.
+  const [scn, setScn] = useState(() => (roleplay && !topicProp ? pickScenario() : null));
+  const [scnLoading, setScnLoading] = useState(false);
+  const genScn = useCallback(() => {
+    setScnLoading(true);
+    setError("");
+    genScenario(topicProp, levelProp || "A2")
+      .then(setScn)
+      .catch((e) => setError("Không tạo được tình huống: " + String(e.message || e)))
+      .finally(() => setScnLoading(false));
+  }, [topicProp, levelProp]);
+  useEffect(() => { if (roleplay && topicProp) genScn(); }, [roleplay, topicProp, genScn]);
+  // Đổi tình huống (trước khi bắt đầu): sinh lại theo chủ đề, hoặc xoay kịch bản soạn tay.
+  const swapScn = () => (topicProp ? genScn() : setScn(pickScenario(scn?.id)));
   const [summary, setSummary] = useState(null); // tổng kết cuối phiên
   const [lookup, setLookup] = useState(null); // tra nghĩa: {term, vi, loading}
   const focus = useMemo(buildFocus, []); // điểm cần tập trung (từ hồ sơ)
@@ -232,7 +246,7 @@ export default function VoiceChat({ dueWords, addWord, level: levelProp, topic: 
   }
   function newSession() {
     setHistory([]); setSpoken(new Set()); setShadow(null); setSummary(null); setError("");
-    setTopic(topicProp || pickTopic()); if (roleplay) setScn(pickScenario(scn?.id)); setPhase("idle");
+    setTopic(topicProp || pickTopic()); if (roleplay) swapScn(); setPhase("idle");
   }
   // Bỏ lượt vừa rồi (câu đáp của app + lời mình nói) để thu lại — khi Whisper nghe nhầm.
   function redoLast() {
@@ -318,14 +332,19 @@ export default function VoiceChat({ dueWords, addWord, level: levelProp, topic: 
       </div>
       <ContextBar label={scn ? scn.title : topic} level={level} />
       {/* Thẻ tình huống: vai của bạn + mục tiêu; đổi được khi CHƯA bắt đầu */}
-      {scn && (
+      {roleplay && scnLoading && !scn && (
         <div className="carry-note" style={{ marginTop: 10 }}>
+          <div className="carry-head">🎭 Đang tạo tình huống theo chủ đề…</div>
+        </div>
+      )}
+      {scn && (
+        <div className="carry-note" style={{ marginTop: 10, opacity: scnLoading ? 0.5 : 1 }}>
           <div className="carry-head">🎭 {scn.title}</div>
           <div className="carry-sub">Bạn là <b>{scn.userRole}</b> · đối phương: {scn.aiRole}</div>
           <div className="carry-sub">🎯 Nhiệm vụ: {scn.goal}</div>
           {!started && history.length === 0 && (
-            <button className="link-exit" style={{ marginTop: 6, color: "var(--teal)" }} onClick={() => setScn(pickScenario(scn.id))}>
-              🎲 Đổi tình huống
+            <button className="link-exit" style={{ marginTop: 6, color: "var(--teal)" }} disabled={scnLoading} onClick={swapScn}>
+              {scnLoading ? "Đang tạo…" : "🎲 Đổi tình huống"}
             </button>
           )}
         </div>
@@ -424,8 +443,8 @@ export default function VoiceChat({ dueWords, addWord, level: levelProp, topic: 
           <span className="cta-main">■ Dừng & gửi</span>
         </button>
       ) : history.length === 0 ? (
-        <button className="cta" disabled={busy} onClick={begin}>
-          <span className="cta-main">🎤 {busy ? "Đang mở lời…" : "Bắt đầu buổi nói"}</span>
+        <button className="cta" disabled={busy || (roleplay && (!scn || scnLoading))} onClick={begin}>
+          <span className="cta-main">🎤 {busy ? "Đang mở lời…" : roleplay && !scn ? "Đang tạo tình huống…" : "Bắt đầu buổi nói"}</span>
         </button>
       ) : (
         <button className="cta" disabled={busy} onClick={() => startRecording({ type: "turn" })}>

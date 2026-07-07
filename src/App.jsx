@@ -94,7 +94,7 @@ function AppMain() {
 
   // ── Luyện nói ── (dùng trình độ + chủ đề đã chọn ở trang chủ)
   if (view === "voice") {
-    return <VoiceChat dueWords={dueWords} addWord={vocabApi.addWord} level={level} topic={roleplayOn ? "" : speakTopic} roleplay={roleplayOn} onBack={() => setView("home")} />;
+    return <VoiceChat dueWords={dueWords} addWord={vocabApi.addWord} level={level} topic={speakTopic} roleplay={roleplayOn} onBack={() => setView("home")} />;
   }
 
   // ── Đánh giá nói (CEFR) ──

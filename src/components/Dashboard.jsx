@@ -105,8 +105,10 @@ export default function Dashboard({ cards, getState, onStart, onReset, productio
           <span className="cta-main">🎙️ Luyện nói</span>
           <span className="cta-sub">{needTopic ? "chọn một chủ đề cụ thể ở trên" : "theo chủ đề & trình độ ở trên"}</span>
         </button>
-        {/* Roleplay không cần chủ đề từ vựng — tình huống tự chọn ngẫu nhiên, đổi được trước khi bắt đầu */}
-        <button className="cta-ghost" onClick={onRoleplay}>🎭 Đóng vai tình huống <span className="app-sub">— phỏng vấn, gọi món, mặc cả…</span></button>
+        {/* Roleplay: chọn chủ đề cụ thể → Claude sinh tình huống THEO chủ đề; "Tất cả" → kịch bản soạn tay ngẫu nhiên */}
+        <button className="cta-ghost" onClick={onRoleplay}>
+          🎭 Đóng vai tình huống <span className="app-sub">— {needTopic ? "ngẫu nhiên: phỏng vấn, gọi món…" : `theo chủ đề "${scope}"`}</span>
+        </button>
         {hint && <p className="app-sub" style={{ color: "var(--amber)", marginTop: 8, marginBottom: 0 }}>{hint}</p>}
       </div>
 
