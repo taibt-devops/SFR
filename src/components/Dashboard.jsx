@@ -6,11 +6,12 @@ import { computeStats, nextDueAt, hardCards } from "../srs/session.js";
 import { streakFor, todayReviewedFor } from "../srs/stats.js";
 import { loadSpeaking, latestLevel, assessedToday, speakingProfile, CEFR_ORDER } from "../srs/speaking.js";
 import { loadCoachNotes, latestNote } from "../srs/coachMemory.js";
+import { loadWarmup, warmupToday } from "../srs/warmup.js";
 
 const DIM_VI = { fluency: "trôi chảy", lexical: "vốn từ", grammar: "ngữ pháp", pronunciation: "phát âm" };
 import { dueLabel } from "../utils/format.js";
 
-export default function Dashboard({ cards, getState, onStart, onReset, productionMode, onToggleProduction, stats, scope, onScope, level, onLevel, onStory, onVoice, onRoleplay, onAssess, onProfile }) {
+export default function Dashboard({ cards, getState, onStart, onReset, productionMode, onToggleProduction, stats, scope, onScope, level, onLevel, onStory, onVoice, onRoleplay, onWarmup, onAssess, onProfile }) {
   const now = Date.now();
   const streak = streakFor(stats, now);
   const todayDone = todayReviewedFor(stats, now);
@@ -19,6 +20,7 @@ export default function Dashboard({ cards, getState, onStart, onReset, productio
   const lastNote = useMemo(() => latestNote(loadCoachNotes()), []); // buổi nói gần nhất (bài tập buổi sau)
   const profile = useMemo(() => speakingProfile(loadSpeaking()), []); // điểm yếu để cá nhân hoá lộ trình
   const didAssessToday = useMemo(() => assessedToday(loadSpeaking(), now), [now]);
+  const didWarmupToday = useMemo(() => warmupToday(loadWarmup(), now), [now]);
   const reviewDone = todayDone >= goal;
   const topics = useMemo(() => [...new Set(cards.map((c) => c.c))], [cards]);
 
@@ -122,6 +124,7 @@ export default function Dashboard({ cards, getState, onStart, onReset, productio
       {/* LỘ TRÌNH HÔM NAY — cá nhân hoá theo điểm yếu */}
       <div className="sec-lab">Lộ trình hôm nay{targetLabel && <span className="plan-target"> · 🎯 mục tiêu: {targetLabel}</span>}</div>
       <div className="plan">
+        <PlanStep done={didWarmupToday} track label="🎤 Khởi động 1 phút" sub="nói tự do — đo tốc độ & filler" onClick={onWarmup} />
         <PlanStep track={false} label="🎙️ Luyện nói ~5 phút" sub={voiceSub} onClick={goVoice} />
         <PlanStep done={didAssessToday} track label="🎯 Đánh giá nói 1 bài" sub={assessSub} onClick={goAssess} />
         <PlanStep done={reviewDone} track label={`📚 Ôn từ vựng — ${Math.min(todayDone, goal)}/${goal} thẻ`} sub={reviewSub} onClick={() => onStart({ scope })} />

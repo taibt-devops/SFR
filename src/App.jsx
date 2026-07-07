@@ -11,6 +11,7 @@ import StudySession from "./components/StudySession.jsx";
 import MiniStory from "./components/MiniStory.jsx";
 import VoiceChat from "./components/VoiceChat.jsx";
 import SpeakingAssess from "./components/SpeakingAssess.jsx";
+import WarmupTalk from "./components/WarmupTalk.jsx";
 import ProgressTopics from "./components/ProgressTopics.jsx";
 import TopicDetail from "./components/TopicDetail.jsx";
 
@@ -81,6 +82,11 @@ function AppMain() {
     );
   }
 
+  // ── Khởi động nói 1 phút ──
+  if (view === "warmup") {
+    return <WarmupTalk onBack={() => setView("home")} />;
+  }
+
   // ── Mini-story ──
   if (view === "story") {
     return <MiniStory dueWords={dueWords} scopeLabel={scopeLabel} onBack={() => setView("home")} />;
@@ -138,6 +144,7 @@ function AppMain() {
       onStory={() => setView("story")}
       onVoice={() => { setRoleplayOn(false); setView("voice"); }}
       onRoleplay={() => { setRoleplayOn(true); setView("voice"); }}
+      onWarmup={() => setView("warmup")}
       onAssess={() => setView("assess")}
       onProfile={() => setView("progress")}
     />
