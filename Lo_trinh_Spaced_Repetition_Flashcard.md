@@ -392,7 +392,7 @@ Mọi thứ rất nhẹ (proxy ~30–50MB RAM, frontend tĩnh); phần "nặng" 
 
 ### 5.1. Đa dạng kiểu ôn (Varied Retrieval) — `srs/cardTypes.js`
 
-Mỗi thẻ đến hạn được hỏi bằng **một** trong các kiểu sau (xoay vòng / ngẫu nhiên theo thẻ trong phiên). **Tất cả suy ra từ field sẵn có `{v,m,e,d,col}` — KHÔNG cần Claude:**
+Mỗi thẻ đến hạn được hỏi bằng **một** trong các kiểu sau (xoay vòng / ngẫu nhiên theo thẻ trong phiên). **Tất cả suy ra từ field sẵn có `{v,m,e,d,col}` — KHÔNG cần Claude** (riêng `speak` cần whisper local — M5):
 
 | Kiểu | Mặt trước | Người học làm | Cách chấm |
 |---|---|---|---|
@@ -401,6 +401,7 @@ Mỗi thẻ đến hạn được hỏi bằng **một** trong các kiểu sau (
 | `listen` | TTS đọc `v` (hoặc `e`) qua Web Speech | gõ lại từ/câu nghe được | **auto** → *gợi ý* `q` |
 | `produce` | `v` + yêu cầu "đặt 1 câu dùng từ này" | gõ/nói một câu | thủ công, đối chiếu `e`/`col` |
 | `reverse` | `d` (câu tiếng Việt) | nói/gõ lại câu tiếng Anh | thủ công, đối chiếu `e` |
+| `speak` | nghĩa `m` + yêu cầu "nói từ tiếng Anh" | bấm mic, **nói** từ (Whisper nghe) | **auto** (transcript chứa nguyên văn `v`) → *gợi ý* `q`; mic/whisper lỗi → nút "Hiện đáp án" chấm thủ công |
 
 - **Auto-chấm** (`cloze`/`listen`): so chuỗi *không phân biệt hoa thường + trim*. **Sai → gợi ý `q=2` (Chưa nhớ)** nhưng vẫn cho người học override; **Đúng → hiện thanh 4 nút bình thường**. `q` cuối cùng vẫn đi qua `review()` y như cũ (**KHÔNG vi phạm C1**: SM-2 vẫn nhận `q` rồi tính lịch).
 - **Sinh cloze:** thay token `v` trong `e` (case-insensitive, theo ranh giới từ) bằng `____`. Nếu `v` **không** xuất hiện nguyên dạng trong `e` (biến cách, vd `"rely"` ≠ `"reliable"`) → **fallback về `recall`**. Hàm thuần, có test.

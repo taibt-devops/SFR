@@ -1,5 +1,5 @@
-// Màn ôn đa kiểu (§5.1–5.2): recall / cloze / listen / produce / reverse.
-// Phase: "prompt" (hỏi) → "revealed" (lộ đáp án + 4 nút). Auto-chấm cloze/listen chỉ GỢI Ý q.
+// Màn ôn đa kiểu (§5.1–5.2): recall / cloze / listen / produce / reverse / speak.
+// Phase: "prompt" (hỏi) → "revealed" (lộ đáp án + 4 nút). Auto-chấm cloze/listen/speak chỉ GỢI Ý q.
 // Thuần UI — logic chọn kiểu/sinh cloze/so khớp ở srs/cardTypes.js; SM-2 không đổi.
 import { useCallback, useEffect, useMemo, useState } from "react";
 import RatingBar from "./RatingBar.jsx";
@@ -15,6 +15,7 @@ import {
   availableTypes,
   pickAdaptiveType,
   isAutoGraded,
+  checkSpokenWord,
 } from "../srs/cardTypes.js";
 
 const KEY_TO_Q = { 1: 2, 2: 3, 3: 4, 4: 5 };
@@ -103,7 +104,14 @@ export default function StudySession({ card, state, progress, productionMode, sc
     }
   }, [answer, card, type]);
 
-  const expected = type === "cloze" ? cloze?.answer : type === "listen" ? card.v : null;
+  const expected = type === "cloze" ? cloze?.answer : type === "listen" || type === "speak" ? card.v : null;
+
+  // speak: Whisper trả transcript → chấm (transcript chứa nguyên văn v) → lộ đáp án luôn.
+  const onSpokenHeard = useCallback((heard) => {
+    setAnswer(heard);
+    setGraded({ correct: checkSpokenWord(heard, card.v) });
+    setPhase("revealed");
+  }, [card]);
 
   const reveal = useCallback(() => {
     if (isAutoGraded(type)) setGraded({ correct: checkAnswer(answer, expected) });
@@ -150,11 +158,19 @@ export default function StudySession({ card, state, progress, productionMode, sc
             {(type === "produce" || type === "reverse") && answer.trim() && (
               <div className="fc-vi" style={{ marginTop: 12, opacity: 0.85 }}>Câu của bạn: “{answer.trim()}”</div>
             )}
+            {type === "speak" && answer.trim() && (
+              <div className="fc-vi" style={{ marginTop: 12, opacity: 0.85 }}>Bạn nói: “{answer.trim()}”</div>
+            )}
           </>
         ) : (
-          <PromptFace type={type} card={card} cloze={cloze} answer={answer} setAnswer={setAnswer} onSpeak={() => speak(card.v)} onSubmit={reveal} />
+          <PromptFace type={type} card={card} cloze={cloze} answer={answer} setAnswer={setAnswer} onSpeak={() => speak(card.v)} onSubmit={reveal} onHeard={onSpokenHeard} />
         )}
       </div>
+
+      {/* speak: không nói được / mic lỗi → vẫn lật xem đáp án, tự chấm bằng 4 nút */}
+      {phase === "prompt" && type === "speak" && (
+        <button className="cta-ghost" onClick={reveal}>Hiện đáp án</button>
+      )}
 
       {/* cloze/listen: tự chấm khi bấm Kiểm tra */}
       {phase === "prompt" && isAutoGraded(type) && (
@@ -180,6 +196,28 @@ export default function StudySession({ card, state, progress, productionMode, sc
       {phase === "revealed" && <ShadowPractice word={card.v} example={card.e} />}
       {phase === "revealed" && <RatingBar state={state} onRate={onRate} suggestedQ={sQ} />}
     </div>
+  );
+}
+
+// Kiểu "speak": nhìn nghĩa → bấm mic nói từ tiếng Anh (mic mở trong cú chạm — iOS). KHÔNG hiện e/col (lộ đáp án).
+function SpeakFace({ card, onHeard }) {
+  const { phase, result, error, start, stop } = useShadow();
+  useEffect(() => { if (result) onHeard(result.heard); }, [result, onHeard]);
+  return (
+    <>
+      <div className="fc-hint">Nói từ tiếng Anh có nghĩa là</div>
+      <div className="fc-mean" style={{ fontSize: 19, color: "var(--text)", marginTop: 10 }}>{card.m}</div>
+      <div style={{ marginTop: 18 }}>
+        {phase === "recording" ? (
+          <button className="cta-ghost cta-accent" style={{ marginTop: 0, width: "auto", padding: "10px 24px" }} onClick={stop}>■ Dừng</button>
+        ) : (
+          <button className="cta-ghost cta-accent" style={{ marginTop: 0, width: "auto", padding: "10px 24px" }} disabled={phase === "thinking"} onClick={() => start(card.v)}>
+            {phase === "thinking" ? "Đang nghe…" : "🎤 Nói"}
+          </button>
+        )}
+      </div>
+      {error && <p className="app-sub" style={{ color: "var(--red)", marginTop: 10 }}>{error}</p>}
+    </>
   );
 }
 
@@ -230,8 +268,9 @@ function CoachNote({ feedback }) {
   );
 }
 
-function PromptFace({ type, card, cloze, answer, setAnswer, onSpeak, onSubmit }) {
+function PromptFace({ type, card, cloze, answer, setAnswer, onSpeak, onSubmit, onHeard }) {
   const onEnter = (e) => { if (e.key === "Enter") { e.preventDefault(); onSubmit(); } };
+  if (type === "speak") return <SpeakFace card={card} onHeard={onHeard} />;
   if (type === "cloze") {
     return (
       <>
