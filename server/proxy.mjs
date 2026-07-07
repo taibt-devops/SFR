@@ -298,8 +298,25 @@ async function handlePatterns(body) {
   return { patterns: extractJsonArray(out) };
 }
 
+// Sinh tình huống ĐÓNG VAI theo CHỦ ĐỀ từ vựng đang học (map chặt topic). Client fallback kịch bản soạn tay.
+async function handleScenario(body) {
+  const { topic = "", level = "A2" } = body;
+  const out = await callClaude({
+    maxTokens: 300,
+    system:
+      'Bạn thiết kế MỘT tình huống đóng vai (roleplay) để luyện NÓI tiếng Anh xoay quanh chủ đề "' + topic + '" (CEFR ' + level + "). " +
+      "Tình huống phải ĐỜI THƯỜNG, cụ thể, có nhiệm vụ/xung đột nhỏ buộc học viên phải nói nhiều và dùng từ vựng của chủ đề. " +
+      'CHỈ trả JSON: {"title":"tên tình huống ngắn (tiếng Việt)","aiRole":"vai của AI — người đối thoại (mô tả tiếng Việt)",' +
+      '"userRole":"vai học viên (tiếng Việt)","goal":"mục tiêu học viên phải đạt — cụ thể, đo được (tiếng Việt)"}. KHÔNG thêm gì ngoài JSON.',
+    messages: [{ role: "user", content: "chủ đề: " + topic }],
+  });
+  const o = extractJsonObject(out) || {};
+  return { scenario: o.title && o.aiRole && o.userRole && o.goal ? { id: "gen", ...o } : null };
+}
+
 const ROUTES = {
   "/": handleChat,
+  "/scenario": handleScenario,
   "/mine": handleMine,
   "/story": handleStory,
   "/coach": handleCoach,
