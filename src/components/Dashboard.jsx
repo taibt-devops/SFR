@@ -63,6 +63,20 @@ export default function Dashboard({ cards, getState, onStart, onReset, productio
   const goVoice = () => (needTopic ? setHint("Hãy chọn một chủ đề cụ thể ở trên để luyện nói.") : onVoice());
   const goAssess = () => (needTopic ? setHint("Hãy chọn một chủ đề cụ thể ở trên để đánh giá.") : onAssess());
 
+  // Chế độ nói trong hero: trò chuyện với gia sư vs đóng vai tình huống (nhớ lựa chọn lần trước).
+  const [voiceMode, setVoiceMode] = useState(() => {
+    try { return localStorage.getItem("phrasal-voicemode-v1") || "chat"; } catch { return "chat"; }
+  });
+  const pickMode = (m) => {
+    setVoiceMode(m);
+    try { localStorage.setItem("phrasal-voicemode-v1", m); } catch { /* bỏ qua */ }
+  };
+  // Roleplay chạy được cả khi "Tất cả" (tình huống ngẫu nhiên) — chỉ chế độ trò chuyện mới cần chủ đề.
+  const heroGo = voiceMode === "roleplay" ? onRoleplay : goVoice;
+  const heroSub = voiceMode === "roleplay"
+    ? needTopic ? "tình huống ngẫu nhiên — phỏng vấn, gọi món…" : `tình huống theo chủ đề "${scope}"`
+    : needTopic ? "chọn một chủ đề cụ thể ở trên" : "theo chủ đề & trình độ ở trên";
+
   return (
     <div className="app">
       <div className="app-head" style={{ justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
@@ -101,13 +115,14 @@ export default function Dashboard({ cards, getState, onStart, onReset, productio
             {CEFR_ORDER.map((l) => <option key={l} value={l}>{l}</option>)}
           </select>
         </label>
-        <button className="cta" style={{ marginTop: 14, opacity: needTopic ? 0.55 : 1 }} onClick={goVoice}>
+        {/* 2 chế độ, 1 nút: 💬 gia sư trò chuyện · 🎭 nhập vai tình huống (theo chủ đề nếu đã chọn) */}
+        <div className="chips" style={{ marginTop: 12 }}>
+          <span className={`chip ${voiceMode === "chat" ? "chip-on" : ""}`} onClick={() => pickMode("chat")}>💬 Trò chuyện</span>
+          <span className={`chip ${voiceMode === "roleplay" ? "chip-on" : ""}`} onClick={() => pickMode("roleplay")}>🎭 Đóng vai</span>
+        </div>
+        <button className="cta" style={{ marginTop: 12, opacity: needTopic && voiceMode === "chat" ? 0.55 : 1 }} onClick={heroGo}>
           <span className="cta-main">🎙️ Luyện nói</span>
-          <span className="cta-sub">{needTopic ? "chọn một chủ đề cụ thể ở trên" : "theo chủ đề & trình độ ở trên"}</span>
-        </button>
-        {/* Roleplay: chọn chủ đề cụ thể → Claude sinh tình huống THEO chủ đề; "Tất cả" → kịch bản soạn tay ngẫu nhiên */}
-        <button className="cta-ghost" onClick={onRoleplay}>
-          🎭 Đóng vai tình huống <span className="app-sub">— {needTopic ? "ngẫu nhiên: phỏng vấn, gọi món…" : `theo chủ đề "${scope}"`}</span>
+          <span className="cta-sub">{heroSub}</span>
         </button>
         {hint && <p className="app-sub" style={{ color: "var(--amber)", marginTop: 8, marginBottom: 0 }}>{hint}</p>}
       </div>
