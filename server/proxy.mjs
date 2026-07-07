@@ -215,21 +215,30 @@ async function handleAssess(body) {
     : { cefr: "?", summary: out.trim().slice(0, 300), dims: {}, strengths: [], weaknesses: [], fixes: [], tags: [] };
 }
 
-// Tổng kết cuối buổi luyện nói: phân tích các câu HỌC VIÊN đã nói → làm tốt / cần luyện / gợi ý buổi sau.
+// Tổng kết cuối buổi luyện nói: làm tốt / cần luyện / gợi ý buổi sau + RECAST — chọn tối đa 3 câu
+// học viên nói mà bản xứ sẽ nói khác đi, viết lại (upgrades) để họ nghe & đọc theo (shadowing câu của CHÍNH MÌNH).
 async function handleSummary(body) {
   const { history = [], level = "A2", topic = "" } = body;
   const said = history.filter((m) => m.role === "user").map((m) => m.content).join(" / ");
   const text = await callClaude({
-    maxTokens: 360,
+    maxTokens: 700,
     system:
-      'Bạn là gia sư tiếng Anh. Đây là các câu HỌC VIÊN đã nói trong buổi (CEFR ' + level + ', chủ đề "' + topic + '"): "' +
+      'Bạn là gia sư tiếng Anh. Đây là các câu HỌC VIÊN đã nói trong buổi (CEFR ' + level + ', chủ đề "' + topic + '"), ngăn bằng " / ": "' +
       said + '". Tổng kết NGẮN, ấm áp, bằng TIẾNG VIỆT. ' +
-      'CHỈ trả JSON: {"wentWell":["..",".."],"toImprove":["..",".."],"suggestion":"1 câu gợi ý cụ thể cho buổi sau"}. ' +
-      "wentWell = 1–2 điều họ làm tốt; toImprove = 1–2 điểm cụ thể cần luyện. KHÔNG markdown/emoji, KHÔNG thêm gì ngoài JSON.",
+      'CHỈ trả JSON: {"wentWell":["..",".."],"toImprove":["..",".."],"suggestion":"1 câu gợi ý cụ thể cho buổi sau",' +
+      '"upgrades":[{"orig":"câu học viên đã nói (nguyên văn)","better":"cách người bản xứ nói tự nhiên hơn, cùng ý, vừa mức ' + level + '"}]}. ' +
+      "wentWell = 1–2 điều họ làm tốt; toImprove = 1–2 điểm cụ thể cần luyện. " +
+      "upgrades = tối đa 3 câu ĐÁNG nâng cấp nhất (bỏ qua câu đã tốt / quá ngắn; transcript Whisper có thể nghe nhầm — đừng chọn câu vô nghĩa); " +
+      "better bằng TIẾNG ANH, không markdown (sẽ được đọc to). Nếu không có câu nào đáng sửa thì upgrades=[]. KHÔNG thêm gì ngoài JSON.",
     messages: [{ role: "user", content: said || "(học viên nói rất ít)" }],
   });
   const o = extractJsonObject(text) || {};
-  return { wentWell: o.wentWell || [], toImprove: o.toImprove || [], suggestion: o.suggestion || text.trim() };
+  return {
+    wentWell: o.wentWell || [],
+    toImprove: o.toImprove || [],
+    suggestion: o.suggestion || text.trim(),
+    upgrades: Array.isArray(o.upgrades) ? o.upgrades.filter((u) => u?.orig && u?.better).slice(0, 3) : [],
+  };
 }
 
 // Tra nghĩa nhanh: dịch 1 từ/cụm (hoặc cả câu) sang tiếng Việt theo NGỮ CẢNH. Dùng khi đang luyện nói.
