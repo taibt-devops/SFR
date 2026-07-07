@@ -71,7 +71,6 @@ export default function Dashboard({ cards, getState, onStart, onManage, onReset,
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
           <button className="manage-link" onClick={goAssess}>🎯 Đánh giá</button>
           <button className="manage-link" onClick={onProfile}>📈 Tiến trình</button>
-          <button className="manage-link" onClick={onManage}>Từ vựng</button>
         </div>
       </div>
 
@@ -126,8 +125,11 @@ export default function Dashboard({ cards, getState, onStart, onManage, onReset,
         <PlanStep done={reviewDone} track label={`📚 Ôn từ vựng — ${Math.min(todayDone, goal)}/${goal} thẻ`} sub={reviewSub} onClick={() => onStart({ scope })} />
       </div>
 
-      {/* TỪ VỰNG — nền cho luyện nói (theo chủ đề đã chọn ở trên) */}
-      <div className="sec-lab">Từ vựng {scope === "all" ? "" : `· ${scope}`}</div>
+      {/* TỪ VỰNG — nền cho luyện nói (theo chủ đề đã chọn ở trên). "Quản lý" = lối vào DataManager duy nhất. */}
+      <div className="sec-lab" style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+        <span>Từ vựng {scope === "all" ? "" : `· ${scope}`}</span>
+        <button className="link-exit" style={{ fontSize: 12 }} onClick={onManage}>Quản lý ›</button>
+      </div>
       <p className="app-sub" style={{ marginBottom: 10 }}>
         Đến hạn {counts.due} · Mới {counts.new} · Đã thuộc {counts.mastered} · tổng {cards.length} từ
       </p>
