@@ -13,6 +13,7 @@ import { speak } from "../utils/tts.js";
 import { useShadow } from "../hooks/useShadow.js";
 import { loadSpeaking, speakingProfile } from "../srs/speaking.js";
 import { loadCoachNotes, saveCoachNotes, addCoachNote, priorFocusText } from "../srs/coachMemory.js";
+import { pickScenario } from "../data/scenarios.js";
 
 const TOPICS = [
   "Giới thiệu bản thân & sở thích",
@@ -88,7 +89,7 @@ function SumSection({ title, items, color }) {
   );
 }
 
-export default function VoiceChat({ dueWords, addWord, level: levelProp, topic: topicProp, onBack }) {
+export default function VoiceChat({ dueWords, addWord, level: levelProp, topic: topicProp, roleplay = false, onBack }) {
   const [history, setHistory] = useState([]);
   const [phase, setPhase] = useState("idle"); // idle | recording | thinking | error
   const [error, setError] = useState("");
@@ -97,6 +98,7 @@ export default function VoiceChat({ dueWords, addWord, level: levelProp, topic: 
   const [saving, setSaving] = useState(null); // {sentence, word} (B18)
   const [level] = useState(levelProp || "A2"); // trình độ lấy từ trang chủ
   const [topic, setTopic] = useState(() => topicProp || pickTopic()); // chủ đề lấy từ trang chủ (hoặc tự xoay nếu "Tất cả")
+  const [scn, setScn] = useState(() => (roleplay ? pickScenario() : null)); // tình huống đóng vai (#4)
   const [summary, setSummary] = useState(null); // tổng kết cuối phiên
   const [lookup, setLookup] = useState(null); // tra nghĩa: {term, vi, loading}
   const focus = useMemo(buildFocus, []); // điểm cần tập trung (từ hồ sơ)
@@ -138,10 +140,10 @@ export default function VoiceChat({ dueWords, addWord, level: levelProp, topic: 
     setError("");
     // Trí nhớ liên buổi: nhắc điểm cần luyện (điểm yếu hồ sơ + toImprove buổi trước).
     const recall = [focus, priorFocusText(loadCoachNotes())].filter(Boolean).join(" · ");
-    reply([], dueWords, { level, focus, topic, opener: true, recall })
+    reply([], dueWords, { level, focus, topic, opener: true, recall, scenario: scn })
       .then((t) => { setHistory([{ role: "assistant", content: t }]); setPhase("idle"); })
       .catch((e) => { setError("Không lấy được câu mở đầu: " + String(e.message || e)); setPhase("error"); });
-  }, [dueWords, level, focus, topic]);
+  }, [dueWords, level, focus, topic, scn]);
 
   async function processTurn(blob) {
     setPhase("thinking");
@@ -152,7 +154,7 @@ export default function VoiceChat({ dueWords, addWord, level: levelProp, topic: 
       if (hit.length) setSpoken((s) => new Set([...s, ...hit]));
       const next = [...history, { role: "user", content: said }];
       setHistory(next);
-      const answer = await reply(next, dueWords, { level, focus, topic });
+      const answer = await reply(next, dueWords, { level, focus, topic, scenario: scn });
       setHistory([...next, { role: "assistant", content: answer }]);
       speak(answer);
       setPhase("idle");
@@ -219,18 +221,18 @@ export default function VoiceChat({ dueWords, addWord, level: levelProp, topic: 
   function endSession() {
     setPhase("thinking");
     setError("");
-    summarize({ history, level, topic })
+    summarize({ history, level, topic: scn ? scn.title : topic, scenario: scn })
       .then((s) => {
         setSummary(s);
         // Lưu tổng kết → trí nhớ gia sư (mở đầu buổi sau nhắc lại + "bài tập buổi sau" ở trang chủ).
-        saveCoachNotes(addCoachNote(loadCoachNotes(), { at: Date.now(), topic, level, ...s }));
+        saveCoachNotes(addCoachNote(loadCoachNotes(), { at: Date.now(), topic: scn ? scn.title : topic, level, ...s }));
         setPhase("idle");
       })
       .catch((e) => { setError("Không tổng kết được: " + String(e.message || e)); setPhase("error"); });
   }
   function newSession() {
     setHistory([]); setSpoken(new Set()); setShadow(null); setSummary(null); setError("");
-    setTopic(topicProp || pickTopic()); setPhase("idle");
+    setTopic(topicProp || pickTopic()); if (roleplay) setScn(pickScenario(scn?.id)); setPhase("idle");
   }
   // Bỏ lượt vừa rồi (câu đáp của app + lời mình nói) để thu lại — khi Whisper nghe nhầm.
   function redoLast() {
@@ -254,6 +256,16 @@ export default function VoiceChat({ dueWords, addWord, level: levelProp, topic: 
           <span className="app-title">Tổng kết buổi nói</span>
           <button className="link-exit" onClick={onBack}>← Về</button>
         </div>
+
+        {/* Roleplay: đạt mục tiêu tình huống chưa */}
+        {scn && summary.goalDone !== undefined && (
+          <div className="carry-note" style={{ marginTop: 14, ...(summary.goalDone ? {} : { borderColor: "rgba(251,191,36,.4)", background: "rgba(251,191,36,.08)" }) }}>
+            <div className="carry-head" style={summary.goalDone ? {} : { color: "var(--amber)" }}>
+              🎭 {scn.title} — {summary.goalDone ? "✅ Đạt mục tiêu" : "⏳ Chưa đạt mục tiêu"}
+            </div>
+            {summary.goalNote && <div className="carry-sub">{summary.goalNote}</div>}
+          </div>
+        )}
 
         <div className="sec-lab" style={{ marginTop: 14 }}>Từ đang ôn đã dùng ({spoken.size}/{dueWords.length})</div>
         <div className="chips">
@@ -289,7 +301,7 @@ export default function VoiceChat({ dueWords, addWord, level: levelProp, topic: 
   return (
     <div className="app">
       <div className="study-top">
-        <span className="app-title">Luyện nói</span>
+        <span className="app-title">{scn ? "🎭 Đóng vai" : "Luyện nói"}</span>
         <span style={{ display: "inline-flex", alignItems: "center", gap: 14 }}>
           {/* Góc phải: mở popup thêm từ vựng (tự điền câu gần nhất của gia sư làm ví dụ) */}
           <button
@@ -304,8 +316,21 @@ export default function VoiceChat({ dueWords, addWord, level: levelProp, topic: 
           <button className="link-exit" onClick={onBack}>← Về</button>
         </span>
       </div>
-      <ContextBar label={topic} level={level} />
-      {focus && <p className="app-sub" style={{ marginTop: 6 }}>🎯 Luyện trúng: {focus}</p>}
+      <ContextBar label={scn ? scn.title : topic} level={level} />
+      {/* Thẻ tình huống: vai của bạn + mục tiêu; đổi được khi CHƯA bắt đầu */}
+      {scn && (
+        <div className="carry-note" style={{ marginTop: 10 }}>
+          <div className="carry-head">🎭 {scn.title}</div>
+          <div className="carry-sub">Bạn là <b>{scn.userRole}</b> · đối phương: {scn.aiRole}</div>
+          <div className="carry-sub">🎯 Nhiệm vụ: {scn.goal}</div>
+          {!started && history.length === 0 && (
+            <button className="link-exit" style={{ marginTop: 6, color: "var(--teal)" }} onClick={() => setScn(pickScenario(scn.id))}>
+              🎲 Đổi tình huống
+            </button>
+          )}
+        </div>
+      )}
+      {!scn && focus && <p className="app-sub" style={{ marginTop: 6 }}>🎯 Luyện trúng: {focus}</p>}
       <TtsControls />
 
       {/* B16: checklist từ due đã nói */}
@@ -317,7 +342,9 @@ export default function VoiceChat({ dueWords, addWord, level: levelProp, topic: 
       </div>
 
       <div className="chat-log" ref={logRef}>
-        {history.length === 0 && phase !== "thinking" && <p className="empty-msg">Chọn trình độ & chủ đề ở trên, rồi bấm “Bắt đầu buổi nói”.</p>}
+        {history.length === 0 && phase !== "thinking" && (
+          <p className="empty-msg">{scn ? "Đọc nhiệm vụ ở trên rồi bấm “Bắt đầu buổi nói” — đối phương sẽ mở lời trước." : "Chọn trình độ & chủ đề ở trên, rồi bấm “Bắt đầu buổi nói”."}</p>
+        )}
         {history.map((m, i) => (
           <div key={i} className={`bubble ${m.role === "user" ? "bubble-user" : "bubble-ai"}`}>
             <Clickable text={m.content} onWord={(w) => lookupTerm(w, m.content)} />

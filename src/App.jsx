@@ -29,10 +29,11 @@ function AppMain() {
   const [scope, setScope] = useState("all"); // chủ đề (danh mục từ vựng, hoặc "all")
   const [level, setLevel] = useState(() => latestLevel(loadSpeaking()) || "A2"); // trình độ nói (CEFR)
   const [topicView, setTopicView] = useState(null); // chủ đề đang xem chi tiết ở Tiến trình
+  const [roleplayOn, setRoleplayOn] = useState(false); // luyện nói kiểu đóng vai tình huống (#4)
 
   // Hành động từ Chi tiết chủ đề: chốt chủ đề rồi mở màn tương ứng.
   const goTopicAssess = (t) => { setScope(t); setView("assess"); };
-  const goTopicVoice = (t) => { setScope(t); setView("voice"); };
+  const goTopicVoice = (t) => { setScope(t); setRoleplayOn(false); setView("voice"); };
   const goTopicReview = (t) => { setScope(t); study.start({ scope: t }); };
 
   // Từ due theo ĐÚNG chủ đề đã chọn — làm nhiên liệu cho luyện nói / mini-story.
@@ -87,7 +88,7 @@ function AppMain() {
 
   // ── Luyện nói ── (dùng trình độ + chủ đề đã chọn ở trang chủ)
   if (view === "voice") {
-    return <VoiceChat dueWords={dueWords} addWord={vocabApi.addWord} level={level} topic={speakTopic} onBack={() => setView("home")} />;
+    return <VoiceChat dueWords={dueWords} addWord={vocabApi.addWord} level={level} topic={roleplayOn ? "" : speakTopic} roleplay={roleplayOn} onBack={() => setView("home")} />;
   }
 
   // ── Đánh giá nói (CEFR) ──
@@ -135,7 +136,8 @@ function AppMain() {
       level={level}
       onLevel={setLevel}
       onStory={() => setView("story")}
-      onVoice={() => setView("voice")}
+      onVoice={() => { setRoleplayOn(false); setView("voice"); }}
+      onRoleplay={() => { setRoleplayOn(true); setView("voice"); }}
       onAssess={() => setView("assess")}
       onProfile={() => setView("progress")}
     />

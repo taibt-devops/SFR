@@ -2,12 +2,12 @@
 import { authHeaders } from "./auth.js";
 const URL = import.meta.env.VITE_PROXY_URL;
 
-export async function summarize({ history, level = "A2", topic = "" }) {
+export async function summarize({ history, level = "A2", topic = "", scenario = null }) {
   if (!URL) throw new Error("Chưa cấu hình VITE_PROXY_URL (xem .env.example) và bật proxy.");
   const r = await fetch(URL.replace(/\/$/, "") + "/summary", {
     method: "POST",
     headers: authHeaders(),
-    body: JSON.stringify({ history, level, topic }),
+    body: JSON.stringify({ history, level, topic, scenario }),
   });
   if (!r.ok) throw new Error("proxy lỗi " + r.status);
   const data = await r.json();
@@ -17,5 +17,7 @@ export async function summarize({ history, level = "A2", topic = "" }) {
     toImprove: data.toImprove || [],
     suggestion: data.suggestion || "",
     upgrades: data.upgrades || [], // recast: [{orig, better}] tối đa 3 câu
+    goalDone: data.goalDone, // roleplay: đạt mục tiêu chưa (undefined nếu không phải roleplay)
+    goalNote: data.goalNote || "",
   };
 }

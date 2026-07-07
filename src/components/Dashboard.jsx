@@ -10,7 +10,7 @@ import { loadCoachNotes, latestNote } from "../srs/coachMemory.js";
 const DIM_VI = { fluency: "trôi chảy", lexical: "vốn từ", grammar: "ngữ pháp", pronunciation: "phát âm" };
 import { dueLabel } from "../utils/format.js";
 
-export default function Dashboard({ cards, getState, onStart, onReset, productionMode, onToggleProduction, stats, scope, onScope, level, onLevel, onStory, onVoice, onAssess, onProfile }) {
+export default function Dashboard({ cards, getState, onStart, onReset, productionMode, onToggleProduction, stats, scope, onScope, level, onLevel, onStory, onVoice, onRoleplay, onAssess, onProfile }) {
   const now = Date.now();
   const streak = streakFor(stats, now);
   const todayDone = todayReviewedFor(stats, now);
@@ -103,6 +103,8 @@ export default function Dashboard({ cards, getState, onStart, onReset, productio
           <span className="cta-main">🎙️ Luyện nói</span>
           <span className="cta-sub">{needTopic ? "chọn một chủ đề cụ thể ở trên" : "theo chủ đề & trình độ ở trên"}</span>
         </button>
+        {/* Roleplay không cần chủ đề từ vựng — tình huống tự chọn ngẫu nhiên, đổi được trước khi bắt đầu */}
+        <button className="cta-ghost" onClick={onRoleplay}>🎭 Đóng vai tình huống <span className="app-sub">— phỏng vấn, gọi món, mặc cả…</span></button>
         {hint && <p className="app-sub" style={{ color: "var(--amber)", marginTop: 8, marginBottom: 0 }}>{hint}</p>}
       </div>
 
