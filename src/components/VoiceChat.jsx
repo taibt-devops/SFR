@@ -170,9 +170,19 @@ export default function VoiceChat({ dueWords, addWord, level: levelProp, topic: 
     if (!saving?.word.trim()) return;
     // Lưu vào ĐÚNG chủ đề đang luyện (topicProp). Chỉ khi không xác định được mới gom "Sổ lỗi".
     const c = (topicProp && topicProp.trim()) || "Sổ lỗi (luyện nói)";
-    const r = addWord({ c, v: saving.word.trim(), m: "", e: saving.sentence, d: "", col: "" });
+    const r = addWord({ c, v: saving.word.trim(), m: (saving.m || "").trim(), e: saving.sentence, d: "", col: "" });
     setSaving(null);
     setError(r.ok ? "" : r.error || "Lưu lỗi");
+  }
+
+  // Tự dịch nghĩa cho từ đang nhập trong popup (theo ngữ cảnh câu ví dụ nếu có).
+  function autoMeaning() {
+    const w = saving?.word.trim();
+    if (!w) return;
+    setSaving((s) => ({ ...s, mLoading: true }));
+    translateWord(w, saving.sentence || w)
+      .then((vi) => setSaving((s) => (s ? { ...s, m: vi, mLoading: false } : s)))
+      .catch(() => setSaving((s) => (s ? { ...s, mLoading: false } : s)));
   }
 
   function endSession() {
@@ -302,6 +312,15 @@ export default function VoiceChat({ dueWords, addWord, level: levelProp, topic: 
             <input className="field" autoFocus placeholder="từ/cụm muốn lưu…" value={saving.word}
               onChange={(e) => setSaving({ ...saving, word: e.target.value })}
               onKeyDown={(e) => e.key === "Enter" && saveCard()} />
+            <div className="field-wrap" style={{ marginTop: 8 }}>
+              <input className="field" placeholder="nghĩa tiếng Việt…" value={saving.m || ""}
+                onChange={(e) => setSaving({ ...saving, m: e.target.value })}
+                onKeyDown={(e) => e.key === "Enter" && saveCard()} />
+              <button className="link-exit" title="Tự dịch nghĩa" disabled={!saving.word.trim() || saving.mLoading}
+                style={{ fontSize: 18, flexShrink: 0 }} onClick={autoMeaning}>
+                {saving.mLoading ? "…" : "🌐"}
+              </button>
+            </div>
             <textarea className="field" rows={2} placeholder="câu ví dụ (tuỳ chọn)…" value={saving.sentence}
               style={{ marginTop: 8 }}
               onChange={(e) => setSaving({ ...saving, sentence: e.target.value })} />
