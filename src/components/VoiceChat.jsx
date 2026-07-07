@@ -10,6 +10,7 @@ import { matchSpoken, diffWords } from "../utils/voiceMatch.js";
 import ContextBar from "./ContextBar.jsx";
 import TtsControls from "./TtsControls.jsx";
 import { speak } from "../utils/tts.js";
+import { useShadow } from "../hooks/useShadow.js";
 import { loadSpeaking, speakingProfile } from "../srs/speaking.js";
 import { loadCoachNotes, saveCoachNotes, addCoachNote, priorFocusText } from "../srs/coachMemory.js";
 
@@ -45,6 +46,35 @@ function Clickable({ text, onWord }) {
     ) : (
       <span key={i}>{tok}</span>
     )
+  );
+}
+
+// Recast (tổng kết buổi): câu học viên nói → bản bản-xứ. Nghe mẫu + đọc theo lại chính câu của mình.
+function UpgradeItem({ u }) {
+  const { phase, result, error, start, stop } = useShadow();
+  return (
+    <div className="story-text" style={{ fontSize: 14, marginTop: 10, padding: "12px 14px" }}>
+      <div className="app-sub">Bạn nói: “{u.orig}”</div>
+      <div style={{ marginTop: 6, color: "var(--teal)", fontWeight: 600 }}>→ {u.better}</div>
+      <div style={{ marginTop: 8 }}>
+        <button className="link-exit" onClick={() => speak(u.better)}>🔊 Nghe</button>
+        {phase === "recording" ? (
+          <button className="link-exit" style={{ marginLeft: 12, color: "var(--red)" }} onClick={stop}>■ Dừng</button>
+        ) : (
+          <button className="link-exit" style={{ marginLeft: 12 }} disabled={phase === "thinking"} onClick={() => start(u.better)}>
+            {phase === "thinking" ? "Đang nghe…" : "🎯 Đọc theo"}
+          </button>
+        )}
+      </div>
+      {error && <p className="app-sub" style={{ color: "var(--red)", marginTop: 6 }}>{error}</p>}
+      {result && (
+        <p className="app-sub" style={{ marginTop: 6 }}>
+          {result.result.map((x, i) => (
+            <span key={i} style={{ color: x.ok ? "var(--green)" : "var(--red)" }}>{x.word} </span>
+          ))}
+        </p>
+      )}
+    </div>
   );
 }
 
@@ -235,6 +265,14 @@ export default function VoiceChat({ dueWords, addWord, level: levelProp, topic: 
 
         <SumSection title="✅ Làm tốt" items={summary.wentWell} color="var(--green)" />
         <SumSection title="🔧 Cần luyện" items={summary.toImprove} color="var(--amber)" />
+
+        {/* Recast: nghe bản nâng cấp rồi đọc theo — sửa đúng câu MÌNH vừa nói */}
+        {summary.upgrades?.length > 0 && (
+          <>
+            <div className="sec-lab" style={{ color: "var(--blue)" }}>⬆️ Câu của bạn → cách nói tự nhiên hơn</div>
+            {summary.upgrades.map((u, i) => <UpgradeItem key={i} u={u} />)}
+          </>
+        )}
         {summary.suggestion && (
           <p className="empty-msg" style={{ marginTop: 18, textAlign: "left", color: "var(--text)" }}>
             💡 <b>Buổi sau:</b> {summary.suggestion}

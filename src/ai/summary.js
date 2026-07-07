@@ -12,5 +12,10 @@ export async function summarize({ history, level = "A2", topic = "" }) {
   if (!r.ok) throw new Error("proxy lỗi " + r.status);
   const data = await r.json();
   if (data.error) throw new Error(data.error);
-  return { wentWell: data.wentWell || [], toImprove: data.toImprove || [], suggestion: data.suggestion || "" };
+  return {
+    wentWell: data.wentWell || [],
+    toImprove: data.toImprove || [],
+    suggestion: data.suggestion || "",
+    upgrades: data.upgrades || [], // recast: [{orig, better}] tối đa 3 câu
+  };
 }
