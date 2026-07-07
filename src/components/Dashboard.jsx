@@ -10,7 +10,7 @@ import { loadCoachNotes, latestNote } from "../srs/coachMemory.js";
 const DIM_VI = { fluency: "trôi chảy", lexical: "vốn từ", grammar: "ngữ pháp", pronunciation: "phát âm" };
 import { dueLabel } from "../utils/format.js";
 
-export default function Dashboard({ cards, getState, onStart, onManage, onReset, productionMode, onToggleProduction, stats, scope, onScope, level, onLevel, onStory, onVoice, onAssess, onProfile }) {
+export default function Dashboard({ cards, getState, onStart, onReset, productionMode, onToggleProduction, stats, scope, onScope, level, onLevel, onStory, onVoice, onAssess, onProfile }) {
   const now = Date.now();
   const streak = streakFor(stats, now);
   const todayDone = todayReviewedFor(stats, now);
@@ -125,11 +125,8 @@ export default function Dashboard({ cards, getState, onStart, onManage, onReset,
         <PlanStep done={reviewDone} track label={`📚 Ôn từ vựng — ${Math.min(todayDone, goal)}/${goal} thẻ`} sub={reviewSub} onClick={() => onStart({ scope })} />
       </div>
 
-      {/* TỪ VỰNG — nền cho luyện nói (theo chủ đề đã chọn ở trên). "Quản lý" = lối vào DataManager duy nhất. */}
-      <div className="sec-lab" style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-        <span>Từ vựng {scope === "all" ? "" : `· ${scope}`}</span>
-        <button className="link-exit" style={{ fontSize: 12 }} onClick={onManage}>Quản lý ›</button>
-      </div>
+      {/* TỪ VỰNG — nền cho luyện nói (theo chủ đề đã chọn ở trên) */}
+      <div className="sec-lab">Từ vựng {scope === "all" ? "" : `· ${scope}`}</div>
       <p className="app-sub" style={{ marginBottom: 10 }}>
         Đến hạn {counts.due} · Mới {counts.new} · Đã thuộc {counts.mastered} · tổng {cards.length} từ
       </p>

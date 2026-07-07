@@ -8,7 +8,6 @@ import { useVocab } from "./hooks/useVocab.js";
 import { dueLabel } from "./utils/format.js";
 import Dashboard from "./components/Dashboard.jsx";
 import StudySession from "./components/StudySession.jsx";
-import DataManager from "./components/DataManager.jsx";
 import MiniStory from "./components/MiniStory.jsx";
 import VoiceChat from "./components/VoiceChat.jsx";
 import SpeakingAssess from "./components/SpeakingAssess.jsx";
@@ -81,19 +80,6 @@ function AppMain() {
     );
   }
 
-  // ── Quản lý dữ liệu ──
-  if (view === "data") {
-    return (
-      <DataManager
-        userWords={vocabApi.userWords}
-        importText={vocabApi.importText}
-        removeWord={vocabApi.removeWord}
-        exportText={vocabApi.exportText}
-        onBack={() => setView("home")}
-      />
-    );
-  }
-
   // ── Mini-story ──
   if (view === "story") {
     return <MiniStory dueWords={dueWords} scopeLabel={scopeLabel} onBack={() => setView("home")} />;
@@ -140,7 +126,6 @@ function AppMain() {
       cards={vocabApi.vocab}
       getState={study.getState}
       onStart={study.start}
-      onManage={() => setView("data")}
       onReset={study.resetProgress}
       productionMode={productionMode}
       onToggleProduction={() => setProductionMode((v) => !v)}
