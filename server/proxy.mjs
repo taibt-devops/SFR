@@ -76,20 +76,29 @@ function extractJsonArray(text) {
 
 // ── Handlers ──
 async function handleChat(body) {
-  const { history = [], dueWords = [], level = "A2", focus = "", topic = "", opener = false, recall = "" } = body;
+  const { history = [], dueWords = [], level = "A2", focus = "", topic = "", opener = false, recall = "", scenario = null } = body;
+
+  // Mô tả vai (roleplay §đề xuất #4): Claude NHẬP VAI đối phương, học viên phải đạt mục tiêu tình huống.
+  const rp = scenario?.title
+    ? 'NHẬP VAI tình huống "' + scenario.title + '": bạn là ' + scenario.aiRole + "; học viên là " + scenario.userRole +
+      ". Mục tiêu học viên phải đạt: " + scenario.goal + ". GIỮ ĐÚNG VAI suốt hội thoại, phản ứng như người thật " +
+      "(được phép làm khó NHẸ đúng kiểu tình huống); khi học viên đạt mục tiêu thì xác nhận tự nhiên trong vai. "
+    : "";
 
   // App chủ động MỞ LỜI: chào + 1 câu hỏi mở để bắt đầu chủ đề (học viên khỏi bí "nói gì trước").
   if (opener) {
     const text = await callClaude({
       maxTokens: 150,
-      system:
-        "Bạn là gia sư luyện nói tiếng Anh thân thiện, NHỚ học viên qua các buổi. MỞ ĐẦU buổi nói. " +
-        (recall
-          ? "Buổi trước học viên cần luyện: " + recall + ". Hãy nhắc lại điều này thật NHẸ & ẤM ÁP bằng tiếng Anh (1 câu ngắn, kiểu 'Last time we worked on… let's keep an eye on it today'), RỒI "
-          : "") +
-        'đặt MỘT câu hỏi mở để học viên bắt đầu nói về chủ đề "' + topic + '". Mức CEFR ' + level +
-        " (A1–A2: câu rất đơn giản, chậm rõ; B1–B2: tự nhiên hơn; C1–C2: như người bản xứ). " +
-        "Tiếng Anh, " + (recall ? "2–3 câu" : "1–2 câu") + ", KHÔNG markdown/emoji.",
+      system: rp
+        ? rp + "Nói LỜI THOẠI MỞ MÀN của vai bạn — vào thẳng tình huống, KHÔNG giải thích luật chơi. Mức CEFR " + level +
+          " (A1–A2: câu rất đơn giản, chậm rõ; B1–B2: tự nhiên hơn; C1–C2: như người bản xứ). Tiếng Anh, 1–2 câu, KHÔNG markdown/emoji."
+        : "Bạn là gia sư luyện nói tiếng Anh thân thiện, NHỚ học viên qua các buổi. MỞ ĐẦU buổi nói. " +
+          (recall
+            ? "Buổi trước học viên cần luyện: " + recall + ". Hãy nhắc lại điều này thật NHẸ & ẤM ÁP bằng tiếng Anh (1 câu ngắn, kiểu 'Last time we worked on… let's keep an eye on it today'), RỒI "
+            : "") +
+          'đặt MỘT câu hỏi mở để học viên bắt đầu nói về chủ đề "' + topic + '". Mức CEFR ' + level +
+          " (A1–A2: câu rất đơn giản, chậm rõ; B1–B2: tự nhiên hơn; C1–C2: như người bản xứ). " +
+          "Tiếng Anh, " + (recall ? "2–3 câu" : "1–2 câu") + ", KHÔNG markdown/emoji.",
       messages: [{ role: "user", content: "Bắt đầu." }],
     });
     return { text };
@@ -104,7 +113,7 @@ async function handleChat(body) {
     messages: msgs,
     maxTokens: 320,
     system:
-      "Bạn là gia sư luyện NÓI tiếng Anh thân thiện, dạy theo trình độ. " +
+      (rp || "Bạn là gia sư luyện NÓI tiếng Anh thân thiện, dạy theo trình độ. ") +
       "Trình độ học viên: CEFR " + level + ". ĐIỀU CHỈNH ĐỘ KHÓ cho vừa: " +
       "A1–A2 = câu NGẮN, từ rất thông dụng, nói chậm-rõ; B1–B2 = câu dài hơn, từ đa dạng, vài cụm thành ngữ; " +
       "C1–C2 = nói tự nhiên như người bản xứ, thành ngữ & sắc thái. " +
@@ -218,8 +227,12 @@ async function handleAssess(body) {
 // Tổng kết cuối buổi luyện nói: làm tốt / cần luyện / gợi ý buổi sau + RECAST — chọn tối đa 3 câu
 // học viên nói mà bản xứ sẽ nói khác đi, viết lại (upgrades) để họ nghe & đọc theo (shadowing câu của CHÍNH MÌNH).
 async function handleSummary(body) {
-  const { history = [], level = "A2", topic = "" } = body;
+  const { history = [], level = "A2", topic = "", scenario = null } = body;
   const said = history.filter((m) => m.role === "user").map((m) => m.content).join(" / ");
+  const goal = scenario?.goal
+    ? ' Buổi này là ROLEPLAY "' + scenario.title + '" — mục tiêu học viên: ' + scenario.goal +
+      '. Thêm vào JSON: "goalDone":true|false,"goalNote":"1 câu tiếng Việt: đạt/chưa đạt mục tiêu & vì sao".'
+    : "";
   const text = await callClaude({
     maxTokens: 700,
     system:
@@ -229,7 +242,8 @@ async function handleSummary(body) {
       '"upgrades":[{"orig":"câu học viên đã nói (nguyên văn)","better":"cách người bản xứ nói tự nhiên hơn, cùng ý, vừa mức ' + level + '"}]}. ' +
       "wentWell = 1–2 điều họ làm tốt; toImprove = 1–2 điểm cụ thể cần luyện. " +
       "upgrades = tối đa 3 câu ĐÁNG nâng cấp nhất (bỏ qua câu đã tốt / quá ngắn; transcript Whisper có thể nghe nhầm — đừng chọn câu vô nghĩa); " +
-      "better bằng TIẾNG ANH, không markdown (sẽ được đọc to). Nếu không có câu nào đáng sửa thì upgrades=[]. KHÔNG thêm gì ngoài JSON.",
+      "better bằng TIẾNG ANH, không markdown (sẽ được đọc to). Nếu không có câu nào đáng sửa thì upgrades=[]." +
+      goal + " KHÔNG thêm gì ngoài JSON.",
     messages: [{ role: "user", content: said || "(học viên nói rất ít)" }],
   });
   const o = extractJsonObject(text) || {};
@@ -238,6 +252,7 @@ async function handleSummary(body) {
     toImprove: o.toImprove || [],
     suggestion: o.suggestion || text.trim(),
     upgrades: Array.isArray(o.upgrades) ? o.upgrades.filter((u) => u?.orig && u?.better).slice(0, 3) : [],
+    ...(scenario?.goal ? { goalDone: !!o.goalDone, goalNote: o.goalNote || "" } : {}),
   };
 }
 
