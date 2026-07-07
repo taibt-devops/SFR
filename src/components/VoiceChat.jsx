@@ -247,6 +247,16 @@ export default function VoiceChat({ dueWords, addWord, level: levelProp, topic: 
         </span>
       </div>
       <ContextBar label={topic} level={level} />
+      {/* Icon nổi góc phải: mở popup thêm từ vựng (tự điền câu gần nhất của gia sư làm ví dụ) */}
+      <button
+        className="fab-add"
+        title="Thêm từ vựng"
+        aria-label="Thêm từ vựng"
+        onClick={() => setSaving({
+          sentence: [...history].reverse().find((m) => m.role === "assistant")?.content || "",
+          word: "",
+        })}
+      >＋</button>
       {focus && <p className="app-sub" style={{ marginTop: 6 }}>🎯 Luyện trúng: {focus}</p>}
       <TtsControls />
 
@@ -268,7 +278,6 @@ export default function VoiceChat({ dueWords, addWord, level: levelProp, topic: 
                 <button className="link-exit" onClick={() => speak(m.content)}>🔊</button>
                 <button className="link-exit" style={{ marginLeft: 10 }} onClick={() => lookupTerm(m.content, m.content)}>🌐 Dịch câu</button>
                 <button className="link-exit" style={{ marginLeft: 10 }} onClick={() => startRecording({ type: "shadow", target: m.content })}>🎯 Đọc theo</button>
-                <button className="link-exit" style={{ marginLeft: 10 }} onClick={() => setSaving({ sentence: m.content, word: "" })}>＋ Thẻ</button>
               </span>
             )}
           </div>
@@ -286,16 +295,21 @@ export default function VoiceChat({ dueWords, addWord, level: levelProp, topic: 
         </div>
       )}
 
-      {/* B18: lưu thành thẻ */}
+      {/* B18: popup lưu thành thẻ (mở từ icon nổi góc phải) */}
       {saving && (
-        <div className="story-text" style={{ fontSize: 14 }}>
-          <div className="app-sub" style={{ marginBottom: 6 }}>Lưu thành thẻ (ví dụ: “{saving.sentence}”)</div>
-          <input className="field" autoFocus placeholder="từ/cụm muốn lưu…" value={saving.word}
-            onChange={(e) => setSaving({ ...saving, word: e.target.value })}
-            onKeyDown={(e) => e.key === "Enter" && saveCard()} />
-          <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-            <button className="cta-ghost" style={{ marginTop: 0 }} disabled={!saving.word.trim()} onClick={saveCard}>Lưu</button>
-            <button className="cta-ghost" style={{ marginTop: 0 }} onClick={() => setSaving(null)}>Huỷ</button>
+        <div className="modal-overlay" onClick={() => setSaving(null)}>
+          <div className="modal-box" onClick={(e) => e.stopPropagation()}>
+            <div className="sec-lab" style={{ margin: "0 0 9px" }}>＋ Thêm từ vựng</div>
+            <input className="field" autoFocus placeholder="từ/cụm muốn lưu…" value={saving.word}
+              onChange={(e) => setSaving({ ...saving, word: e.target.value })}
+              onKeyDown={(e) => e.key === "Enter" && saveCard()} />
+            <textarea className="field" rows={2} placeholder="câu ví dụ (tuỳ chọn)…" value={saving.sentence}
+              style={{ marginTop: 8 }}
+              onChange={(e) => setSaving({ ...saving, sentence: e.target.value })} />
+            <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+              <button className="cta-ghost" style={{ marginTop: 0 }} disabled={!saving.word.trim()} onClick={saveCard}>Lưu</button>
+              <button className="cta-ghost" style={{ marginTop: 0 }} onClick={() => setSaving(null)}>Huỷ</button>
+            </div>
           </div>
         </div>
       )}
