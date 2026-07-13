@@ -7,6 +7,7 @@ import { streakFor, todayReviewedFor } from "../srs/stats.js";
 import { loadSpeaking, latestLevel, assessedToday, speakingProfile, CEFR_ORDER } from "../srs/speaking.js";
 import { loadCoachNotes, latestNote } from "../srs/coachMemory.js";
 import { loadWarmup, warmupToday } from "../srs/warmup.js";
+import ProgressChart from "./ProgressChart.jsx";
 
 const DIM_VI = { fluency: "trôi chảy", lexical: "vốn từ", grammar: "ngữ pháp", pronunciation: "phát âm" };
 import { dueLabel } from "../utils/format.js";
@@ -146,6 +147,10 @@ export default function Dashboard({ cards, getState, onStart, onReset, productio
         <PlanStep done={didAssessToday} track label="🎯 Đánh giá nói 1 bài" sub={assessSub} onClick={goAssess} />
         <PlanStep done={reviewDone} track label={`📚 Ôn từ vựng — ${Math.min(todayDone, goal)}/${goal} thẻ`} sub={reviewSub} onClick={() => onStart({ scope })} />
       </div>
+
+      {/* TIẾN ĐỘ 14 NGÀY — phút nói + từ học mỗi ngày (dữ liệu srs/daily.js) */}
+      <div className="sec-lab">Tiến độ 14 ngày</div>
+      <ProgressChart />
 
       {/* TỪ VỰNG — nền cho luyện nói (theo chủ đề đã chọn ở trên) */}
       <div className="sec-lab">Từ vựng {scope === "all" ? "" : `· ${scope}`}</div>

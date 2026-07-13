@@ -223,3 +223,10 @@ select.field:hover { border-color: var(--text3); }
 .pbar > i { background: linear-gradient(90deg, var(--teal), #5be3c0); }
 .field:focus { box-shadow: 0 0 0 3px rgba(45, 212, 167, .15); }
 .manage-link { background: none; border: 1px solid var(--border2); border-radius: 999px; color: var(--text2); font-size: 12.5px; padding: 6px 12px; cursor: pointer; }
+
+/* ── Biểu đồ tiến độ 14 ngày (trang chủ) ── */
+.pchart { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 12px 14px 8px; margin-bottom: 14px; }
+.pchart-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
+.pchart-t { font-size: 12px; font-weight: 600; color: var(--text2); }
+.pchart-leg { font-size: 11px; color: var(--text3); display: inline-flex; align-items: center; gap: 4px; }
+.pchart-leg i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-left: 6px; }
