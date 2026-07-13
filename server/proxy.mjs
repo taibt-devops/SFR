@@ -314,6 +314,47 @@ async function handleScenario(body) {
   return { scenario: o.title && o.aiRole && o.userRole && o.goal ? { id: "gen", ...o } : null };
 }
 
+// ── TTS (Kokoro local) ──
+// Trả BYTES audio (mp3), không JSON — xử lý riêng, không qua ROUTES. Không cần CLAUDE_TOKEN.
+const KOKORO_URL = process.env.KOKORO_URL; // vd http://kokoro:8880; thiếu → 503, client fallback Web Speech
+const TTS_TIMEOUT_MS = 20_000;
+
+async function handleTts(body, res) {
+  if (!KOKORO_URL) {
+    res.statusCode = 503;
+    res.setHeader("content-type", "application/json");
+    return res.end(JSON.stringify({ error: "Proxy chưa cấu hình KOKORO_URL" }));
+  }
+  const { text = "", voice = "af_heart", speed = 1 } = body;
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), TTS_TIMEOUT_MS);
+  try {
+    const r = await fetch(KOKORO_URL.replace(/\/$/, "") + "/v1/audio/speech", {
+      method: "POST",
+      signal: ctrl.signal,
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        model: "kokoro",
+        input: String(text).slice(0, 1000), // câu học ngắn; chặn payload bất thường
+        voice,
+        speed,
+        response_format: "mp3",
+      }),
+    });
+    if (!r.ok) throw new Error(`kokoro ${r.status}: ${(await r.text()).slice(0, 200)}`);
+    const buf = Buffer.from(await r.arrayBuffer());
+    res.setHeader("content-type", "audio/mpeg");
+    res.setHeader("cache-control", "no-store"); // client tự cache theo text+voice (Cache API)
+    res.end(buf);
+  } catch (e) {
+    res.statusCode = e.name === "AbortError" ? 504 : 502;
+    res.setHeader("content-type", "application/json");
+    res.end(JSON.stringify({ error: "TTS lỗi: " + String(e.message || e) }));
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 const ROUTES = {
   "/": handleChat,
   "/scenario": handleScenario,
@@ -343,6 +384,19 @@ http
     if ((req.url || "/").split("?")[0] === "/ping") {
       res.setHeader("content-type", "application/json");
       return res.end(JSON.stringify({ ok: true }));
+    }
+
+    // TTS: trả audio bytes, không cần CLAUDE_TOKEN → nhánh riêng trước check token.
+    if (req.method === "POST" && (req.url || "/").split("?")[0] === "/tts") {
+      try {
+        let raw = "";
+        for await (const c of req) raw += c;
+        return await handleTts(JSON.parse(raw || "{}"), res);
+      } catch (err) {
+        res.statusCode = 400;
+        res.setHeader("content-type", "application/json");
+        return res.end(JSON.stringify({ error: String(err.message || err) }));
+      }
     }
 
     const handler = ROUTES[(req.url || "/").split("?")[0]];
