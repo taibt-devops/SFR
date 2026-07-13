@@ -6,6 +6,8 @@ services:
       context: .
       dockerfile: server/Dockerfile
     env_file: .env          # CLAUDE_TOKEN, PROXY_SECRET → runtime của proxy
+    environment:
+      KOKORO_URL: http://kokoro:8880   # TTS local; thiếu → /tts trả 503, client fallback Web Speech
     expose:
       - "8787"
     # DNS công khai: host Ubuntu dùng systemd-resolved (127.0.0.53) mà container không tới được
@@ -31,6 +33,24 @@ services:
       - 8.8.8.8
       - 1.1.1.1
     # Cấp GPU NVIDIA cho container (host đã có nvidia runtime + container-toolkit).
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    restart: unless-stopped
+
+  # TTS local (GPU) — Kokoro-82M qua kokoro-fastapi (API kiểu OpenAI /v1/audio/speech).
+  # Giọng neural tự nhiên thay Web Speech; model nhỏ nên suy luận gần tức thời trên GPU.
+  kokoro:
+    image: ghcr.io/remsky/kokoro-fastapi-gpu:latest
+    expose:
+      - "8880"
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
     deploy:
       resources:
         reservations:
