@@ -5,6 +5,7 @@ import { transcribe } from "../ai/whisper.js";
 import { assessSpeaking } from "../ai/assess.js";
 import { speechStats } from "../utils/fluency.js";
 import { loadSpeaking, saveSpeaking, addAssessment, latestLevel } from "../srs/speaking.js";
+import { loadDaily, saveDaily, bumpSpeak } from "../srs/daily.js";
 import ContextBar from "./ContextBar.jsx";
 
 const TASKS = [
@@ -74,6 +75,7 @@ export default function SpeakingAssess({ dueWords, topic, topicId = "", scopeLab
       rec.onstop = () => {
         stopTracks();
         const seconds = (Date.now() - startedAt.current) / 1000;
+        saveDaily(bumpSpeak(loadDaily(), seconds, Date.now())); // phút nói/ngày cho biểu đồ tiến độ
         process(new Blob(chunksRef.current, { type: rec.mimeType || "audio/webm" }), seconds);
       };
       recRef.current = rec;

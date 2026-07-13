@@ -5,6 +5,7 @@ import { buildSession, review } from "../srs/sm2.js";
 import { loadProgress, saveProgress, resetProgress as clearStored } from "../srs/storage.js";
 import { answerQueue, currentCard, isSessionDone, nextDueAt } from "../srs/session.js";
 import { loadStats, saveStats, recordReview } from "../srs/stats.js";
+import { loadDaily, saveDaily, bumpReview } from "../srs/daily.js";
 
 export function useStudy(cards) {
   const [progress, setProgress] = useState(loadProgress); // { [id]: SRstate }
@@ -34,6 +35,7 @@ export function useStudy(cards) {
       const card = currentCard(queue || []);
       if (!card) return;
       const now = Date.now();
+      const isNew = !progress[card.id]; // chưa có SR state = lần đầu học từ này
       const next = review(progress[card.id], q, now);
       const map = { ...progress, [card.id]: next };
       setProgress(map);
@@ -41,6 +43,7 @@ export function useStudy(cards) {
       const ns = recordReview(stats, now); // cập nhật streak/đếm thẻ hôm nay (§5.8)
       setStats(ns);
       saveStats(ns);
+      saveDaily(bumpReview(loadDaily(), isNew, now)); // lịch sử ngày cho biểu đồ tiến độ
       if (q < 3) setLapsedIds((s) => new Set(s).add(card.id));
       setQueue(answerQueue(queue, q)); // gặp lại trong phiên dựa hàng đợi, KHÔNG dựa due
     },

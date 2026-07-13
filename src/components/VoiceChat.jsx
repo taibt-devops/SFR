@@ -15,6 +15,7 @@ import { loadSpeaking, speakingProfile } from "../srs/speaking.js";
 import { loadCoachNotes, saveCoachNotes, addCoachNote, priorFocusText } from "../srs/coachMemory.js";
 import { pickScenario } from "../data/scenarios.js";
 import { genScenario } from "../ai/scenario.js";
+import { loadDaily, saveDaily, bumpSpeak } from "../srs/daily.js";
 
 const TOPICS = [
   "Giới thiệu bản thân & sở thích",
@@ -196,9 +197,11 @@ export default function VoiceChat({ dueWords, addWord, level: levelProp, topic: 
       streamRef.current = stream;
       const rec = new MediaRecorder(stream);
       chunksRef.current = [];
+      const startedAt = Date.now();
       rec.ondataavailable = (e) => e.data.size && chunksRef.current.push(e.data);
       rec.onstop = () => {
         stopTracks();
+        saveDaily(bumpSpeak(loadDaily(), (Date.now() - startedAt) / 1000, Date.now())); // phút nói/ngày
         const blob = new Blob(chunksRef.current, { type: rec.mimeType || "audio/webm" });
         modeRef.current.type === "shadow" ? processShadow(blob, modeRef.current.target) : processTurn(blob);
       };

@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { transcribe } from "../ai/whisper.js";
 import { speechStats } from "../utils/fluency.js";
 import { loadWarmup, saveWarmup, addWarmup, warmupTrend } from "../srs/warmup.js";
+import { loadDaily, saveDaily, bumpSpeak } from "../srs/daily.js";
 
 const PROMPTS = [
   "Kể về ngày hôm nay của bạn — bạn đã làm gì?",
@@ -51,6 +52,7 @@ export default function WarmupTalk({ onBack }) {
       rec.onstop = async () => {
         cleanup();
         const seconds = Math.min(LIMIT, Math.round((Date.now() - startedAtRef.current) / 1000));
+        saveDaily(bumpSpeak(loadDaily(), seconds, Date.now())); // phút nói/ngày cho biểu đồ tiến độ
         const blob = new Blob(chunksRef.current, { type: rec.mimeType || "audio/webm" });
         setPhase("thinking");
         try {
