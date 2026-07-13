@@ -1,6 +1,8 @@
-// Chọn giọng đọc + tốc độ (Web Speech API). Lưu localStorage, dùng cho toàn app.
+// Chọn giọng đọc + tốc độ (Kokoro qua server, hoặc giọng hệ thống). Lưu localStorage, dùng cho toàn app.
 import { useEffect, useState } from "react";
-import { englishVoices, getPrefs, setPrefs, speak } from "../utils/tts.js";
+import { englishVoices, getPrefs, setPrefs, speak, KOKORO_VOICES } from "../utils/tts.js";
+
+const HAS_PROXY = !!import.meta.env.VITE_PROXY_URL;
 
 const SPEEDS = [
   { v: 0.8, label: "Chậm" },
@@ -48,11 +50,20 @@ export default function TtsControls() {
           onChange={(e) => update({ voiceURI: e.target.value })}
         >
           <option value="">Tự động (tốt nhất)</option>
-          {voices.map((v) => (
-            <option key={v.voiceURI} value={v.voiceURI}>
-              {v.name} ({v.lang})
-            </option>
-          ))}
+          {HAS_PROXY && (
+            <optgroup label="Giọng AI (server)">
+              {KOKORO_VOICES.map((v) => (
+                <option key={v.id} value={"kokoro:" + v.id}>{v.label}</option>
+              ))}
+            </optgroup>
+          )}
+          <optgroup label="Giọng trên máy">
+            {voices.map((v) => (
+              <option key={v.voiceURI} value={v.voiceURI}>
+                {v.name} ({v.lang})
+              </option>
+            ))}
+          </optgroup>
         </select>
       </label>
       <label className="vs-row" style={{ marginTop: 8 }}>
