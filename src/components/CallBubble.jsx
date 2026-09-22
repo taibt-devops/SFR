@@ -6,10 +6,16 @@ import { useState } from "react";
 import { speak } from "../utils/tts.js";
 
 // Mỗi từ là một vùng chạm để tra nghĩa.
+// stopPropagation là BẮT BUỘC: không có nó, click nổi bọt lên .turn-body và bật luôn hàng 4 nút
+// công cụ — đúng lúc người học chỉ muốn đọc nghĩa thì màn lại nhảy thêm một hàng nút.
 function Clickable({ text, onWord }) {
   return text.split(/(\s+)/).map((tok, i) =>
     /[A-Za-z]/.test(tok) ? (
-      <span key={i} className="lookup-word" onClick={() => onWord(tok)}>{tok}</span>
+      <span
+        key={i}
+        className="lookup-word"
+        onClick={(e) => { e.stopPropagation(); onWord(tok); }}
+      >{tok}</span>
     ) : (
       <span key={i}>{tok}</span>
     )
