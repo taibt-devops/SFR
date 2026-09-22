@@ -161,6 +161,17 @@ Ví dụ: `feat: srs/lesson.js - may trang thai 15p/10p + test`, `fix: nhip 4 kh
 
 > Khi task chạm file có known issue → tạo task fix issue đó TRƯỚC task chính.
 
+- 🔴 **Whisper mất GPU sau vài ngày chạy → chậm gấp 11 lần** (gặp 2026-09-22, container `Up 5 days`).
+  Triệu chứng người dùng: màn nói đứng hoài ở "Đang nghe bạn nói…".
+  **Chẩn đoán:** `docker compose exec whisper nvidia-smi` trả `Failed to initialize NVML: Unknown Error`
+  dù `NVIDIA_VISIBLE_DEVICES=all`. `faster_whisper` im lặng rơi về CPU; `large-v3` trên CPU mất
+  **3.9s**/câu thay vì **0.35s** trên GPU. Whisper vẫn trả `200 OK` nên log trông hoàn toàn bình thường —
+  đừng tin mỗi status code, phải ĐO thời gian.
+  **Cách kiểm nhanh:** `nvidia-smi --query-compute-apps=pid,used_memory --format=csv,noheader` trên host —
+  Whisper phải giữ ~7.5GB. Chỉ thấy mỗi Kokoro (~1.1GB) là nó đã rơi về CPU.
+  **Sửa:** `docker compose up -d --force-recreate whisper` rồi chờ ~45s cho model nạp lại.
+  Client đã có giới hạn 25s (`ai/whisper.js`) nên lần sau sẽ báo lỗi thay vì treo vĩnh viễn.
+
 - **cura-dev không ổn định**: máy host có tiền sử treo RCU / Docker hang tái phát, và container mất
   DNS (đã vá bằng `dns: 8.8.8.8` trong `docker-compose.yml`). App không gọi được Whisper/Kokoro →
   **kiểm tra sức khoẻ host TRƯỚC** khi nghi ngờ code.

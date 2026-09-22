@@ -3,13 +3,29 @@
 //
 // KHÔNG có ô gõ chữ (C10). Mic hỏng thì báo lỗi và cho thử lại — không mở đường trốn bằng bàn phím,
 // vì gõ chữ đúng là chỗ người học né việc mở miệng.
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRecorder } from "../hooks/useRecorder.js";
 import { diffWords } from "../utils/voiceMatch.js";
 import { speak } from "../utils/tts.js";
 import { good, miss } from "../utils/sfx.js";
 
 export const PASS = 0.8; // tỉ lệ từ khớp coi là đạt
+
+// Đếm giây trong lúc chờ Whisper. Bình thường ~0.35s nên không kịp thấy; chỉ khi máy chủ chậm nó
+// mới hiện, và lúc đó người học cần biết app còn sống chứ không phải đã chết.
+function Waiting() {
+  const [s, setS] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setS((v) => v + 1), 1000);
+    return () => clearInterval(t);
+  }, []);
+  return (
+    <p className="muted center pulse">
+      Đang nghe bạn nói…{s >= 3 ? ` ${s}s` : ""}
+      {s >= 8 && <><br /><span className="small">Máy chủ đang chậm hơn thường lệ.</span></>}
+    </p>
+  );
+}
 
 export default function SpeakCheck({ target, prompt, footer, autoHint = false }) {
   const [result, setResult] = useState(null); // { text, diff, score }
@@ -48,7 +64,7 @@ export default function SpeakCheck({ target, prompt, footer, autoHint = false })
               </div>
             </div>
           )}
-          {rec.phase === "thinking" && <p className="muted center pulse">Đang nghe bạn nói…</p>}
+          {rec.phase === "thinking" && <Waiting />}
           {rec.phase === "recording" ? (
             // Nhịp đập để người học thấy máy ĐANG nghe thật, không phải treo.
             <button className="btn btn-rec rec-live" onClick={rec.stop}>■ Dừng — tôi nói xong rồi</button>
