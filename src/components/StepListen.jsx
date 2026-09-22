@@ -4,6 +4,7 @@
 import { useMemo, useState } from "react";
 import StepShell from "./StepShell.jsx";
 import { speak } from "../utils/tts.js";
+import { good, miss, tick } from "../utils/sfx.js";
 
 const N = 2; // 1 phút — chỉ 2 câu, không ăn vào ngân sách của nhịp nói
 
@@ -21,7 +22,13 @@ export default function StepListen({ lesson, bar, onDone }) {
   const options = useMemo(() => optionsFor(lesson, qi), [lesson, qi]);
   const correct = picked === ex.vi;
 
+  const pick = (vi) => {
+    setPicked(vi);
+    (vi === ex.vi ? good : miss)();
+  };
+
   const next = () => {
+    tick();
     if (qi + 1 >= N) return onDone();
     setQi(qi + 1);
     setPicked(null);
@@ -39,7 +46,7 @@ export default function StepListen({ lesson, bar, onDone }) {
             key={vi}
             className={`btn ${picked && vi === ex.vi ? "rate-good" : picked === vi ? "rate-again" : ""}`}
             disabled={!!picked}
-            onClick={() => setPicked(vi)}
+            onClick={() => pick(vi)}
           >
             {vi}
           </button>

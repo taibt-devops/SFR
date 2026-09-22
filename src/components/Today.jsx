@@ -5,7 +5,10 @@
 // Phần động lực ở đây là BẰNG CHỨNG CÔNG SỨC, không phải lời cổ vũ: vòng tiến độ tới 72 mẫu câu,
 // chuỗi ngày, và dải 14 ngày cho thấy rõ mình đã bỏ ngày nào.
 import { TOTAL_DAYS } from "../data/course/outline.js";
+import { useState } from "react";
 import Ring from "./Ring.jsx";
+import { isMuted, setMuted, tick } from "../utils/sfx.js";
+import { useCountUp } from "../hooks/useCountUp.js";
 
 function Strip({ days }) {
   return (
@@ -38,6 +41,17 @@ export default function Today({
   onStart, onProgress, onWarmup, onRoleplay, onChat,
 }) {
   const talk = { onRoleplay, onChat, onWarmup };
+  const [mute, setMute] = useState(isMuted);
+  const nStreak = useCountUp(streak, { delay: 260 });
+  const nDone = useCountUp(completed, { delay: 320 });
+
+  // Tắt/bật âm — để ở HUD, nhỏ thôi. Học ở văn phòng thì phải tắt được ngay, đừng bắt đi tìm.
+  const toggleMute = () => {
+    const next = !mute;
+    setMuted(next);
+    setMute(next);
+    if (!next) tick(); // bật lại thì kêu một tiếng cho biết là đã bật
+  };
 
   // Hết phần đã soạn — nói thật thay vì hiện màn trống khó hiểu.
   if (!lesson) {
@@ -59,7 +73,12 @@ export default function Today({
     <div className="screen">
       <div className="hud">
         <span><b>1%</b><i>/</i>NGÀY</span>
-        <span>TUẦN <b>{lesson.week}</b><i>/</i>12</span>
+        <span>
+          TUẦN <b>{lesson.week}</b><i>/</i>12
+          <button className="hud-mute" onClick={toggleMute} title={mute ? "Bật âm" : "Tắt âm"}>
+            {mute ? "🔇" : "🔊"}
+          </button>
+        </span>
       </div>
 
       <div className="t-hero reveal" style={{ "--d": "40ms" }}>
@@ -77,11 +96,11 @@ export default function Today({
 
       <div className="stats reveal" style={{ "--d": "120ms" }}>
         <div className={`stat stat-streak${streak >= 3 ? " is-hot" : ""}`}>
-          <b>{streak}</b>
+          <b>{nStreak}</b>
           <span>ngày liên tục</span>
         </div>
         <div className="stat">
-          <b>{completed}</b>
+          <b>{nDone}</b>
           <span>mẫu câu đã nắm</span>
         </div>
       </div>
@@ -104,7 +123,7 @@ export default function Today({
 
       {/* Nhãn phải nói ĐÚNG việc nút sẽ làm: `lesson` ở đây luôn là bài CHƯA xong lõi, nên khi hôm
           nay đã học rồi thì bấm vào là mở bài KẾ TIẾP, không phải học lại bài cũ. */}
-      <button className="btn btn-primary cta-hero reveal" style={{ "--d": "250ms" }} onClick={onStart}>
+      <button className="btn btn-primary cta-hero reveal" style={{ "--d": "250ms" }} onClick={() => { tick(); onStart(); }}>
         {doneToday ? "Học tiếp bài sau" : "Bắt đầu"}
         <span>{doneToday ? "✓ 1% hôm nay đã xong" : "15 phút · bắt buộc"}</span>
       </button>

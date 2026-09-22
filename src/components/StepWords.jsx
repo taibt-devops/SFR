@@ -4,6 +4,7 @@
 import { useState } from "react";
 import StepShell from "./StepShell.jsx";
 import SpeakCheck from "./SpeakCheck.jsx";
+import { tick } from "../utils/sfx.js";
 import { speak } from "../utils/tts.js";
 
 export default function StepWords({ lesson, bar, onDone }) {
@@ -14,6 +15,7 @@ export default function StepWords({ lesson, bar, onDone }) {
   const last = i + 1 >= lesson.words.length;
 
   const next = () => {
+    tick();
     if (last) return onDone();
     setI(i + 1);
     setHeard(false);

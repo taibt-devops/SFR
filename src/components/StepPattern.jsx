@@ -3,6 +3,7 @@
 // "thì hiện tại hoàn thành" không giúp được gì, "dùng khi gọi món" thì giúp.
 import StepShell from "./StepShell.jsx";
 import { speak } from "../utils/tts.js";
+import { tick } from "../utils/sfx.js";
 
 export default function StepPattern({ lesson, bar, onDone }) {
   return (
@@ -31,7 +32,7 @@ export default function StepPattern({ lesson, bar, onDone }) {
       </div>
 
       <div className="spacer" />
-      <button className="btn btn-primary" onClick={onDone}>Thuộc rồi — sang phần nói</button>
+      <button className="btn btn-primary" onClick={() => { tick(); onDone(); }}>Thuộc rồi — sang phần nói</button>
     </StepShell>
   );
 }

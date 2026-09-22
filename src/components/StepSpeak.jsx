@@ -3,6 +3,7 @@
 import { useState } from "react";
 import StepShell from "./StepShell.jsx";
 import SpeakCheck, { PASS } from "./SpeakCheck.jsx";
+import { tick } from "../utils/sfx.js";
 
 export default function StepSpeak({ lesson, bar, drills, kicker, onDone, onSaid }) {
   const [i, setI] = useState(0);
@@ -10,6 +11,7 @@ export default function StepSpeak({ lesson, bar, drills, kicker, onDone, onSaid 
   const last = i + 1 >= drills.length;
 
   const next = (result) => {
+    tick();
     // Chỉ ghi câu ĐẠT làm bằng chứng tiến bộ — câu sai không phải thứ để khoe lại sau này.
     if (result.score >= PASS) onSaid?.(d.en, result.score);
     if (last) onDone();

@@ -5,6 +5,7 @@
 import { useState } from "react";
 import StepShell from "./StepShell.jsx";
 import SpeakCheck, { PASS } from "./SpeakCheck.jsx";
+import { tick } from "../utils/sfx.js";
 import { promptFor } from "../srs/items.js";
 
 export default function StepReview({ bar, queue, getState, onRate, onDone }) {
@@ -27,6 +28,7 @@ export default function StepReview({ bar, queue, getState, onRate, onDone }) {
   const last = i + 1 >= queue.length;
 
   const rate = (q) => {
+    tick();
     onRate(item.id, q);
     if (last) onDone();
     else setI(i + 1);

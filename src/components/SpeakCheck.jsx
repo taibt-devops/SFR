@@ -7,6 +7,7 @@ import { useCallback, useState } from "react";
 import { useRecorder } from "../hooks/useRecorder.js";
 import { diffWords } from "../utils/voiceMatch.js";
 import { speak } from "../utils/tts.js";
+import { good, miss } from "../utils/sfx.js";
 
 export const PASS = 0.8; // tỉ lệ từ khớp coi là đạt
 
@@ -17,7 +18,10 @@ export default function SpeakCheck({ target, prompt, footer, autoHint = false })
     (text) => {
       const diff = diffWords(target, text);
       const ok = diff.filter((d) => d.ok).length;
-      setResult({ text, diff, score: diff.length ? ok / diff.length : 0 });
+      const score = diff.length ? ok / diff.length : 0;
+      setResult({ text, diff, score });
+      // Phản hồi bằng tai trước khi mắt kịp đọc — biết ngay đạt hay chưa.
+      (score >= PASS ? good : miss)();
     },
     [target]
   );

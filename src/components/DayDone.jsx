@@ -3,11 +3,22 @@
 // Phần mở rộng là phần thưởng cho ngày khoẻ, không phải món nợ cho ngày mệt (C12).
 //
 // Đây là khoảnh khắc trả công duy nhất trong ngày nên nó được phép "to tiếng": dấu tick đóng như
-// con dấu, mẫu câu hiện cỡ lớn, chuỗi ngày nhảy số. Mọi màn khác vẫn phải trầm.
+// con dấu, pháo giấy, hợp âm rải, chuỗi ngày nhảy số. Mọi màn khác vẫn phải trầm.
+import { useEffect } from "react";
+import Burst from "./Burst.jsx";
+import { done } from "../utils/sfx.js";
+import { useCountUp } from "../hooks/useCountUp.js";
 
 export default function DayDone({ lesson, streak, saidBest, extDone, canExt, onExt, onExit }) {
+  // Hợp âm rải + pháo giấy: phần thưởng duy nhất trong ngày, chạy đúng một lần khi vào màn.
+  useEffect(() => {
+    done();
+  }, []);
+  const n = useCountUp(streak, { delay: 420 });
+
   return (
     <div className="screen screen-mid">
+      <Burst />
       <div className="done-mark">✓</div>
 
       {lesson?.review ? (
@@ -32,7 +43,7 @@ export default function DayDone({ lesson, streak, saidBest, extDone, canExt, onE
 
       <div className="reveal" style={{ "--d": "420ms" }}>
         <span className="streak-big">
-          <b>{streak}</b>
+          <b>{n}</b>
           <span>ngày liên tục</span>
         </span>
       </div>
