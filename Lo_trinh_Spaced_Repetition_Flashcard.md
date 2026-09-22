@@ -809,3 +809,166 @@ Branch: `rewrite-1-percent`.
 - Không dùng Claude để tính `q` hoặc lịch SM-2.
 - Không có ô gõ chữ thay cho nói ở nhịp 4 / 4b.
 - Không có màn nào bắt người học chọn chủ đề trước khi học.
+
+---
+
+## Phần 10 — Gia sư: hồ sơ năng lực & phân tích cuối buổi
+
+> Thiết kế 2026-09-22 sau brainstorm với chủ dự án. Chưa triển khai — đây là spec cho đợt làm tiếp.
+
+### 10.1. Vì sao cần
+
+Hiện tại mỗi ngày người học nói **5–7 câu** ở nhịp 0/4/4b, và **không một câu nào được LLM nhìn thấy**.
+Thứ duy nhất chấm là `utils/voiceMatch.diffWords` — so *túi từ*, **bỏ qua thứ tự**, không biết gì về
+ngữ pháp hay phát âm. Nói `"table book a I'd like to"` vẫn được 100% khớp.
+
+LLM chỉ vào cuộc ở hai chỗ người học có thể không bao giờ chạm:
+- tổng kết trò chuyện tự do (tuỳ chọn, ngoài streak),
+- chấm CEFR (chỉ ngày `day % 6 === 0`).
+
+Và `ai/coach.js#coachSentence` — hàm gia sư nhận xét từng câu — **đã chết**, không còn ai gọi từ khi
+bỏ các kiểu thẻ produce/reverse.
+
+Đó là khoảng cách giữa "app có chấm điểm" và "gia sư thật".
+
+### 10.2. Nguyên tắc
+
+1. **Một lần gọi mỗi ngày.** Gom cả buổi rồi gửi Claude MỘT lần lúc đóng ngày. Chấm từng câu ngay
+   lúc nói thì đứt mạch (thêm 1–3s × 7 câu) và tốn gấp ~8 lần.
+2. **KHÔNG chặn màn đóng ngày.** Đó là khoảnh khắc trả công duy nhất trong ngày (§4.1); bắt nó chờ
+   LLM là hỏng. Phân tích chạy nền.
+3. **Phản hồi đến lúc dùng được, không phải lúc vừa xong.** Kết quả hiện **đầu buổi hôm sau**, ngay
+   trước khi người học mở miệng. Gia sư giỏi không đọc bảng lỗi lúc học trò đang xách cặp ra về.
+4. **Bản ghi Whisper KHÔNG phải lời người học nói.** Nhận dạng giọng nghe nhầm là chuyện thường.
+   Coi mọi sai lệch là lỗi ngữ pháp sẽ sửa những lỗi người học không hề mắc → mất tin tưởng rất
+   nhanh. **Thà bỏ sót còn hơn bịa ra lỗi.**
+5. **Hỏng thì im lặng bỏ qua.** Mạng lỗi / token hết hạn / Claude chậm → buổi hôm sau chạy bình
+   thường như chưa có gia sư. Không báo lỗi, không chặn. Phân tích là phần CỘNG THÊM, không được
+   phép làm hỏng buổi học.
+
+### 10.3. Thu thập trong buổi
+
+Mỗi lần người học nói xong một câu (nhịp 0 ôn · 4 drill · 4b câu khó · 3 từ mới), ghi lại một
+**attempt**:
+
+```js
+{ kind: "review" | "drill" | "drill2" | "words",
+  itemId,           // với nhịp ôn: "pat::12" / "word::12::napkin"
+  target,           // câu đích
+  heard,            // Whisper nghe được (nguyên văn, KHÔNG sửa)
+  score }           // 0..1 từ diffWords — dùng làm tín hiệu "có thể do nghe nhầm"
+```
+
+Lưu vào `srf-tutor-v1` theo ngày. Đóng ngày xong mới gửi đi.
+
+### 10.4. Gọi Claude — route `/tutor`
+
+Thêm route vào `server/proxy.mjs` (cùng khuôn với `/assess`, `/summary`).
+
+**Gửi lên:**
+
+```js
+{ level: "A2",
+  pattern: "I'd like + N / to V",
+  attempts: [{ target, heard, score }],
+  recentErrors: [{ tag: "article", count: 4 }] }   // để nó biết lỗi nào dai dẳng
+```
+
+**System prompt phải nói rõ hai điều** (đây là chỗ quyết định chất lượng):
+- Bản ghi đến từ nhận dạng giọng nói và **có thể sai**. Bỏ qua sai lệch giống lỗi nghe (âm gần
+  giống, mất âm cuối, nối âm). Chỉ bắt lỗi có **hình dạng ngữ pháp thật**.
+- `score` thấp mà `heard` nghe hợp lý → nhiều khả năng do nghe nhầm, KHÔNG phải lỗi người học.
+
+**Nhận về:**
+
+```js
+{ errors: [{ tag, vi, evidence, fix }],   // tag thuộc BẢNG CỐ ĐỊNH bên dưới
+  strengths: [string],
+  focus: string,                          // ĐÚNG MỘT điều cần chú ý buổi sau
+  drills: [{ vi, en }],                   // tối đa 2 câu sửa lỗi cho buổi sau
+  hints: [{ itemId, q, why }] }           // gợi ý cho LẦN GẶP SAU của item — xem 10.7
+```
+
+**Bảng nhãn lỗi CỐ ĐỊNH** (enum, không cho Claude tự chế):
+`article` · `tense` · `preposition` · `word-order` · `aux-verb` · `plural` · `pronoun` ·
+`word-choice` · `pronunciation`
+
+> Vì sao phải đóng: nhãn tự do thì **không đếm được qua nhiều ngày**. "thiếu mạo từ", "quên a/an",
+> "article missing" là ba chuỗi khác nhau → ba lỗi khác nhau → hồ sơ vô dụng. Nhãn lạ bị **bỏ**,
+> không cố đoán.
+
+### 10.5. Hồ sơ năng lực — `srs/tutor.js`
+
+Một kho duy nhất `srf-tutor-v1`, gộp thứ đang nằm rải rác ở 4 chỗ:
+
+```js
+{ [day]: { attempts: [...], analysis: {...} | null, at } }
+```
+
+Hàm THUẦN (có test), suy ra hồ sơ từ kho đó:
+
+| Hàm | Trả về |
+|---|---|
+| `addAttempt(store, day, attempt)` | store mới |
+| `setAnalysis(store, day, analysis)` | store mới |
+| `topErrors(store, n, days)` | `[{ tag, count }]` — lỗi lặp nhiều nhất trong N ngày gần đây |
+| `focusFor(store)` | chuỗi `focus` của ngày gần nhất, hoặc `""` |
+| `drillsFor(store, day)` | 2 câu sửa lỗi sinh từ NGÀY TRƯỚC, để chèn vào hôm nay |
+| `hintFor(store, itemId)` | `{ q, why }` gợi ý cho item sắp ôn, hoặc `null` |
+| `weeklyReport(store, week)` | so tuần này với tuần trước: trục nào lên, lỗi nào hết, lỗi nào dai |
+
+Các kho cũ (`phrasal-speaking-v1` CEFR, `phrasal-coach-v1`, `phrasal-warmup-v1`) **giữ nguyên** —
+hồ sơ ĐỌC từ chúng, không nuốt chúng. Đụng vào là phá §7.1.
+
+### 10.6. Ba đường ra
+
+**a. Bài tập riêng cho lỗi** — `drillsFor()` trả 2 câu, **chèn vào ĐẦU nhịp 4** hôm sau, gắn nhãn
+"sửa lỗi hôm qua". KHÔNG tạo nhịp thứ 6: thêm nhịp là thêm thời gian, mà ngân sách đã 15–18 phút
+(§3.1). Hai câu này thay chỗ, không cộng thêm — nhịp 4 vẫn 5 câu.
+
+**b. Báo cáo tiến bộ** — hiện ở **ngày chốt tuần** (`day % 6 === 0`), trước nhịp chấm CEFR. So với
+tuần trước, không phải điểm tuyệt đối: "mạo từ từ 6 lần xuống 1", không phải "bạn đạt B1".
+
+**c. Lái trò chuyện** — `focusFor()` + `topErrors()` nối vào `focus` đang có sẵn trong
+`hooks/useCall.js`. Đường truyền đã có, chỉ là hiện đang lấy từ dữ liệu nghèo (chỉ CEFR).
+
+### 10.7. C5 → C5′
+
+**C5 cũ:** Claude KHÔNG được tính `q`/lịch SM-2.
+
+**C5′:** Claude được **đề xuất** `q`, người học vẫn bấm nút cuối, và `srs/sm2.js` vẫn là thứ DUY
+NHẤT tính lịch. Claude không bao giờ ghi thẳng vào SR state.
+
+> **Gợi ý áp cho LẦN GẶP SAU, không phải lần vừa rồi.** Bản nháp đầu định để Claude đề xuất `q` cho
+> chính buổi vừa phân tích — nhưng nó **đến quá muộn để dùng được**: nhịp ôn diễn ra ở ĐẦU buổi,
+> người học đã bấm chấm xong từ lâu trước khi phân tích chạy lúc đóng ngày. Đề xuất cho một lượt đã
+> qua thì chỉ còn hai đường: ghi đè SR state sau lưng người học (phá C5′), hoặc xếp lại hàng đợi
+> (chủ dự án đã chọn KHÔNG làm).
+>
+> Cách đúng: lưu `hints[itemId] = { q, why }`. **Lần sau** item đó vào nhịp ôn, thanh chấm **làm nổi
+> sẵn** mức Claude gợi ý kèm một dòng lý do ("lần trước vấp mạo từ"). Người học vẫn là người bấm.
+> Đúng thời điểm, không đụng SR state, không xếp lại hàng đợi.
+
+Phần không đổi: lịch ôn vẫn do thuật toán, không do LLM. Đó là thứ giữ cho app ổn định khi Claude
+đổi ý hoặc không gọi được.
+
+### 10.8. Suy biến khi hỏng
+
+| Tình huống | Hành vi |
+|---|---|
+| Không gọi được Claude (mạng/token/503) | `analysis = null`. Buổi sau chạy bình thường, không drill sửa lỗi, không báo cáo. Không hiện lỗi. |
+| Claude trả JSON sai khuôn | Bỏ cả gói, coi như `null`. KHÔNG cố vá từng trường. |
+| Nhãn lỗi lạ ngoài enum | Bỏ riêng nhãn đó, giữ phần còn lại. |
+| `drills` thiếu `vi` hoặc `en` | Bỏ câu đó. Nhịp 4 dùng đủ 5 câu gốc. |
+| `hints` trỏ tới item không tồn tại | Bỏ. Thanh chấm hiện bình thường, không làm nổi nút nào. |
+
+### 10.9. Definition of Done
+
+- `srs/tutor.js` thuần + test: `addAttempt`/`setAnalysis` không mutate; `topErrors` đếm đúng qua
+  nhiều ngày; `drillsFor` chỉ lấy của ngày TRƯỚC; nhãn ngoài enum bị loại; `weeklyReport` so đúng
+  hai tuần.
+- Gói hỏng / thiếu trường / nhãn lạ → có test, không ném lỗi.
+- Kiểm tay: tắt proxy → học trọn buổi bình thường, không hiện lỗi nào.
+- Kiểm tay: nói sai cố ý một lỗi ngữ pháp rõ (bỏ mạo từ) → hôm sau thấy đúng lỗi đó + 2 câu sửa.
+- Kiểm tay: nói ĐÚNG nhưng để Whisper nghe nhầm → gia sư KHÔNG báo đó là lỗi ngữ pháp.
+- `hintFor` chỉ trả gợi ý cho lần gặp SAU, và bị xoá sau khi dùng một lần (có test).

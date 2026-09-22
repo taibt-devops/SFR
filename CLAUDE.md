@@ -51,7 +51,7 @@ BƯỚC 5 — CODE (chỉ sau khi 1–4 xong).
 | **C2′** | Đơn vị nội dung là **bài học** (`{day, pat, ex, drills, words, drills2, scene}`), KHÔNG phải thẻ. Review item **suy ra tự động** từ bài (`pat::<day>`, `word::<day>::<w>`) — KHÔNG soạn tay, KHÔNG lưu trong file nội dung. *(Thay thế C2 cũ `{c,v,m,e,d,col}` — đã bỏ.)* | §2.2–2.3 |
 | C3 | Tách bạch **state đã lưu** (localStorage, quyết định "đến hạn" ở phiên SAU) vs **hàng đợi in-session**. "Chưa nhớ" lưu `due=+1 ngày` NHƯNG gặp lại trong phiên dựa vào hàng đợi, KHÔNG dựa `due`. | §1.4 |
 | C4 | Persistence = `localStorage`; key có version. Item chưa có state = item mới (`seen=false`). | §1.5, §2.4 |
-| C5 | Claude = bộ não hội thoại + trợ lý soạn dữ liệu. NHƯNG **KHÔNG** dùng Claude để tính `q`/lịch SM-2 — `q` luôn từ self-rating người học, lịch luôn do `srs/sm2.js` thuần. | §3.1 |
+| **C5′** | Claude được **đề xuất** `q` dựa trên phân tích cuối buổi (thay cho `diffWords` so túi từ). NHƯNG người học vẫn bấm nút cuối, và `srs/sm2.js` vẫn là thứ DUY NHẤT tính lịch — Claude KHÔNG bao giờ ghi thẳng vào SR state. *(Nới từ C5 cũ: "Claude không được đụng q/lịch".)* | §3.1, §10.7 |
 | C6 | Xác thực = **token Claude Max** qua **proxy local**; `Authorization: Bearer` + header `anthropic-beta: oauth-2025-04-20`; model `claude-opus-4-8`. | §6 |
 | C7 | **Token chỉ ở env của proxy.** Frontend KHÔNG giữ token — gọi qua proxy kèm `x-proxy-secret`. | §6 |
 | C8 | All-local; Claude API là **chỗ duy nhất ra internet**. Mic (`getUserMedia`) + PWA cần **HTTPS/secure context**. | §6 |
@@ -107,6 +107,8 @@ BƯỚC 5 — CODE (chỉ sau khi 1–4 xong).
 |---|---|
 | `srf-course-v1` | `srs/course.js` (MỚI) |
 | `srf-reset-v1` | cờ dọn dữ liệu cũ, chạy 1 lần |
+| `srf-mywords-v1` | `srs/myWords.js` — từ người học tự thêm (spec §2.5) |
+| `srf-tutor-v1` | `srs/tutor.js` — hồ sơ năng lực + phân tích cuối buổi (spec §10) |
 | `phrasal-srs-v1` | `srs/storage.js` — **giữ nguyên tên key** |
 | `phrasal-speaking-v1` · `phrasal-coach-v1` · `phrasal-daily-v1` · `phrasal-warmup-v1` | các module nói, **giữ nguyên** |
 
@@ -149,7 +151,7 @@ Ví dụ: `feat: srs/lesson.js - may trang thai 15p/10p + test`, `fix: nhip 4 kh
 
 - KHÔNG để token/secret trong code, commit, frontend, hay `localStorage`.
 - KHÔNG gọi Claude trực tiếp từ browser bằng token Max (OAuth+CORS hỏng) — phải qua proxy.
-- KHÔNG dùng Claude để tính `q`/lịch SM-2 (C5).
+- KHÔNG để Claude ghi thẳng vào SR state hay tự tính lịch ôn — nó chỉ được ĐỀ XUẤT `q` (C5′).
 - KHÔNG mutate `state` trong `review()`; KHÔNG để hàm thuần tự gọi `Date.now()` (nhận `now` qua tham số).
 - KHÔNG thêm ô gõ chữ vào nhịp nói (C10).
 - KHÔNG thêm màn bắt chọn chủ đề/trình độ trước khi học (C9).
