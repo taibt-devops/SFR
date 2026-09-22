@@ -115,6 +115,8 @@ function AppMain() {
             onRate={L.rate}
             onDone={done}
             onAttempt={L.attempt}
+            hintOf={L.hintOf}
+            onUseHint={L.consumeHint}
           />
         );
       case "listen":

@@ -9,7 +9,7 @@ import { loadMyWords, saveMyWords, addMyWord, countMyWords } from "../srs/myWord
 import { buildSession, review } from "../srs/sm2.js";
 import { loadProgress, saveProgress } from "../srs/storage.js";
 import { loadDaily, saveDaily, bumpReview } from "../srs/daily.js";
-import { loadTutor, saveTutor, addAttempt, setAnalysis, topErrors, attemptsFor } from "../srs/tutor.js";
+import { loadTutor, saveTutor, addAttempt, setAnalysis, topErrors, attemptsFor, hintFor, clearHint } from "../srs/tutor.js";
 import { analyzeSession } from "../ai/tutor.js";
 import { loadSpeaking, latestLevel } from "../srs/speaking.js";
 
@@ -147,6 +147,17 @@ export function useLesson() {
     [lesson]
   );
 
+  const hintOf = useCallback((itemId) => hintFor(tutor, itemId), [tutor]);
+
+  // Gợi ý chỉ nhắc MỘT lần — dùng xong thì gỡ khỏi kho.
+  const consumeHint = useCallback((itemId) => {
+    setTutor((prev) => {
+      const next = clearHint(prev, itemId);
+      if (next !== prev) saveTutor(next);
+      return next;
+    });
+  }, []);
+
   // Ghi câu người học nói đúng — bằng chứng tiến bộ trên màn đóng ngày.
   const said = useCallback(
     (text, score) => {
@@ -177,6 +188,8 @@ export function useLesson() {
     addWord,
     tutor,
     attempt,
+    hintOf,
+    consumeHint,
     start,
     startExt,
     exit,

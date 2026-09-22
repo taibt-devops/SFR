@@ -960,3 +960,9 @@ h1, h2 { margin: 0; line-height: 1.2; font-family: var(--font-display); }
   font-size: 13px;
   font-weight: 800;
 }
+
+/* Mức gia sư gợi ý ở nhịp ôn — chỉ làm NỔI, không tự bấm thay người học (C5′). */
+.rate-tip {
+  border-color: var(--lime);
+  box-shadow: 0 0 0 1px var(--lime), 0 10px 26px -16px rgba(200, 250, 60, 0.9);
+}
