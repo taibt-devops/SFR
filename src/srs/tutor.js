@@ -84,7 +84,7 @@ export function topErrors(store = {}, speakingList = [], n = 5) {
   const bump = (tag) => {
     if (ERROR_TAGS.includes(tag)) counts[tag] = (counts[tag] || 0) + 1;
   };
-  for (const day of Object.values(store)) for (const e of day?.analysis?.errors || []) bump(e.tag);
+  for (const day of Object.values(store || {})) for (const e of day?.analysis?.errors || []) bump(e.tag);
   for (const a of speakingList || []) for (const t of a?.tags || []) bump(t);
   return Object.entries(counts)
     .map(([tag, count]) => ({ tag, count }))

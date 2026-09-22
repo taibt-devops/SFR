@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { beforeEach, describe, expect, it } from "vitest";
 import {
   addAttempt,
@@ -104,10 +106,29 @@ describe("sanitizeAnalysis", () => {
     expect(sanitizeAnalysis({})).toEqual({ errors: [], strengths: [], focus: "", drills: [], hints: [] });
   });
 
-  it("ERROR_TAGS khớp bảng của /assess", () => {
-    expect(ERROR_TAGS).toContain("mạo từ");
-    expect(ERROR_TAGS).toContain("ngập ngừng-trôi chảy");
-    expect(ERROR_TAGS).toHaveLength(9);
+  it("ERROR_TAGS khớp THẬT với bảng nhãn trong server/proxy.mjs#handleAssess (đọc file, không chép tay)", () => {
+    // Đọc thẳng server/proxy.mjs thay vì so hai chuỗi hardcode — nếu ai sửa nhãn ở MỘT trong hai
+    // file mà quên sửa file kia, test này phải ĐỎ (trước đây chỉ kiểm 2 chuỗi cứng + độ dài 9,
+    // nên lệch bảng nhãn vẫn xanh — đúng chỗ hậu quả nặng nhất lại không có gác).
+    const proxyPath = fileURLToPath(new URL("../../server/proxy.mjs", import.meta.url));
+    const src = readFileSync(proxyPath, "utf8");
+
+    // Mốc "danh sách:" nằm ngay trước chuỗi liệt kê nhãn trong system prompt của handleAssess.
+    const anchor = "danh sách:";
+    const anchorIdx = src.indexOf(anchor);
+    expect(anchorIdx, "khong tim thay moc 'danh sach:' trong proxy.mjs — handleAssess co the da doi cau chu").not.toBe(-1);
+
+    // Chuỗi liệt kê nhãn nằm trong literal single-quote KẾ TIẾP, bắt đầu ngay bằng dấu ".
+    const after = src.slice(anchorIdx, anchorIdx + 600);
+    const literal = after.match(/'("[^']*)'/);
+    expect(literal, "khong tim thay chuoi literal chua danh sach nhan ngay sau moc").toBeTruthy();
+
+    const tagsInProxy = [...literal[1].matchAll(/"([^"]+)"/g)].map((m) => m[1].normalize("NFC"));
+    expect(tagsInProxy.length).toBeGreaterThan(0);
+
+    // Chuẩn hoá NFC cả hai phía — bắt được cả trường hợp lệch TỔ HỢP DẤU Unicode (NFC/NFD),
+    // không chỉ lệch chữ cái thường thấy.
+    expect(ERROR_TAGS.map((t) => t.normalize("NFC"))).toEqual(tagsInProxy);
   });
 
   it("setAnalysis lưu gói đã lọc, không mutate", () => {
@@ -151,6 +172,10 @@ describe("topErrors", () => {
   it("chưa có gì → mảng rỗng", () => {
     expect(topErrors({}, [], 3)).toEqual([]);
   });
+
+  it("store null → không ném lỗi, trả mảng rỗng (nhất quán với focusFor/drillsFor/hintFor/clearHint)", () => {
+    expect(topErrors(null, [], 5)).toEqual([]);
+  });
 });
 
 describe("focusFor / drillsFor", () => {
@@ -170,7 +195,7 @@ describe("focusFor / drillsFor", () => {
   });
 });
 
-describe("hintFor / useHint", () => {
+describe("hintFor / clearHint", () => {
   it("tìm được gợi ý theo itemId", () => {
     const store = { 2: mkDay([], { hints: [{ itemId: "pat::1", q: 2, why: "vấp mạo từ" }] }) };
     expect(hintFor(store, "pat::1")).toMatchObject({ q: 2, why: "vấp mạo từ" });
