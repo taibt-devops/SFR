@@ -30,10 +30,18 @@ export default function App() {
 
 function AppMain() {
   const L = useLesson();
-  const [view, setView] = useState("today"); // today | progress | warmup
+  const [view, setView] = useState("today"); // today | progress | warmup | roleplay | chat
   const home = () => setView("today");
 
   const lesson = L.lesson;
+
+  // Nói tự do: gia sư nhắc bạn dùng lại những MẪU CÂU đã học (không phải từ vựng rời) — 6 mẫu gần nhất.
+  const learnedKeys = useMemo(
+    () => L.lessons.filter((l) => l.patKey && L.progress[l.day]?.core).slice(-6).map((l) => l.patKey),
+    [L.lessons, L.progress]
+  );
+  // Tình huống đóng vai: lấy của bài vừa học xong, chưa học bài nào thì lấy bài sắp học.
+  const freeScene = (L.lastDone && !L.lastDone.review && L.lastDone.scene) || L.pending?.scene || "";
 
   // Nhiên liệu cho các màn nói cũ: ngày thường dùng từ của bài, ngày chốt tuần dùng mẫu câu cả tuần.
   const dueWords = useMemo(() => {
@@ -46,6 +54,19 @@ function AppMain() {
     return <Progress lessons={L.lessons} progress={L.progress} streak={L.streak} onBack={home} />;
   }
   if (view === "warmup") return <WarmupTalk onBack={home} />;
+
+  // ── Nói tự do (vào thẳng từ màn chờ, không cần học xong) ──
+  if (view === "roleplay" || view === "chat") {
+    return (
+      <VoiceChat
+        dueWords={learnedKeys}
+        level={latestLevel(loadSpeaking()) || "A2"}
+        topic={view === "roleplay" ? freeScene : TRACK_VI[L.pending?.track || "daily"]}
+        roleplay={view === "roleplay"}
+        onBack={home}
+      />
+    );
+  }
 
   // ── Đóng ngày ──
   if (L.mode === "done") {
@@ -129,6 +150,8 @@ function AppMain() {
       onStart={L.start}
       onProgress={() => setView("progress")}
       onWarmup={() => setView("warmup")}
+      onRoleplay={() => setView("roleplay")}
+      onChat={() => setView("chat")}
     />
   );
 }

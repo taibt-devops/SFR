@@ -419,6 +419,26 @@ Bài có `day % 6 === 0` không có mẫu câu mới. Thay vào đó (vẫn 15' 
 "có lịch cố định". Nhờ vậy giữ được công cụ mà vẫn bỏ được cái bẫy tự chọn (0.2.1). Đồng thời sửa
 mâu thuẫn của bản cũ (plan bắt chấm CEFR mỗi ngày trong khi chính app khuyên 2-3 lần/tuần).
 
+### 3.5. Nói tự do — luôn với tới được từ màn chờ
+
+> **Sửa sai của bản đầu (2026-09-22).** Thiết kế ban đầu chỉ cho vào phần nói theo lịch: đóng vai là
+> nhịp CUỐI của phần mở rộng, trò chuyện + chấm CEFR chỉ có ngày chốt tuần. Hệ quả là muốn nói chuyện
+> với gia sư ở ngày 1 phải học xong ~23 phút, còn 5/6 ngày thì không có đường nào vào. Chủ dự án mở
+> app và **không tìm thấy phần luyện nói** — đúng là lỗi thiết kế, không phải lỗi người dùng.
+> Chôn một tính năng sâu tới mức không ai thấy thì không khác gì xoá nó.
+
+Màn chờ có thêm một hàng **ba nút phụ**: 🎭 Đóng vai · 💬 Trò chuyện · 🎤 Khởi động. Vào thẳng, không
+cần học xong bài nào, không cần chọn chủ đề hay trình độ trước.
+
+Vẫn giữ C9 vì ba thứ này **không phải lựa chọn bắt buộc trước khi học**:
+- Nút chính vẫn **duy nhất** ("Bắt đầu — 15 phút"), to và nổi hơn hẳn; ba nút kia nhỏ, nằm dưới, có
+  nhãn "không tính streak" để không ai tưởng phải làm.
+- Bấm vào là chạy ngay — chủ đề/trình độ/tình huống đều suy ra từ tiến độ, không hỏi gì.
+
+**Nhiên liệu:** gia sư được truyền **`patKey` của 6 mẫu câu gần nhất đã học** (không phải từ vựng
+rời), nên nó nhắc bạn dùng lại đúng thứ vừa học và checklist ✓ hiện mẫu nào đã nói được. Tình huống
+đóng vai lấy `scene` của bài vừa học xong; chưa học bài nào thì lấy của bài sắp học.
+
 ---
 
 ## Phần 4 — Đóng ngày, streak, bằng chứng tiến bộ

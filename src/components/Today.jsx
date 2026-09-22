@@ -3,7 +3,10 @@
 // của hôm nay, việc của người học chỉ là bấm bắt đầu.
 import { TOTAL_DAYS } from "../data/course/outline.js";
 
-export default function Today({ lesson, streak, doneToday, completed, onStart, onProgress, onWarmup }) {
+export default function Today({
+  lesson, streak, doneToday, completed,
+  onStart, onProgress, onWarmup, onRoleplay, onChat,
+}) {
   // Hết phần đã soạn — nói thật thay vì hiện màn trống khó hiểu.
   if (!lesson) {
     return (
@@ -14,6 +17,12 @@ export default function Today({ lesson, streak, doneToday, completed, onStart, o
           {completed}/{TOTAL_DAYS} mẫu câu. Các tuần sau chưa có nội dung — soạn tiếp rồi quay lại.
         </p>
         <div className="spacer" />
+        {/* Hết bài rồi thì nói tự do chính là thứ nên làm tiếp. */}
+        <div className="btn-row btn-trio">
+          <button className="btn" onClick={onRoleplay}>🎭 Đóng vai</button>
+          <button className="btn" onClick={onChat}>💬 Trò chuyện</button>
+          <button className="btn" onClick={onWarmup}>🎤 Khởi động</button>
+        </div>
         <button className="btn" onClick={onProgress}>Xem tôi nói được gì rồi</button>
       </div>
     );
@@ -47,8 +56,18 @@ export default function Today({ lesson, streak, doneToday, completed, onStart, o
         </span>
       </div>
 
+      {/* Nói tự do — luôn với tới được, KHÔNG phải học xong mới mở khoá.
+          Vẫn giữ C9: chỉ có MỘT nút chính ở trên; đây là hàng phụ, không cấu hình gì trước khi vào. */}
+      <div className="free-talk">
+        <div className="step-kicker">Nói tự do · không tính streak</div>
+        <div className="btn-row btn-trio">
+          <button className="btn" onClick={onRoleplay}>🎭 Đóng vai</button>
+          <button className="btn" onClick={onChat}>💬 Trò chuyện</button>
+          <button className="btn" onClick={onWarmup}>🎤 Khởi động</button>
+        </div>
+      </div>
+
       <button className="btn-link" onClick={onProgress}>Tôi nói được gì rồi</button>
-      <button className="btn-link" onClick={onWarmup}>Khởi động nói 1 phút (tuỳ chọn)</button>
     </div>
   );
 }

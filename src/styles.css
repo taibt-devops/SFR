@@ -153,6 +153,12 @@ h2 { font-size: 20px; font-weight: 600; }
 
 .btn-sm { width: auto; padding: 8px 14px; font-size: 14px; border-radius: 10px; }
 
+/* Hàng 3 nút phụ (nói tự do) — nhỏ hơn nút chính để phân cấp vẫn rõ trên màn nhỏ. */
+.btn-trio .btn { padding: 12px 4px; font-size: 14px; border-radius: 12px; }
+
+.free-talk { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+.free-talk .step-kicker { text-align: center; }
+
 /* ── Đánh giá SM-2 (4 nút, phím 1–4) ─────────────────────── */
 .rate { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
 .rate .btn { padding: 14px 4px; font-size: 14px; border-radius: 12px; }
