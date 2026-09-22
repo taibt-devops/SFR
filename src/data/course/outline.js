@@ -14,7 +14,7 @@ export const outline = [
   // ── Tuần 2 — Nói về bản thân ──
   { day: 7, pat: "I work as + N / at + N", patVi: "Tôi làm nghề... / ở..." },
   { day: 8, pat: "I've been ...ing for + time", patVi: "Tôi làm ... được bao lâu rồi" },
-  { day: 9, pat: "I'm into + N / I like ...ing", patVi: "Tôi thích..." },
+  { day: 9, pat: "I'm into + N / Ving", patVi: "Tôi mê..., tôi khoái..." },
   { day: 10, pat: "I usually + V", patVi: "Thói quen" },
   { day: 11, pat: "I'm not really + adj", patVi: "Phủ định nhẹ, tránh nói cộc" },
   { day: 12, review: true },
