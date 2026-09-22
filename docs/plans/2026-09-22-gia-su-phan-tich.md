@@ -610,22 +610,15 @@ async function handleTutor(body) {
 
 - [ ] **Step 2: Đăng ký route**
 
-Sửa hằng `ROUTES`, thêm một dòng:
+Mở `server/proxy.mjs`, tìm hằng `ROUTES`, **THÊM ĐÚNG MỘT DÒNG** vào cuối:
 
 ```js
-const ROUTES = {
-  "/": handleChat,
-  "/scenario": handleScenario,
-  "/mine": handleMine,
-  "/story": handleStory,
-  "/assess": handleAssess,
-  "/summary": handleSummary,
-  "/translate": handleTranslate,
-  "/ipa": handleIpa,
-  "/patterns": handlePatterns,
   "/tutor": handleTutor,
-};
 ```
+
+> ⚠️ **ĐỪNG dán đè cả khối `ROUTES`.** Bản nháp đầu của kế hoạch này có chụp sẵn cả khối — và ảnh
+> chụp đó ĐÃ CŨ, thiếu `"/coach": handleCoach` (route có thật, đang chạy). Dán đè sẽ âm thầm xoá
+> mất một route đang phục vụ. Chỉ thêm một dòng, không đụng dòng nào khác.
 
 - [ ] **Step 3: Nạp lại proxy trên cura-dev**
 
