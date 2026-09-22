@@ -78,8 +78,16 @@ BƯỚC 5 — CODE (chỉ sau khi 1–4 xong).
 - `.env` chứa token phải nằm trong `.gitignore`. Kiểm tra trước mỗi commit.
 - Frontend chỉ biết `VITE_PROXY_URL` + `VITE_PROXY_SECRET`. Secret nhúng trong bundle là **lớp khóa
   nhẹ** cho dùng local; khi expose ra internet, khóa thật = **Cloudflare Access**.
-- Token hết hạn → chạy lại `claude setup-token`, cập nhật env, restart proxy. KHÔNG "vá tạm" bằng
-  cách nhét token vào client.
+- **Token hết hạn (401 từ Anthropic)** → xoay bằng 2 bước:
+  1. `claude setup-token` — **tương tác**, mở trình duyệt để đăng nhập + duyệt. Không tự động hoá
+     được, không ai chạy thay chủ dự án được.
+  2. `bash scripts/set-token.sh` — dán token vào dấu nhắc ẩn; script tự kiểm chứng với Anthropic
+     TRƯỚC khi ghi, sao lưu `.env` cũ, rồi **tạo lại** container proxy.
+  Token đi thẳng bàn phím → server qua stdin: không vào argv (`ps` thấy được), không vào lịch sử
+  shell, không in ra màn hình. KHÔNG "vá tạm" bằng cách nhét token vào client.
+- **`docker compose restart proxy` KHÔNG đủ** khi đổi `.env`: `env_file` chỉ được đọc lúc **tạo**
+  container, nên restart sẽ chạy lại đúng container cũ với token cũ — tưởng đã xoay mà thực ra chưa.
+  Phải `docker compose up -d --force-recreate proxy`.
 
 ## Stack & cấu trúc
 
