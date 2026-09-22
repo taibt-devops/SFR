@@ -39,7 +39,9 @@
 ## Dọn & triển khai
 
 - [x] **R15** Xoá file ở spec §7.3 + dọn key `phrasal-*` một lần (cờ `srf-reset-v1`). Không import mồ côi.
-- [ ] **R17** Deploy cura-dev: `docker compose up -d --build`, vào được cổng 8088.
+- [x] **R17** Deploy cura-dev — LIVE tại https://english.forbible.org/ (cổng 8088 sau nginx).
+      Health check trong `scripts/deploy.sh` đã thêm retry: `docker compose up` trả về khi container
+      vừa TẠO xong chứ chưa phục vụ được, bắn một phát là ăn 502 rồi báo hỏng oan.
 
 ---
 

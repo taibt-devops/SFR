@@ -32,6 +32,14 @@ scp "/tmp/$TARBALL" "$HOST:/tmp/$TARBALL"
 ssh "$HOST" "cd $DIR && tar xzf /tmp/$TARBALL && docker compose up -d --build $SERVICES"
 
 echo "==> [5/5] Health check"
-code=$(curl -fsS -o /dev/null -w '%{http_code}' "$APP_URL" || echo "ERR")
+# `docker compose up` trả về ngay khi container ĐƯỢC TẠO, không phải khi nginx đã nhận request.
+# Bắn một phát là gần như chắc chắn ăn 502 và báo hỏng oan → thử lại vài lần trước khi kết luận.
+code="ERR"
+for i in 1 2 3 4 5 6; do
+  code=$(curl -fsS -o /dev/null -w '%{http_code}' "$APP_URL" || echo "ERR")
+  [ "$code" = "200" ] && break
+  echo "   lần $i: $code — chờ container lên…"
+  sleep 5
+done
 echo "   $APP_URL → $code"
-[ "$code" = "200" ] && echo "✓ Deploy xong." || { echo "✗ App không trả 200 — kiểm tra 'docker compose logs' trên server."; exit 1; }
+[ "$code" = "200" ] && echo "✓ Deploy xong." || { echo "✗ App không trả 200 sau 30s — kiểm tra 'docker compose logs' trên server."; exit 1; }
