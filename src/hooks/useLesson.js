@@ -9,6 +9,9 @@ import { loadMyWords, saveMyWords, addMyWord, countMyWords } from "../srs/myWord
 import { buildSession, review } from "../srs/sm2.js";
 import { loadProgress, saveProgress } from "../srs/storage.js";
 import { loadDaily, saveDaily, bumpReview } from "../srs/daily.js";
+import { loadTutor, saveTutor, addAttempt, setAnalysis, topErrors, attemptsFor, hintFor, clearHint } from "../srs/tutor.js";
+import { analyzeSession } from "../ai/tutor.js";
+import { loadSpeaking, latestLevel } from "../srs/speaking.js";
 
 const REVIEW_LIMIT = 8; // nhịp 0 ~4 phút (spec §3.1)
 
@@ -19,6 +22,7 @@ export function useLesson() {
   });
   const [srs, setSrs] = useState(loadProgress);
   const [myWords, setMyWords] = useState(loadMyWords);
+  const [tutor, setTutor] = useState(loadTutor);
   const [mode, setMode] = useState("idle"); // idle | core | ext | done
   const [activeDay, setActiveDay] = useState(null);
 
@@ -74,8 +78,36 @@ export function useLesson() {
       const next = completeStep(progress, lesson, which, now);
       persist(next);
       if (!nextStep(lesson, next, { ext: mode === "ext" })) setMode("done");
+
+      // Đóng ngày → phân tích nền. KHÔNG await: màn đóng ngày là khoảnh khắc trả công duy nhất
+      // trong ngày (§4.1), bắt nó chờ LLM là hỏng. Hỏng thì im lặng bỏ qua (§10.8).
+      // "speak" = nhịp cuối của lõi ngày thường, "chat" = nhịp cuối của lõi ngày chốt tuần — chọn
+      // đúng 2 mốc này (thay vì đợi cả `mode==="ext"` xong) để phân tích LUÔN chạy mỗi ngày, kể cả
+      // khi người học bỏ qua phần mở rộng tuỳ chọn (words/speak2/roleplay).
+      if (which === "speak" || which === "chat") {
+        const day = lesson.day;
+        const attempts = attemptsFor(tutor, day);
+        if (attempts.length) {
+          analyzeSession({
+            level: latestLevel(loadSpeaking()) || "A2",
+            pattern: lesson.pat || "",
+            attempts,
+            recentErrors: topErrors(tutor, loadSpeaking(), 3),
+          })
+            .then((raw) => {
+              setTutor((prev) => {
+                const nx = setAnalysis(prev, day, raw, Date.now());
+                saveTutor(nx);
+                return nx;
+              });
+            })
+            .catch(() => {
+              /* mạng lỗi / token hết hạn / Claude chậm → buổi sau chạy như chưa có gia sư (§10.8) */
+            });
+        }
+      }
     },
-    [lesson, progress, mode, persist]
+    [lesson, progress, mode, persist, tutor]
   );
 
   // Chấm một item ôn. `q` do NGƯỜI HỌC chọn (C5) — hook chỉ ghi lịch do sm2.js tính.
@@ -101,6 +133,30 @@ export function useLesson() {
       return next;
     });
   }, [progress, pending]);
+
+  // Ghi lại một lần nói để cuối ngày gửi gia sư phân tích (spec §10.3).
+  const attempt = useCallback(
+    (a) => {
+      if (!lesson) return;
+      setTutor((prev) => {
+        const next = addAttempt(prev, lesson.day, a, Date.now());
+        saveTutor(next);
+        return next;
+      });
+    },
+    [lesson]
+  );
+
+  const hintOf = useCallback((itemId) => hintFor(tutor, itemId), [tutor]);
+
+  // Gợi ý chỉ nhắc MỘT lần — dùng xong thì gỡ khỏi kho.
+  const consumeHint = useCallback((itemId) => {
+    setTutor((prev) => {
+      const next = clearHint(prev, itemId);
+      if (next !== prev) saveTutor(next);
+      return next;
+    });
+  }, []);
 
   // Ghi câu người học nói đúng — bằng chứng tiến bộ trên màn đóng ngày.
   const said = useCallback(
@@ -130,6 +186,10 @@ export function useLesson() {
     myWords,
     myWordCount: countMyWords(myWords),
     addWord,
+    tutor,
+    attempt,
+    hintOf,
+    consumeHint,
     start,
     startExt,
     exit,

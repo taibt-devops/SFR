@@ -22,8 +22,8 @@ describe("bộ bước theo loại ngày", () => {
     expect(isWeekClose(teach)).toBe(false);
   });
 
-  it("ngày chốt tuần: bộ bước riêng, KHÔNG có phần mở rộng", () => {
-    expect(coreStepsFor(weekClose)).toEqual(WEEK_STEPS);
+  it("ngày chốt tuần: bộ bước riêng, có báo cáo trước khi ôn", () => {
+    expect(coreStepsFor(weekClose)).toEqual(["report", "review", "assess", "chat"]);
     expect(extStepsFor(weekClose)).toEqual([]);
     expect(isWeekClose(weekClose)).toBe(true);
   });
@@ -86,7 +86,7 @@ describe("completeStep", () => {
     expect(later[1].doneAt).toBe(NOW);
   });
 
-  it("ngày chốt tuần xong 3 nhịp riêng là core, ext luôn false", () => {
+  it("ngày chốt tuần xong 4 nhịp riêng là core, ext luôn false", () => {
     const p = runAll(weekClose, WEEK_STEPS);
     expect(isCoreDone(p, 6)).toBe(true);
     expect(isExtDone(p, 6)).toBe(false);
@@ -135,6 +135,6 @@ describe("lastCompleted / stepProgress", () => {
     expect(stepProgress(teach, {})).toMatchObject({ index: 0, total: 4 });
     const p = runAll(teach, ["review", "listen"]);
     expect(stepProgress(teach, p)).toMatchObject({ index: 2, total: 4 });
-    expect(stepProgress(weekClose, {})).toMatchObject({ index: 0, total: 3 });
+    expect(stepProgress(weekClose, {})).toMatchObject({ index: 0, total: 4 });
   });
 });

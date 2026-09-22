@@ -27,7 +27,7 @@ function Waiting() {
   );
 }
 
-export default function SpeakCheck({ target, prompt, footer, autoHint = false }) {
+export default function SpeakCheck({ target, prompt, footer, autoHint = false, onAttempt, kind, itemId }) {
   const [result, setResult] = useState(null); // { text, diff, score }
 
   const onResult = useCallback(
@@ -36,10 +36,13 @@ export default function SpeakCheck({ target, prompt, footer, autoHint = false })
       const ok = diff.filter((d) => d.ok).length;
       const score = diff.length ? ok / diff.length : 0;
       setResult({ text, diff, score });
+      // Báo attempt ra ngoài để useLesson gom vào kho gia sư — SpeakCheck là nơi DUY NHẤT
+      // chấm câu nói nên báo từ đây là phủ được cả 4 nhịp (0/3/4/4b) (spec §10.3).
+      onAttempt?.({ kind, itemId, target, heard: text, score });
       // Phản hồi bằng tai trước khi mắt kịp đọc — biết ngay đạt hay chưa.
       (score >= PASS ? good : miss)();
     },
-    [target]
+    [target, onAttempt, kind, itemId]
   );
 
   const rec = useRecorder(onResult);

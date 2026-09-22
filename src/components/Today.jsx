@@ -43,8 +43,9 @@ function FreeTalk({ onRoleplay, onChat, onWarmup }) {
 
 // Lời hứa cụ thể cho 15 phút tới — người mới chưa biết sắp phải làm gì.
 function Plan({ review }) {
+  // Ngày chốt tuần giờ có thêm báo cáo tiến bộ trước khi ôn (§10.6b, Phần 10 Task 12).
   const steps = review
-    ? ["Ôn lại mẫu câu cả tuần", "Chấm trình độ nói", "Trò chuyện tự do"]
+    ? ["Xem báo cáo tiến bộ tuần", "Ôn lại mẫu câu cả tuần", "Chấm trình độ nói", "Trò chuyện tự do"]
     : ["Nghe 4 câu, đoán nghĩa", "Lộ mẫu câu của hôm nay", "Nói 5 câu bằng mồm"];
   return (
     <div className="card">

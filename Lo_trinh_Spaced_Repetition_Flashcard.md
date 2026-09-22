@@ -958,6 +958,26 @@ NHẤT tính lịch. Claude không bao giờ ghi thẳng vào SR state.
 Phần không đổi: lịch ôn vẫn do thuật toán, không do LLM. Đó là thứ giữ cho app ổn định khi Claude
 đổi ý hoặc không gọi được.
 
+### 10.7b. Hai điều chỉnh sau khi chạy thật (2026-09-22)
+
+**a. Claude đếm dòng, không chép id.** Bản đầu đưa `itemId` vào từng dòng và bảo nó copy nguyên văn
+`pat::1`. Nó vẫn trả `"1"`. Bảo mạnh hơn cũng vậy — `::` khiến nó cắt lấy phần đuôi. Đánh nhau với
+xu hướng đó rất mỏng manh, nên làm ngược lại: **cho nó dùng SỐ DÒNG** (`{"n":1,...}` — thứ nó tự
+nhiên muốn làm) rồi **proxy tự ánh xạ** sang `itemId` thật, dòng nào không có itemId thì bỏ hint.
+Hợp đồng với client KHÔNG đổi: `/tutor` vẫn trả `hints: [{ itemId, q, why }]`.
+
+**b. "Thà bỏ sót" nuốt cả lỗi thật.** Prompt bản đầu chỉ có câu cảnh báo về lỗi nhận dạng giọng, kết
+quả là hai câu thiếu mạo từ rành rành vẫn trả `errors: []` — hồ sơ không bao giờ tích luỹ được và
+báo cáo tuần vĩnh viễn rỗng, tức cả tính năng không có dữ liệu để chạy. Bổ sung một phân biệt có
+nguyên tắc: **lỗi nhận dạng thì NGẪU NHIÊN, lỗi người học thì LẶP LẠI CÓ HỆ THỐNG.** Cùng một kiểu
+sai ở nhiều câu = lỗi thật. Một mình một câu thiếu `a` thì vẫn bỏ qua — Whisper nuốt từ chức năng
+ngắn là chuyện thường.
+
+> **Hạn chế đã biết:** phân tích kích hoạt ở cuối phần LÕI (`speak`/`chat`), nên attempt của phần
+> MỞ RỘNG (6 từ mới, 2 câu khó, đóng vai) được ghi vào kho nhưng KHÔNG lọt vào phân tích của ngày
+> đó. Đánh đổi có chủ đích: bảo đảm phân tích LUÔN chạy mỗi ngày quan trọng hơn, vì đa số ngày người
+> học bỏ phần mở rộng. Muốn dùng được dữ liệu đó thì phải gọi thêm một lần ở cuối phần mở rộng.
+
 ### 10.8. Suy biến khi hỏng
 
 | Tình huống | Hành vi |

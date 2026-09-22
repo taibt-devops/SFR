@@ -7,6 +7,7 @@ import Login from "./components/Login.jsx";
 import { useLesson } from "./hooks/useLesson.js";
 import { completedCount, learnedPatterns } from "./srs/course.js";
 import { latestLevel, loadSpeaking } from "./srs/speaking.js";
+import { drillsFor, focusFor, topErrors, weeklyReport } from "./srs/tutor.js";
 
 import Today from "./components/Today.jsx";
 import StepReview from "./components/StepReview.jsx";
@@ -18,6 +19,7 @@ import DayDone from "./components/DayDone.jsx";
 import Progress from "./components/Progress.jsx";
 import Call from "./components/Call.jsx";
 import SpeakingAssess from "./components/SpeakingAssess.jsx";
+import WeekReport from "./components/WeekReport.jsx";
 import WarmupTalk from "./components/WarmupTalk.jsx";
 
 const TRACK_VI = { daily: "Đời thường & du lịch", work: "Công việc & phỏng vấn" };
@@ -50,6 +52,29 @@ function AppMain() {
     return L.lessons.filter((l) => l.week === lesson.week && l.patKey).map((l) => l.patKey);
   }, [lesson, L.lessons]);
 
+  // 2 câu sửa lỗi của hôm qua THAY CHỖ 2 câu cuối, không cộng thêm — nhịp 4 vẫn 5 câu, giữ
+  // nguyên ngân sách 15–18 phút (§3.1, §10.6a). Đặt CÙNG các useMemo khác ở đầu hàm (không phải
+  // ngay trước switch như bản nháp kế hoạch) — dưới đó có 4 lượt `return` sớm (progress/warmup/
+  // roleplay/chat/done), đặt hook sau chúng làm số hook gọi mỗi lần render khác nhau, React sẽ ném
+  // lỗi "Rendered fewer hooks than expected" ngay khi đóng ngày (bug thật, đã tự sửa vị trí).
+  const fixDrills = useMemo(
+    () => (lesson ? drillsFor(L.tutor, lesson.day) : []),
+    [L.tutor, lesson]
+  );
+  const speakDrills = useMemo(() => {
+    const own = lesson?.drills || [];
+    if (!fixDrills.length) return own;
+    return [...fixDrills, ...own.slice(0, Math.max(0, own.length - fixDrills.length))];
+  }, [fixDrills, lesson]);
+
+  // Gia sư ép đúng chỗ đang yếu: điểm chú ý mới nhất + 2 lỗi dai dẳng nhất (§10.6c). ĐẶT CÙNG các
+  // useMemo khác ở đầu hàm, TRƯỚC mọi `return` sớm bên dưới — xem lý do ở comment của fixDrills.
+  const focusHint = useMemo(() => {
+    const f = focusFor(L.tutor);
+    const tags = topErrors(L.tutor, loadSpeaking(), 2).map((e) => e.tag).join(", ");
+    return [f, tags && "lỗi hay lặp: " + tags].filter(Boolean).join(" · ");
+  }, [L.tutor]);
+
   if (view === "progress") {
     return <Progress lessons={L.lessons} progress={L.progress} streak={L.streak} onBack={home} />;
   }
@@ -64,6 +89,7 @@ function AppMain() {
         topic={view === "roleplay" ? freeScene : TRACK_VI[L.pending?.track || "daily"]}
         roleplay={view === "roleplay"}
         onAddWord={L.addWord}
+        focusHint={focusHint}
         onBack={home}
       />
     );
@@ -90,18 +116,58 @@ function AppMain() {
     const done = () => L.complete(L.step);
 
     switch (L.step) {
+      // ── Ngày chốt tuần, bước đầu tiên (spec §3.4, §10.6b) ──
+      case "report":
+        return (
+          <WeekReport
+            lesson={lesson}
+            bar={L.bar}
+            report={weeklyReport(L.tutor, lesson.week)}
+            onDone={done}
+          />
+        );
       case "review":
-        return <StepReview bar={L.bar} queue={L.reviewQueue} getState={L.getState} onRate={L.rate} onDone={done} />;
+        return (
+          <StepReview
+            bar={L.bar}
+            queue={L.reviewQueue}
+            getState={L.getState}
+            onRate={L.rate}
+            onDone={done}
+            onAttempt={L.attempt}
+            hintOf={L.hintOf}
+            onUseHint={L.consumeHint}
+          />
+        );
       case "listen":
         return <StepListen {...shared} onDone={done} />;
       case "pattern":
         return <StepPattern {...shared} onDone={done} />;
       case "speak":
-        return <StepSpeak {...shared} drills={lesson.drills} kicker="Nói ra" onDone={done} onSaid={L.said} />;
+        return (
+          <StepSpeak
+            {...shared}
+            drills={speakDrills}
+            fixCount={fixDrills.length}
+            kicker="Nói ra"
+            onDone={done}
+            onSaid={L.said}
+            onAttempt={L.attempt}
+          />
+        );
       case "words":
-        return <StepWords {...shared} onDone={done} />;
+        return <StepWords {...shared} onDone={done} onAttempt={L.attempt} />;
       case "speak2":
-        return <StepSpeak {...shared} drills={lesson.drills2 || []} kicker="Câu khó hơn" onDone={done} onSaid={L.said} />;
+        return (
+          <StepSpeak
+            {...shared}
+            drills={lesson.drills2 || []}
+            kicker="Câu khó hơn"
+            onDone={done}
+            onSaid={L.said}
+            onAttempt={L.attempt}
+          />
+        );
 
       // Nhịp 5 — đóng vai theo tình huống của bài (màn cũ, giữ nguyên logic).
       case "roleplay":
@@ -113,6 +179,7 @@ function AppMain() {
             topic={lesson.scene}
             roleplay
             onAddWord={L.addWord}
+            focusHint={focusHint}
             onBack={done}
           />
         );
@@ -135,6 +202,7 @@ function AppMain() {
             level={latestLevel(loadSpeaking()) || "A2"}
             topic={TRACK_VI[lesson.track]}
             onAddWord={L.addWord}
+            focusHint={focusHint}
             onBack={done}
           />
         );
