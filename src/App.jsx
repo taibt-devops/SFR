@@ -1,19 +1,26 @@
+// Điều hướng của bản "1% mỗi ngày": màn chờ → phiên học một mạch → đóng ngày.
+// KHÔNG có menu chọn chủ đề/trình độ/chế độ (C9) — chương trình quyết sẵn bài của hôm nay.
+// Các màn nói cũ (đóng vai / chấm CEFR / trò chuyện) không bị bỏ: chúng thành những NHỊP có lịch.
 import { useMemo, useState } from "react";
-import { buildSession } from "./srs/sm2.js";
-import { latestLevel, loadSpeaking } from "./srs/speaking.js";
 import { isAuthed } from "./ai/auth.js";
 import Login from "./components/Login.jsx";
-import { useStudy } from "./hooks/useStudy.js";
-import { useVocab } from "./hooks/useVocab.js";
-import { dueLabel } from "./utils/format.js";
-import Dashboard from "./components/Dashboard.jsx";
-import StudySession from "./components/StudySession.jsx";
-import MiniStory from "./components/MiniStory.jsx";
+import { useLesson } from "./hooks/useLesson.js";
+import { completedCount } from "./srs/course.js";
+import { latestLevel, loadSpeaking } from "./srs/speaking.js";
+
+import Today from "./components/Today.jsx";
+import StepReview from "./components/StepReview.jsx";
+import StepListen from "./components/StepListen.jsx";
+import StepPattern from "./components/StepPattern.jsx";
+import StepSpeak from "./components/StepSpeak.jsx";
+import StepWords from "./components/StepWords.jsx";
+import DayDone from "./components/DayDone.jsx";
+import Progress from "./components/Progress.jsx";
 import VoiceChat from "./components/VoiceChat.jsx";
 import SpeakingAssess from "./components/SpeakingAssess.jsx";
 import WarmupTalk from "./components/WarmupTalk.jsx";
-import ProgressTopics from "./components/ProgressTopics.jsx";
-import TopicDetail from "./components/TopicDetail.jsx";
+
+const TRACK_VI = { daily: "Đời thường & du lịch", work: "Công việc & phỏng vấn" };
 
 export default function App() {
   const [authed, setAuthed] = useState(isAuthed);
@@ -22,131 +29,106 @@ export default function App() {
 }
 
 function AppMain() {
-  const vocabApi = useVocab();
-  const study = useStudy(vocabApi.vocab);
-  const [view, setView] = useState("home"); // "home" | "data" | "story" | "voice" | "assess" | "profile"
-  const [productionMode, setProductionMode] = useState(false); // §5.2 — đặt câu trước khi lật
-  // Thiết lập buổi học CHUNG (chọn ở trang chủ) → chi phối cả ôn từ lẫn luyện nói.
-  const [scope, setScope] = useState("all"); // chủ đề (danh mục từ vựng, hoặc "all")
-  const [level, setLevel] = useState(() => latestLevel(loadSpeaking()) || "A2"); // trình độ nói (CEFR)
-  const [topicView, setTopicView] = useState(null); // chủ đề đang xem chi tiết ở Tiến trình
-  const [roleplayOn, setRoleplayOn] = useState(false); // luyện nói kiểu đóng vai tình huống (#4)
+  const L = useLesson();
+  const [view, setView] = useState("today"); // today | progress | warmup
+  const home = () => setView("today");
 
-  // Hành động từ Chi tiết chủ đề: chốt chủ đề rồi mở màn tương ứng.
-  const goTopicAssess = (t) => { setScope(t); setView("assess"); };
-  const goTopicVoice = (t) => { setScope(t); setRoleplayOn(false); setView("voice"); };
-  const goTopicReview = (t) => { setScope(t); study.start({ scope: t }); };
+  const lesson = L.lesson;
 
-  // Từ due theo ĐÚNG chủ đề đã chọn — làm nhiên liệu cho luyện nói / mini-story.
-  const dueWords = useMemo(
-    () => buildSession(vocabApi.vocab, study.getState, { scope, newLimit: 4, maxReviews: 4 }).slice(0, 8).map((c) => c.v),
-    [vocabApi.vocab, study.getState, scope]
-  );
-  const speakTopic = scope === "all" ? "" : scope; // chủ đề hội thoại = chủ đề đã chọn (rỗng = để tự xoay)
-  const scopeLabel = scope === "all" ? "Tất cả chủ đề" : scope; // nhãn hiển thị ngữ cảnh
+  // Nhiên liệu cho các màn nói cũ: ngày thường dùng từ của bài, ngày chốt tuần dùng mẫu câu cả tuần.
+  const dueWords = useMemo(() => {
+    if (!lesson) return [];
+    if (!lesson.review) return (lesson.words || []).map((w) => w.w);
+    return L.lessons.filter((l) => l.week === lesson.week && l.patKey).map((l) => l.patKey);
+  }, [lesson, L.lessons]);
 
-  // ── Đang ôn ──
-  if (study.started && !study.done) {
-    return (
-      <StudySession
-        card={study.card}
-        state={study.state}
-        progress={study.progress}
-        productionMode={productionMode}
-        scopeLabel={scopeLabel}
-        onRate={study.rate}
-        onExit={study.exit}
-      />
-    );
-  }
-
-  // ── Hoàn thành phiên ──
-  if (study.done) {
-    const { total, good, again } = study.summary;
-    return (
-      <div className="app">
-        <div className="done-check">✓</div>
-        <div className="done-title">Hoàn thành phiên!</div>
-        <div className="done-sub">Bạn đã ôn {total} thẻ</div>
-        <div className="done-stats">
-          <div className="ds"><div className="ds-num" style={{ color: "var(--green)" }}>{good}</div><div className="ds-lab">Nhớ tốt</div></div>
-          <div className="ds"><div className="ds-num" style={{ color: "var(--amber)" }}>{again}</div><div className="ds-lab">Cần ôn lại</div></div>
-        </div>
-        <div className="next-due">
-          <span className="nd-lab">Thẻ đến hạn kế tiếp</span>
-          <span className="nd-val">{dueLabel(study.nextDue)}</span>
-        </div>
-        <div className="spacer" />
-        <button className="cta" onClick={study.exit}><span className="cta-main">Về màn hình chính</span></button>
-      </div>
-    );
-  }
-
-  // ── Khởi động nói 1 phút ──
-  if (view === "warmup") {
-    return <WarmupTalk onBack={() => setView("home")} />;
-  }
-
-  // ── Mini-story ──
-  if (view === "story") {
-    return <MiniStory dueWords={dueWords} scopeLabel={scopeLabel} onBack={() => setView("home")} />;
-  }
-
-  // ── Luyện nói ── (dùng trình độ + chủ đề đã chọn ở trang chủ)
-  if (view === "voice") {
-    return <VoiceChat dueWords={dueWords} addWord={vocabApi.addWord} level={level} topic={speakTopic} roleplay={roleplayOn} onBack={() => setView("home")} />;
-  }
-
-  // ── Đánh giá nói (CEFR) ──
-  if (view === "assess") {
-    return <SpeakingAssess dueWords={dueWords} topic={speakTopic} topicId={scope === "all" ? "" : scope} scopeLabel={scopeLabel} onBack={() => setView("home")} />;
-  }
-
-  // ── Tiến trình: danh sách chủ đề → chi tiết ──
   if (view === "progress") {
-    return (
-      <ProgressTopics
-        cards={vocabApi.vocab}
-        getState={study.getState}
-        onBack={() => setView("home")}
-        onTopic={(t) => { setTopicView(t); setView("topicDetail"); }}
-      />
-    );
+    return <Progress lessons={L.lessons} progress={L.progress} streak={L.streak} onBack={home} />;
   }
-  if (view === "topicDetail" && topicView) {
+  if (view === "warmup") return <WarmupTalk onBack={home} />;
+
+  // ── Đóng ngày ──
+  if (L.mode === "done") {
     return (
-      <TopicDetail
-        topic={topicView}
-        cards={vocabApi.vocab}
-        getState={study.getState}
-        onBack={() => setView("progress")}
-        onAssess={goTopicAssess}
-        onVoice={goTopicVoice}
-        onReview={goTopicReview}
+      <DayDone
+        lesson={lesson}
+        streak={L.streak}
+        saidBest={L.saidBest}
+        extDone={!!L.progress[lesson?.day]?.ext}
+        canExt={!!lesson && !lesson.review}
+        onExt={L.startExt}
+        onExit={L.exit}
       />
     );
   }
 
-  // ── Màn hình chính (Dashboard) ──
+  // ── Đang trong phiên ──
+  if (lesson && L.step) {
+    const shared = { lesson, bar: L.bar };
+    const done = () => L.complete(L.step);
+
+    switch (L.step) {
+      case "review":
+        return <StepReview bar={L.bar} queue={L.reviewQueue} getState={L.getState} onRate={L.rate} onDone={done} />;
+      case "listen":
+        return <StepListen {...shared} onDone={done} />;
+      case "pattern":
+        return <StepPattern {...shared} onDone={done} />;
+      case "speak":
+        return <StepSpeak {...shared} drills={lesson.drills} kicker="Nói ra" onDone={done} onSaid={L.said} />;
+      case "words":
+        return <StepWords {...shared} onDone={done} />;
+      case "speak2":
+        return <StepSpeak {...shared} drills={lesson.drills2 || []} kicker="Câu khó hơn" onDone={done} onSaid={L.said} />;
+
+      // Nhịp 5 — đóng vai theo tình huống của bài (màn cũ, giữ nguyên logic).
+      case "roleplay":
+        return (
+          <VoiceChat
+            dueWords={dueWords}
+            level={latestLevel(loadSpeaking()) || "A2"}
+            // `topic` chính là mô tả tình huống: VoiceChat truyền nó cho genScenario để dựng vai.
+            topic={lesson.scene}
+            roleplay
+            onBack={done}
+          />
+        );
+
+      // ── Ngày chốt tuần (spec §3.4) ──
+      case "assess":
+        return (
+          <SpeakingAssess
+            dueWords={dueWords}
+            topic={TRACK_VI[lesson.track]}
+            topicId={`week-${lesson.week}`}
+            scopeLabel={`Chốt tuần ${lesson.week}`}
+            onBack={done}
+          />
+        );
+      case "chat":
+        return (
+          <VoiceChat
+            dueWords={dueWords}
+            level={latestLevel(loadSpeaking()) || "A2"}
+            topic={TRACK_VI[lesson.track]}
+            onBack={done}
+          />
+        );
+      default:
+        break;
+    }
+  }
+
+  // ── Màn chờ ──
   return (
-    <Dashboard
-      cards={vocabApi.vocab}
-      getState={study.getState}
-      onStart={study.start}
-      onReset={study.resetProgress}
-      productionMode={productionMode}
-      onToggleProduction={() => setProductionMode((v) => !v)}
-      stats={study.stats}
-      scope={scope}
-      onScope={setScope}
-      level={level}
-      onLevel={setLevel}
-      onStory={() => setView("story")}
-      onVoice={() => { setRoleplayOn(false); setView("voice"); }}
-      onRoleplay={() => { setRoleplayOn(true); setView("voice"); }}
+    <Today
+      lesson={L.pending}
+      streak={L.streak}
+      doneToday={L.doneToday}
+      completed={completedCount(L.progress)}
+      onStart={L.start}
+      onProgress={() => setView("progress")}
       onWarmup={() => setView("warmup")}
-      onAssess={() => setView("assess")}
-      onProfile={() => setView("progress")}
     />
   );
 }
