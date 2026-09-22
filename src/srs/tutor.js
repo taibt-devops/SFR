@@ -73,3 +73,65 @@ export function setAnalysis(store, day, raw, now = Date.now()) {
   const prev = store?.[day] || { attempts: [] };
   return { ...store, [day]: { ...prev, analysis: sanitizeAnalysis(raw), at: now } };
 }
+
+const daysDesc = (store) => Object.keys(store || {}).map(Number).filter(Boolean).sort((a, b) => b - a);
+
+// Lỗi lặp nhiều nhất. Gộp HAI nguồn vì cả hai dùng chung ERROR_TAGS:
+//   - phân tích cuối buổi (hằng ngày)
+//   - chấm CEFR `speaking.js` (2–3 lần/tuần), mỗi entry có `tags`
+export function topErrors(store = {}, speakingList = [], n = 5) {
+  const counts = {};
+  const bump = (tag) => {
+    if (ERROR_TAGS.includes(tag)) counts[tag] = (counts[tag] || 0) + 1;
+  };
+  for (const day of Object.values(store)) for (const e of day?.analysis?.errors || []) bump(e.tag);
+  for (const a of speakingList || []) for (const t of a?.tags || []) bump(t);
+  return Object.entries(counts)
+    .map(([tag, count]) => ({ tag, count }))
+    .sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag))
+    .slice(0, n);
+}
+
+// Điều cần chú ý, lấy của ngày GẦN NHẤT có phân tích.
+export function focusFor(store = {}) {
+  for (const d of daysDesc(store)) {
+    const f = store[d]?.analysis?.focus;
+    if (f) return f;
+  }
+  return "";
+}
+
+// Câu sửa lỗi cho buổi `day`: lấy từ ngày GẦN NHẤT TRƯỚC ĐÓ, không lấy của chính ngày này
+// (phân tích của ngày N chạy lúc đóng ngày N, nên chỉ dùng được từ ngày N+1).
+export function drillsFor(store = {}, day) {
+  for (const d of daysDesc(store)) {
+    if (d >= day) continue;
+    const ds = store[d]?.analysis?.drills || [];
+    if (ds.length) return ds;
+  }
+  return [];
+}
+
+export function hintFor(store = {}, itemId) {
+  for (const d of daysDesc(store)) {
+    const h = (store[d]?.analysis?.hints || []).find((x) => x.itemId === itemId);
+    if (h) return h;
+  }
+  return null;
+}
+
+// Gợi ý chỉ nhắc MỘT lần: dùng xong thì gỡ, tránh nhắc mãi một lỗi đã sửa.
+// KHÔNG đặt tên `useHint`: tiền tố `use` khiến quy tắc lint của React coi đây là hook, mà hàm này
+// được gọi bên trong updater của setState — vi phạm rules-of-hooks.
+export function clearHint(store = {}, itemId) {
+  for (const d of daysDesc(store)) {
+    const entry = store[d];
+    const hints = entry?.analysis?.hints || [];
+    if (!hints.some((x) => x.itemId === itemId)) continue;
+    return {
+      ...store,
+      [d]: { ...entry, analysis: { ...entry.analysis, hints: hints.filter((x) => x.itemId !== itemId) } },
+    };
+  }
+  return store;
+}

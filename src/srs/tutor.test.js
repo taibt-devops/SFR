@@ -3,11 +3,16 @@ import {
   addAttempt,
   analysisFor,
   attemptsFor,
+  clearHint,
+  drillsFor,
   ERROR_TAGS,
+  focusFor,
+  hintFor,
   loadTutor,
   sanitizeAnalysis,
   saveTutor,
   setAnalysis,
+  topErrors,
   TUTOR_KEY,
 } from "./tutor.js";
 
@@ -115,5 +120,70 @@ describe("sanitizeAnalysis", () => {
   it("setAnalysis với gói hỏng → lưu null, không ném lỗi", () => {
     const s = setAnalysis({}, 3, "rac", 1);
     expect(analysisFor(s, 3)).toBeNull();
+  });
+});
+
+const mkDay = (tags, extra = {}) => ({
+  attempts: [],
+  analysis: { errors: tags.map((t) => ({ tag: t, vi: "", evidence: "", fix: "" })),
+              strengths: [], focus: "", drills: [], hints: [], ...extra },
+});
+
+describe("topErrors", () => {
+  it("đếm gộp qua nhiều ngày, nhiều nhất lên đầu", () => {
+    const store = { 1: mkDay(["mạo từ", "giới từ"]), 2: mkDay(["mạo từ"]), 3: mkDay(["mạo từ", "giới từ"]) };
+    expect(topErrors(store, [], 2)).toEqual([
+      { tag: "mạo từ", count: 3 },
+      { tag: "giới từ", count: 2 },
+    ]);
+  });
+
+  it("gộp cả tags từ chấm CEFR (speaking.js) vì dùng chung bảng nhãn", () => {
+    const store = { 1: mkDay(["mạo từ"]) };
+    const speaking = [{ tags: ["mạo từ", "phát âm"] }];
+    expect(topErrors(store, speaking, 3)).toEqual([
+      { tag: "mạo từ", count: 2 },
+      { tag: "phát âm", count: 1 },
+    ]);
+  });
+
+  it("chưa có gì → mảng rỗng", () => {
+    expect(topErrors({}, [], 3)).toEqual([]);
+  });
+});
+
+describe("focusFor / drillsFor", () => {
+  it("focus lấy của NGÀY LỚN NHẤT có phân tích", () => {
+    const store = { 1: mkDay([], { focus: "cũ" }), 4: mkDay([], { focus: "mới" }) };
+    expect(focusFor(store)).toBe("mới");
+    expect(focusFor({})).toBe("");
+  });
+
+  it("drillsFor(day) lấy drill sinh từ ngày TRƯỚC đó, không phải ngày hiện tại", () => {
+    const store = {
+      3: mkDay([], { drills: [{ vi: "a", en: "A" }] }),
+      4: mkDay([], { drills: [{ vi: "b", en: "B" }] }),
+    };
+    expect(drillsFor(store, 4)).toEqual([{ vi: "a", en: "A" }]);
+    expect(drillsFor(store, 1)).toEqual([]);
+  });
+});
+
+describe("hintFor / useHint", () => {
+  it("tìm được gợi ý theo itemId", () => {
+    const store = { 2: mkDay([], { hints: [{ itemId: "pat::1", q: 2, why: "vấp mạo từ" }] }) };
+    expect(hintFor(store, "pat::1")).toMatchObject({ q: 2, why: "vấp mạo từ" });
+    expect(hintFor(store, "pat::99")).toBeNull();
+  });
+
+  it("clearHint xoá gợi ý sau khi dùng — chỉ nhắc MỘT lần", () => {
+    const store = { 2: mkDay([], { hints: [{ itemId: "pat::1", q: 2, why: "x" }] }) };
+    const next = clearHint(store, "pat::1");
+    expect(hintFor(next, "pat::1")).toBeNull();
+  });
+
+  it("clearHint với id không tồn tại → trả nguyên store", () => {
+    const store = { 2: mkDay([], { hints: [] }) };
+    expect(clearHint(store, "pat::9")).toBe(store);
   });
 });
