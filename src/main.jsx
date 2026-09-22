@@ -2,6 +2,9 @@ import React from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App.jsx";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
+// legacy.css = giao dien cu, chi con phuc vu cac man noi giu lai (VoiceChat / SpeakingAssess /
+// WarmupTalk / ProgressChart / Login). styles.css nap SAU nen bang mau moi de len :root cua no.
+import "./legacy.css";
 import "./styles.css";
 
 createRoot(document.getElementById("root")).render(

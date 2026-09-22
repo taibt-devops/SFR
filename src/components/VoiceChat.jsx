@@ -320,15 +320,19 @@ export default function VoiceChat({ dueWords, addWord, level: levelProp, topic: 
       <div className="study-top">
         <span className="app-title">{scn ? "🎭 Đóng vai" : "Luyện nói"}</span>
         <span style={{ display: "inline-flex", alignItems: "center", gap: 14 }}>
-          {/* Góc phải: mở popup thêm từ vựng (tự điền câu gần nhất của gia sư làm ví dụ) */}
-          <button
-            className="pill-add"
-            title="Thêm từ vựng vào deck"
-            onClick={() => setSaving({
-              sentence: [...history].reverse().find((m) => m.role === "assistant")?.content || "",
-              word: "",
-            })}
-          >＋ Từ vựng</button>
+          {/* Góc phải: mở popup thêm từ vựng (tự điền câu gần nhất của gia sư làm ví dụ).
+              Chỉ hiện khi CÓ nơi để lưu — khoá "1% mỗi ngày" không có deck tự thêm, nên ẩn nút thay
+              vì để người dùng bấm vào một thứ không lưu được đi đâu. */}
+          {addWord && (
+            <button
+              className="pill-add"
+              title="Thêm từ vựng vào deck"
+              onClick={() => setSaving({
+                sentence: [...history].reverse().find((m) => m.role === "assistant")?.content || "",
+                word: "",
+              })}
+            >＋ Từ vựng</button>
+          )}
           {started && <button className="link-exit" style={{ color: "var(--teal)" }} onClick={endSession}>Kết thúc</button>}
           <button className="btn-back" onClick={onBack}>← Về</button>
         </span>
