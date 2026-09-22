@@ -7,6 +7,7 @@ import Login from "./components/Login.jsx";
 import { useLesson } from "./hooks/useLesson.js";
 import { completedCount, learnedPatterns } from "./srs/course.js";
 import { latestLevel, loadSpeaking } from "./srs/speaking.js";
+import { drillsFor } from "./srs/tutor.js";
 
 import Today from "./components/Today.jsx";
 import StepReview from "./components/StepReview.jsx";
@@ -49,6 +50,21 @@ function AppMain() {
     if (!lesson.review) return (lesson.words || []).map((w) => w.w);
     return L.lessons.filter((l) => l.week === lesson.week && l.patKey).map((l) => l.patKey);
   }, [lesson, L.lessons]);
+
+  // 2 câu sửa lỗi của hôm qua THAY CHỖ 2 câu cuối, không cộng thêm — nhịp 4 vẫn 5 câu, giữ
+  // nguyên ngân sách 15–18 phút (§3.1, §10.6a). Đặt CÙNG các useMemo khác ở đầu hàm (không phải
+  // ngay trước switch như bản nháp kế hoạch) — dưới đó có 4 lượt `return` sớm (progress/warmup/
+  // roleplay/chat/done), đặt hook sau chúng làm số hook gọi mỗi lần render khác nhau, React sẽ ném
+  // lỗi "Rendered fewer hooks than expected" ngay khi đóng ngày (bug thật, đã tự sửa vị trí).
+  const fixDrills = useMemo(
+    () => (lesson ? drillsFor(L.tutor, lesson.day) : []),
+    [L.tutor, lesson]
+  );
+  const speakDrills = useMemo(() => {
+    const own = lesson?.drills || [];
+    if (!fixDrills.length) return own;
+    return [...fixDrills, ...own.slice(0, Math.max(0, own.length - fixDrills.length))];
+  }, [fixDrills, lesson]);
 
   if (view === "progress") {
     return <Progress lessons={L.lessons} progress={L.progress} streak={L.streak} onBack={home} />;
@@ -107,7 +123,15 @@ function AppMain() {
         return <StepPattern {...shared} onDone={done} />;
       case "speak":
         return (
-          <StepSpeak {...shared} drills={lesson.drills} kicker="Nói ra" onDone={done} onSaid={L.said} onAttempt={L.attempt} />
+          <StepSpeak
+            {...shared}
+            drills={speakDrills}
+            fixCount={fixDrills.length}
+            kicker="Nói ra"
+            onDone={done}
+            onSaid={L.said}
+            onAttempt={L.attempt}
+          />
         );
       case "words":
         return <StepWords {...shared} onDone={done} onAttempt={L.attempt} />;

@@ -1,14 +1,16 @@
-// Nhịp 4 (lõi, 3 câu) và 4b (mở rộng, 2 câu khó hơn) — nhịp hiệu quả nhất của cả buổi.
+// Nhịp 4 (lõi, 5 câu — 2 câu đầu có thể là câu sửa lỗi hôm qua, xem `fixCount`) và 4b (mở rộng,
+// 2 câu khó hơn) — nhịp hiệu quả nhất của cả buổi.
 // Việt → Anh, nói bằng mồm. Câu nào khớp cao nhất sẽ thành "bạn vừa nói được" ở màn đóng ngày.
 import { useState } from "react";
 import StepShell from "./StepShell.jsx";
 import SpeakCheck, { PASS } from "./SpeakCheck.jsx";
 import { tick } from "../utils/sfx.js";
 
-export default function StepSpeak({ lesson, bar, drills, kicker, onDone, onSaid, onAttempt }) {
+export default function StepSpeak({ lesson, bar, drills, kicker, onDone, onSaid, onAttempt, fixCount = 0 }) {
   const [i, setI] = useState(0);
   const d = drills[i];
   const last = i + 1 >= drills.length;
+  const isFix = i < fixCount; // 2 câu đầu là câu sửa lỗi hôm qua
 
   const next = (result) => {
     tick();
@@ -30,7 +32,7 @@ export default function StepSpeak({ lesson, bar, drills, kicker, onDone, onSaid,
             <p className="muted small" style={{ marginBottom: 0 }}>Nói câu này bằng tiếng Anh:</p>
             <p className="prompt-vi">{d.vi}</p>
             <p className="muted small">
-              Mẫu: <b>{lesson.pat}</b>
+              {isFix ? "🔧 Sửa lỗi hôm qua" : <>Mẫu: <b>{lesson.pat}</b></>}
             </p>
           </>
         }
