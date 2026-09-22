@@ -9,6 +9,7 @@ import { loadMyWords, saveMyWords, addMyWord, countMyWords } from "../srs/myWord
 import { buildSession, review } from "../srs/sm2.js";
 import { loadProgress, saveProgress } from "../srs/storage.js";
 import { loadDaily, saveDaily, bumpReview } from "../srs/daily.js";
+import { loadTutor, saveTutor, addAttempt } from "../srs/tutor.js";
 
 const REVIEW_LIMIT = 8; // nhịp 0 ~4 phút (spec §3.1)
 
@@ -19,6 +20,7 @@ export function useLesson() {
   });
   const [srs, setSrs] = useState(loadProgress);
   const [myWords, setMyWords] = useState(loadMyWords);
+  const [tutor, setTutor] = useState(loadTutor);
   const [mode, setMode] = useState("idle"); // idle | core | ext | done
   const [activeDay, setActiveDay] = useState(null);
 
@@ -102,6 +104,19 @@ export function useLesson() {
     });
   }, [progress, pending]);
 
+  // Ghi lại một lần nói để cuối ngày gửi gia sư phân tích (spec §10.3).
+  const attempt = useCallback(
+    (a) => {
+      if (!lesson) return;
+      setTutor((prev) => {
+        const next = addAttempt(prev, lesson.day, a, Date.now());
+        saveTutor(next);
+        return next;
+      });
+    },
+    [lesson]
+  );
+
   // Ghi câu người học nói đúng — bằng chứng tiến bộ trên màn đóng ngày.
   const said = useCallback(
     (text, score) => {
@@ -130,6 +145,8 @@ export function useLesson() {
     myWords,
     myWordCount: countMyWords(myWords),
     addWord,
+    tutor,
+    attempt,
     start,
     startExt,
     exit,

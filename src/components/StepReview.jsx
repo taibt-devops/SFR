@@ -8,7 +8,7 @@ import SpeakCheck, { PASS } from "./SpeakCheck.jsx";
 import { tick } from "../utils/sfx.js";
 import { promptFor } from "../srs/items.js";
 
-export default function StepReview({ bar, queue, getState, onRate, onDone }) {
+export default function StepReview({ bar, queue, getState, onRate, onDone, onAttempt }) {
   const [i, setI] = useState(0);
 
   // Ngày đầu tiên chưa có gì để ôn — nói thẳng rồi đi tiếp, đừng bắt nhìn màn trống.
@@ -39,6 +39,9 @@ export default function StepReview({ bar, queue, getState, onRate, onDone }) {
       <SpeakCheck
         key={item.id}
         target={v.en}
+        kind="review"
+        itemId={item.id}
+        onAttempt={onAttempt}
         prompt={
           <>
             <p className="muted small" style={{ marginBottom: 0 }}>

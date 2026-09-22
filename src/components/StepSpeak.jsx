@@ -5,7 +5,7 @@ import StepShell from "./StepShell.jsx";
 import SpeakCheck, { PASS } from "./SpeakCheck.jsx";
 import { tick } from "../utils/sfx.js";
 
-export default function StepSpeak({ lesson, bar, drills, kicker, onDone, onSaid }) {
+export default function StepSpeak({ lesson, bar, drills, kicker, onDone, onSaid, onAttempt }) {
   const [i, setI] = useState(0);
   const d = drills[i];
   const last = i + 1 >= drills.length;
@@ -23,6 +23,8 @@ export default function StepSpeak({ lesson, bar, drills, kicker, onDone, onSaid 
       <SpeakCheck
         key={d.en}
         target={d.en}
+        kind={kicker === "Nói ra" ? "drill" : "drill2"}
+        onAttempt={onAttempt}
         prompt={
           <>
             <p className="muted small" style={{ marginBottom: 0 }}>Nói câu này bằng tiếng Anh:</p>

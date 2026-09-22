@@ -91,17 +91,37 @@ function AppMain() {
 
     switch (L.step) {
       case "review":
-        return <StepReview bar={L.bar} queue={L.reviewQueue} getState={L.getState} onRate={L.rate} onDone={done} />;
+        return (
+          <StepReview
+            bar={L.bar}
+            queue={L.reviewQueue}
+            getState={L.getState}
+            onRate={L.rate}
+            onDone={done}
+            onAttempt={L.attempt}
+          />
+        );
       case "listen":
         return <StepListen {...shared} onDone={done} />;
       case "pattern":
         return <StepPattern {...shared} onDone={done} />;
       case "speak":
-        return <StepSpeak {...shared} drills={lesson.drills} kicker="Nói ra" onDone={done} onSaid={L.said} />;
+        return (
+          <StepSpeak {...shared} drills={lesson.drills} kicker="Nói ra" onDone={done} onSaid={L.said} onAttempt={L.attempt} />
+        );
       case "words":
-        return <StepWords {...shared} onDone={done} />;
+        return <StepWords {...shared} onDone={done} onAttempt={L.attempt} />;
       case "speak2":
-        return <StepSpeak {...shared} drills={lesson.drills2 || []} kicker="Câu khó hơn" onDone={done} onSaid={L.said} />;
+        return (
+          <StepSpeak
+            {...shared}
+            drills={lesson.drills2 || []}
+            kicker="Câu khó hơn"
+            onDone={done}
+            onSaid={L.said}
+            onAttempt={L.attempt}
+          />
+        );
 
       // Nhịp 5 — đóng vai theo tình huống của bài (màn cũ, giữ nguyên logic).
       case "roleplay":

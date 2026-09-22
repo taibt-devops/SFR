@@ -7,7 +7,7 @@ import SpeakCheck from "./SpeakCheck.jsx";
 import { tick } from "../utils/sfx.js";
 import { speak } from "../utils/tts.js";
 
-export default function StepWords({ lesson, bar, onDone }) {
+export default function StepWords({ lesson, bar, onDone, onAttempt }) {
   const [i, setI] = useState(0);
   const [heard, setHeard] = useState(false);
 
@@ -49,6 +49,8 @@ export default function StepWords({ lesson, bar, onDone }) {
           <SpeakCheck
             key={w.w}
             target={w.en}
+            kind="words"
+            onAttempt={onAttempt}
             autoHint
             prompt={
               <>
