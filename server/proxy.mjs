@@ -365,7 +365,7 @@ async function handleTutor(body) {
   const { level = "A2", pattern = "", attempts = [], recentErrors = [] } = body;
   const lines = attempts
     .slice(0, 40)
-    .map((a, i) => `${i + 1}. [${a.itemId || a.kind || "drill"}] đích: "${a.target}" | nghe được: "${a.heard}" | khớp ${Math.round((a.score || 0) * 100)}%`)
+    .map((a, i) => `#${i + 1} | loại=${a.kind || "drill"} | đích: "${a.target}" | nghe được: "${a.heard}" | khớp ${Math.round((a.score || 0) * 100)}%`)
     .join("\n");
   const recent = recentErrors.map((e) => `${e.tag} (${e.count} lần)`).join(", ");
 
@@ -380,17 +380,40 @@ async function handleTutor(body) {
       "BỎ QUA mọi sai lệch giống lỗi nghe (âm gần giống, mất âm cuối, nối âm, đồng âm). " +
       "Chỉ bắt lỗi có HÌNH DẠNG NGỮ PHÁP THẬT. Khớp thấp mà câu nghe được vẫn hợp lý → coi là nghe nhầm, KHÔNG phải lỗi. " +
       "THÀ BỎ SÓT CÒN HƠN BỊA RA LỖI. " +
+      // Cân bằng lại: lần thử đầu prompt chỉ có câu "thà bỏ sót" nên nó nuốt CẢ lỗi thật —
+      // hai câu thiếu mạo từ rành rành vẫn trả errors=[], khiến hồ sơ lỗi không bao giờ tích luỹ
+      // được và báo cáo tuần vĩnh viễn rỗng. Lỗi nhận dạng giọng thì NGẪU NHIÊN, còn lỗi người học
+      // thì LẶP LẠI CÓ HỆ THỐNG — đó là cách phân biệt.
+      "NHƯNG: nghe nhầm thì ngẫu nhiên, còn lỗi thật thì LẶP LẠI. Cùng một kiểu sai xuất hiện ở NHIỀU câu " +
+      "(ví dụ nhiều câu cùng thiếu mạo từ, cùng sai thì) → đó là LỖI THẬT, phải ghi vào errors, đừng bỏ qua. " +
+      "Thiếu hẳn một từ chức năng bắt buộc (a/an/the, is/are, to) ở nhiều câu KHÔNG phải lỗi nghe. " +
+      "Một mình một câu thiếu 'a' thì CÓ THỂ do Whisper nuốt từ — cứ để yên, đừng ghi vào errors. " +
+      "focus được phép nhắc trước một điều cần chú ý ngay cả khi chưa đủ bằng chứng để ghi thành lỗi. " +
       'CHỈ trả JSON: {"errors":[{"tag":"..","vi":"..","evidence":"..","fix":".."}],"strengths":[".."],' +
-      '"focus":"..","drills":[{"vi":"..","en":".."}],"hints":[{"itemId":"..","q":2,"why":".."}]}. ' +
+      '"focus":"..","drills":[{"vi":"..","en":".."}],"hints":[{"n":1,"q":2,"why":".."}]}. ' +
       "tag CHỌN NGUYÊN VĂN từ: " +
       '"mạo từ","chia động từ/thì","số ít-số nhiều","giới từ","trật tự từ","từ vựng hạn chế","liên kết-mạch lạc","phát âm","ngập ngừng-trôi chảy". ' +
       "focus = ĐÚNG MỘT điều cần chú ý buổi sau, tiếng Việt, ngắn. " +
       "drills = ĐÚNG 2 câu luyện nhắm vào lỗi vừa thấy (vi = câu tiếng Việt để dịch, en = câu tiếng Anh chuẩn). " +
-      "hints = chỉ cho dòng có itemId, q là 2 (chưa nhớ) / 3 (khó) / 4 (tốt) / 5 (dễ), why ngắn bằng tiếng Việt. " +
+      "hints = nhận xét từng câu, \"n\" là SỐ DÒNG (#1, #2…), q là 2 (chưa nhớ) / 3 (khó) / 4 (tốt) / " +
+      "5 (dễ), why ngắn bằng tiếng Việt. Mỗi dòng nhiều nhất một hint. " +
       "Không có lỗi đáng kể thì errors=[]. Mọi chữ tiếng Việt ngắn & cụ thể. KHÔNG thêm gì ngoài JSON.",
     messages: [{ role: "user", content: lines || "(học viên không nói câu nào)" }],
   });
-  return extractJsonObject(out) || { errors: [], strengths: [], focus: "", drills: [], hints: [] };
+  const o = extractJsonObject(out) || {};
+
+  // Claude BÁM CHẶT vào số thứ tự dòng: bảo nó copy nguyên văn "pat::1" thì nó vẫn trả "1".
+  // Đánh nhau với xu hướng đó rất mỏng manh, nên làm ngược lại — cho nó dùng số dòng (thứ nó tự
+  // nhiên muốn làm) rồi TA tự ánh xạ sang itemId thật. Dòng không có itemId (drill của bài, không
+  // phải item ôn) thì bỏ hint đó đi.
+  const hints = (Array.isArray(o.hints) ? o.hints : [])
+    .map((h) => {
+      const a = attempts[Number(h?.n) - 1];
+      return a?.itemId ? { itemId: a.itemId, q: h.q, why: h.why } : null;
+    })
+    .filter(Boolean);
+
+  return { errors: [], strengths: [], focus: "", drills: [], ...o, hints };
 }
 
 const ROUTES = {
