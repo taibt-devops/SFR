@@ -11,33 +11,34 @@
 
 - [x] **R1** Viết lại spec + CLAUDE.md — C2 → C2′, thêm C9–C12 (ma sát 0 · nói bắt buộc · không mất
       bài · streak chỉ đếm lõi). Giữ nguyên Phần 1 (SM-2).
-- [ ] **R2** `data/course/week01.js` (6 bài) + `outline.js` (khung tuần 3–12) + `course.test.js`
+- [x] **R2** `data/course/week01.js` (6 bài) + `outline.js` (khung tuần 3–12) + `course.test.js`
       (ràng buộc L1–L5).
-- [ ] **R16** `data/course/week02.js` (6 bài) — làm sau khi luồng chạy được, trước khi dùng thật.
+- [x] **R16** `data/course/week02.js` (6 bài) — làm sau khi luồng chạy được, trước khi dùng thật.
 
 ## Lõi thuần (bắt buộc có test, không phụ thuộc React)
 
-- [ ] **R3** `srs/items.js` — bài → review item `pat::<day>` / `word::<day>::<w>`. KHÔNG đụng SM-2.
-- [ ] **R4** `srs/lesson.js` — máy trạng thái `CORE_STEPS`/`EXT_STEPS`, `todayLesson`/`nextStep`/
+- [x] **R3** `srs/items.js` — bài → review item `pat::<day>` / `word::<day>::<w>`. KHÔNG đụng SM-2.
+- [x] **R4** `srs/lesson.js` — máy trạng thái `CORE_STEPS`/`EXT_STEPS`, `todayLesson`/`nextStep`/
       `completeStep`. Nhận `now`, không mutate. (C11: bài gắn tiến độ, không gắn lịch.)
-- [ ] **R5** `srs/course.js` — tiến độ khoá + streak (chỉ đếm lõi, C12) + `saidBest`.
+- [x] **R5** `srs/course.js` — tiến độ khoá + streak (chỉ đếm lõi, C12) + `saidBest`.
 
 ## Giao diện (viết lại từ đầu)
 
-- [ ] **R6** Gỡ 9 màn cũ khỏi `App.jsx`, dựng khung điều hướng mới. Build sạch.
-- [ ] **R7** `styles.css` mới + `Today.jsx` — màn chờ **một nút**, chạy được trên điện thoại. (C9)
-- [ ] **R8** `StepListen` (nhịp 1) + `StepPattern` (nhịp 2) — Kokoro đọc được.
-- [ ] **R9** `StepSpeak` (nhịp 4) — nói → Whisper → `voiceMatch` chấm → Kokoro đọc mẫu. **Verify LIVE.**
-      KHÔNG ô gõ chữ (C10).
-- [ ] **R10** `StepReview` (nhịp 0) — ôn nhanh lấy đúng item đến hạn, không lộ chữ "SRS".
-- [ ] **R11** `DayDone` — đóng ngày, streak +1, hiện `saidBest`.
-- [ ] **R12** Mở rộng 10': `StepWords` (nhịp 3) + `drills2` (4b) + roleplay (nhịp 5).
-- [ ] **R13** Ngày chốt tuần (`day % 6 === 0`) → `SpeakingAssess` + `VoiceChat` chat (**màn cũ, giữ nguyên**).
-- [ ] **R14** `Progress.jsx` — "Tôi nói được gì rồi": mẫu câu + câu chính mình đã nói.
+- [x] **R6** Gỡ 9 màn cũ khỏi `App.jsx`, dựng khung điều hướng mới. Build sạch.
+- [x] **R7** `styles.css` mới + `Today.jsx` — màn chờ **một nút**, chạy được trên điện thoại. (C9)
+- [x] **R8** `StepListen` (nhịp 1) + `StepPattern` (nhịp 2) — Kokoro đọc được.
+- [~] **R9** `StepSpeak` (nhịp 4) — nói → Whisper → `voiceMatch` chấm → Kokoro đọc mẫu.
+      Đã verify: nút mic có, KHÔNG có ô gõ chữ (C10), mic hỏng báo lỗi tử tế. **CHƯA verify vòng nói
+      thật** — headless không có mic. Cần bạn mở app, nói một câu, xem Whisper + Kokoro có chạy không.
+- [x] **R10** `StepReview` (nhịp 0) — ôn nhanh lấy đúng item đến hạn, không lộ chữ "SRS".
+- [x] **R11** `DayDone` — đóng ngày, streak +1, hiện `saidBest`.
+- [x] **R12** Mở rộng 10': `StepWords` (nhịp 3) + `drills2` (4b) + roleplay (nhịp 5).
+- [x] **R13** Ngày chốt tuần (`day % 6 === 0`) → `SpeakingAssess` + `VoiceChat` chat (**màn cũ, giữ nguyên**).
+- [x] **R14** `Progress.jsx` — "Tôi nói được gì rồi": mẫu câu + câu chính mình đã nói.
 
 ## Dọn & triển khai
 
-- [ ] **R15** Xoá file ở spec §7.3 + dọn key `phrasal-*` một lần (cờ `srf-reset-v1`). Không import mồ côi.
+- [x] **R15** Xoá file ở spec §7.3 + dọn key `phrasal-*` một lần (cờ `srf-reset-v1`). Không import mồ côi.
 - [ ] **R17** Deploy cura-dev: `docker compose up -d --build`, vào được cổng 8088.
 
 ---
