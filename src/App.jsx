@@ -16,7 +16,7 @@ import StepSpeak from "./components/StepSpeak.jsx";
 import StepWords from "./components/StepWords.jsx";
 import DayDone from "./components/DayDone.jsx";
 import Progress from "./components/Progress.jsx";
-import VoiceChat from "./components/VoiceChat.jsx";
+import Call from "./components/Call.jsx";
 import SpeakingAssess from "./components/SpeakingAssess.jsx";
 import WarmupTalk from "./components/WarmupTalk.jsx";
 
@@ -58,11 +58,12 @@ function AppMain() {
   // ── Nói tự do (vào thẳng từ màn chờ, không cần học xong) ──
   if (view === "roleplay" || view === "chat") {
     return (
-      <VoiceChat
+      <Call
         dueWords={learnedKeys}
         level={latestLevel(loadSpeaking()) || "A2"}
         topic={view === "roleplay" ? freeScene : TRACK_VI[L.pending?.track || "daily"]}
         roleplay={view === "roleplay"}
+        onAddWord={L.addWord}
         onBack={home}
       />
     );
@@ -105,12 +106,13 @@ function AppMain() {
       // Nhịp 5 — đóng vai theo tình huống của bài (màn cũ, giữ nguyên logic).
       case "roleplay":
         return (
-          <VoiceChat
+          <Call
             dueWords={dueWords}
             level={latestLevel(loadSpeaking()) || "A2"}
             // `topic` chính là mô tả tình huống: VoiceChat truyền nó cho genScenario để dựng vai.
             topic={lesson.scene}
             roleplay
+            onAddWord={L.addWord}
             onBack={done}
           />
         );
@@ -128,10 +130,11 @@ function AppMain() {
         );
       case "chat":
         return (
-          <VoiceChat
+          <Call
             dueWords={dueWords}
             level={latestLevel(loadSpeaking()) || "A2"}
             topic={TRACK_VI[lesson.track]}
+            onAddWord={L.addWord}
             onBack={done}
           />
         );

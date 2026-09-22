@@ -2,6 +2,7 @@
 // Mỗi mẫu câu đi kèm MỘT CÂU DO CHÍNH NGƯỜI HỌC NÓI. Đặt tuần 1 cạnh tuần 6 là thấy khác biệt ngay;
 // con số "đã ôn 120 thẻ" không bao giờ làm được việc đó.
 import { learnedPatterns, completedCount } from "../srs/course.js";
+import { loadMyWords, myWordsFor } from "../srs/myWords.js";
 import { TOTAL_DAYS } from "../data/course/outline.js";
 import ProgressChart from "./ProgressChart.jsx";
 
@@ -9,6 +10,7 @@ const fmt = (ts) => (ts ? new Date(ts).toLocaleDateString("vi-VN", { day: "2-dig
 
 export default function Progress({ lessons, progress, streak, onBack }) {
   const learned = learnedPatterns(lessons, progress);
+  const mine = loadMyWords();
   const done = completedCount(progress);
 
   return (
@@ -40,6 +42,12 @@ export default function Progress({ lessons, progress, streak, onBack }) {
               <div className="learned-pat">{l.pat}</div>
               <div className="muted small">{l.patVi}</div>
               {l.said && <div className="learned-said">“{l.said}”</div>}
+              {myWordsFor(mine, l.day).length > 0 && (
+                <div className="learned-mine">
+                  ＋ {myWordsFor(mine, l.day).length} từ bạn tự thêm:{" "}
+                  {myWordsFor(mine, l.day).map((x) => x.w).join(" · ")}
+                </div>
+              )}
               <div className="learned-meta">
                 Ngày {l.day} · tuần {l.week} · {fmt(l.doneAt)}
                 {l.ext ? " · ★ có phần mở rộng" : ""}

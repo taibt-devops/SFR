@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { itemsOf, itemsFor, patItem, wordItems, promptFor, parseId, patId, wordId, PAT, WORD } from "./items.js";
+import { itemsOf, itemsFor, patItem, wordItems, myWordItems, promptFor, parseId, patId, wordId, PAT, WORD } from "./items.js";
 import { buildSession } from "./sm2.js";
 
 const lesson = {
@@ -104,5 +104,43 @@ describe("ráp được vào SM-2 mà không sửa sm2.js (C1)", () => {
     const session = buildSession(items, () => null, { newLimit: 10, maxReviews: 10, now: 0 });
     expect(session).toHaveLength(3); // chưa có state → đều là item mới
     expect(session.every((c) => typeof c.id === "string")).toBe(true);
+  });
+});
+
+describe("từ người học tự thêm (spec §2.5)", () => {
+  const lessons = [{ ...lesson, day: 1 }];
+  const mine = { 1: [{ w: "napkin", m: "khăn giấy", en: "Could I have a napkin?" }] };
+
+  it("vào hàng đợi NGAY, không cần xong lõi hay nhịp 3 (ngoại lệ cố ý của §2.3)", () => {
+    const got = itemsFor(lessons, {}, mine);
+    expect(got.map((i) => i.id)).toEqual(["word::1::napkin"]);
+    expect(got[0].mine).toBe(true);
+  });
+
+  it("hỏi bằng nghĩa, đáp bằng chính câu đã gặp từ đó", () => {
+    const it0 = itemsFor(lessons, {}, mine)[0];
+    expect(promptFor(it0, null)).toEqual({ vi: "khăn giấy", en: "Could I have a napkin?" });
+  });
+
+  it("thiếu nghĩa/câu thì vẫn dùng được, không sinh undefined", () => {
+    const got = myWordItems(2, [{ w: "solo" }]);
+    expect(got[0].sub).toBe("(từ bạn tự thêm)");
+    expect(promptFor(got[0], null)).toEqual({ vi: "solo", en: "solo" });
+  });
+
+  it("trùng tên với từ CỦA BÀI thì không nhân đôi id", () => {
+    const dup = { 1: [{ w: "exit", m: "loi ra" }] };
+    const got = itemsFor(lessons, { 1: { core: true, ext: true } }, dup);
+    expect(got.filter((i) => i.id === "word::1::exit")).toHaveLength(1);
+  });
+
+  it("gộp chung với item của bài", () => {
+    const got = itemsFor(lessons, { 1: { core: true, ext: true } }, mine);
+    expect(got.map((i) => i.id)).toContain("pat::1");
+    expect(got.map((i) => i.id)).toContain("word::1::napkin");
+  });
+
+  it("không có từ tự thêm → hành vi cũ giữ nguyên", () => {
+    expect(itemsFor(lessons, { 1: { core: true } }).map((i) => i.id)).toEqual(["pat::1"]);
   });
 });

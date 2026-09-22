@@ -319,6 +319,7 @@ key của chúng. Bản mới chỉ **thêm một** key.
 | Key | Nội dung | Thuộc về |
 |---|---|---|
 | `srf-course-v1` | `{ [day]: { core, ext, doneAt, saidBest } }` | **MỚI** — `srs/course.js`, xem Phần 4 |
+| `srf-mywords-v1` | `{ [day]: [{ w, m, en, at }] }` | **MỚI** — `srs/myWords.js`, xem 2.5 |
 | `phrasal-srs-v1` | map `{ [itemId]: SRstate }` | `srs/storage.js` giữ nguyên; chỉ nội dung đổi (id nay là `pat::`/`word::`) |
 | `phrasal-speaking-v1` | lịch sử chấm CEFR | `srs/speaking.js` giữ nguyên |
 | `phrasal-coach-v1` | ghi chú gia sư buổi trước | `srs/coachMemory.js` giữ nguyên |
@@ -333,6 +334,22 @@ nên không migrate gì hết. Khi khởi động, nếu chưa có cờ `srf-res
 > Vì sao phải xoá `phrasal-srs-v1` chứ không để kệ: id item đổi hoàn toàn từ `"<chủ đề>::<từ>"` sang
 > `"pat::<day>"` / `"word::<day>::<w>"`. State cũ không bao giờ khớp id mới — để lại chỉ tốn chỗ và
 > gây nhiễu khi debug.
+
+### 2.5. Từ người học tự thêm
+
+Trong lúc luyện nói, chạm vào một bong bóng của gia sư → `＋ Từ` mở form (từ · nghĩa · câu đã gặp),
+có nút tự dịch nghĩa. Từ được gắn vào **ngày đang học**, lưu ở `srf-mywords-v1`:
+`{ [day]: [{ w, m, en, at }] }`. Trùng tên trong cùng ngày thì cập nhật, không nhân đôi.
+
+Item ôn dùng lại đúng lược đồ sẵn có — `word::<day>::<w>` — nên không phải chế cơ chế mới. Trùng id
+với từ của bài thì **từ của bài thắng**.
+
+> **Ngoại lệ cố ý của 2.3.** Từ của BÀI chỉ vào hàng đợi ôn khi người học đã làm nhịp 3, để ngày bận
+> không phình nợ ôn tập. Từ TỰ THÊM thì vào ngay, không điều kiện: người học đã chủ động lưu nó thì
+> nó phải quay lại, không thì lưu làm gì.
+
+Bản cũ ném hết vào một chủ đề rác tên `"Sổ lỗi (luyện nói)"` nên chẳng bao giờ ôn lại — và từ
+2026-09-22 thì nhánh đó chết hẳn vì `vocabStore` đã bị xoá mà không ai nối lại `addWord`.
 
 ---
 
@@ -439,6 +456,32 @@ Vẫn giữ C9 vì ba thứ này **không phải lựa chọn bắt buộc trư�
 **Nhiên liệu:** gia sư được truyền **`patKey` của 6 mẫu câu gần nhất đã học** (không phải từ vựng
 rời), nên nó nhắc bạn dùng lại đúng thứ vừa học và checklist ✓ hiện mẫu nào đã nói được. Tình huống
 đóng vai lấy `scene` của bài vừa học xong; chưa học bài nào thì lấy của bài sắp học.
+
+### 3.6. Màn luyện nói = "cuộc gọi" (dựng lại 2026-09-22)
+
+Bản cũ (`VoiceChat.jsx`, 466 dòng) nhồi **7 khối** lên đầu màn trước khi nói được câu đầu: thanh
+tiêu đề, dải ngữ cảnh, thẻ tình huống, dòng "luyện trúng", bộ chọn giọng, dãy chip từ, rồi mới tới
+khung hội thoại. Bốn nút công cụ còn lặp dưới **mọi** bong bóng.
+
+Dựng lại thành **hai màn**:
+
+| Màn | Có gì |
+|---|---|
+| **Brief** | Đóng vai: tình huống + vai + nhiệm vụ + đổi tình huống. Trò chuyện: **liệt kê mẫu câu sắp bị ép dùng**. Giọng/tốc độ gấp trong `<details>`. Một nút: Bắt đầu gọi. |
+| **Cuộc gọi** | Hội thoại · dải mẫu câu tick dần · nút nói to ở đáy. Hết. |
+
+- Công cụ (`🔊 / 🌐 / 🎯 / ＋ Từ`) **ẩn trong bong bóng**, chạm mới hiện. Chạm một TỪ vẫn tra nghĩa ngay.
+- **Không có đồng hồ** — chủ dự án chốt bỏ; đếm giờ lúc đang nói tạo áp lực không cần thiết.
+- Nhãn `Đang luyện: Đời thường & du lịch` bị bỏ: nó giống hệt nhau suốt 6 tuần nên không nói lên gì.
+  Thay bằng danh sách mẫu câu thật.
+
+**Tách file** (CLAUDE.md: quá ~300 dòng phải tách): `hooks/useCall.js` (toàn bộ logic) ·
+`Call.jsx` (điều phối) · `CallBrief` · `CallScreen` · `CallBubble` · `CallSummary` · `AddWordModal`.
+
+**13 tính năng phải giữ nguyên** (checklist nghiệm thu khi tách): hội thoại đa lượt · sinh/đổi tình
+huống · checklist mẫu câu đã dùng · đọc theo (shadow) · tra nghĩa từ/câu · thêm từ vựng · tổng kết
+cuối buổi · ghi chú gia sư liên buổi · lái theo điểm yếu · nói lại lượt vừa rồi · cộng phút nói vào
+biểu đồ · chọn giọng/tốc độ · buổi mới.
 
 ---
 
@@ -659,8 +702,7 @@ server/*                      deploy/*                        Dockerfile  docker
 ### 7.2. Giữ NHƯNG thay vỏ giao diện + cách vào màn
 | Component | Vị trí mới |
 |---|---|
-| `VoiceChat.jsx` (roleplay) | Nhịp 5 phần mở rộng, nạp `lesson.scene` |
-| `VoiceChat.jsx` (chat) | Ngày chốt tuần, nhịp B |
+| ~~`VoiceChat.jsx`~~ → `Call.jsx` + 5 file con | Dựng lại 2026-09-22, xem 3.6. Roleplay = nhịp 5 & nút màn chờ; chat = ngày chốt tuần & nút màn chờ |
 | `SpeakingAssess.jsx` | Ngày chốt tuần, nhịp A |
 | `WarmupTalk.jsx` | Tuỳ chọn, vào từ màn chờ (không nằm trong 15' lõi) |
 | `ProgressChart.jsx` | Cuối màn "Tôi nói được gì rồi" |
@@ -683,6 +725,7 @@ src/hooks/useStudy.js               src/hooks/useVocab.js
 src/srs/vocabStore.js (+test)       src/srs/cardTypes.js (+test)
 src/srs/session.js (+test)          src/data/vocab.js (+test)
 src/srs/stats.js (+test)            (streak chuyển sang srs/course.js — xem 4.2)
+src/components/VoiceChat.jsx        (dựng lại thành Call.jsx + 5 file con — xem 3.6)
 src/styles.css
 vocab.js  vocab_batch2.js  vocab_batch3.js  vocab_batch4.js  vocab_batch5.js  vocab_batch6.js
 Mockup_Flashcard_SRS.html           jfk.wav

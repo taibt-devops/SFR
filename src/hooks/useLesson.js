@@ -5,6 +5,7 @@ import { lessons, lessonByDay } from "../data/course/index.js";
 import { todayLesson, nextStep, completeStep, stepProgress, lastCompleted, isWeekClose } from "../srs/lesson.js";
 import { loadCourse, saveCourse, purgeLegacy, streakFor, doneToday, recordSaid, saidFor, recentDays } from "../srs/course.js";
 import { itemsFor, promptFor } from "../srs/items.js";
+import { loadMyWords, saveMyWords, addMyWord, countMyWords } from "../srs/myWords.js";
 import { buildSession, review } from "../srs/sm2.js";
 import { loadProgress, saveProgress } from "../srs/storage.js";
 import { loadDaily, saveDaily, bumpReview } from "../srs/daily.js";
@@ -17,6 +18,7 @@ export function useLesson() {
     return loadCourse();
   });
   const [srs, setSrs] = useState(loadProgress);
+  const [myWords, setMyWords] = useState(loadMyWords);
   const [mode, setMode] = useState("idle"); // idle | core | ext | done
   const [activeDay, setActiveDay] = useState(null);
 
@@ -39,9 +41,9 @@ export function useLesson() {
 
   // Hàng đợi ôn của nhịp 0 — chỉ item của những bài ĐÃ học xong lõi (spec §2.3).
   const reviewQueue = useMemo(() => {
-    const pool = itemsFor(lessons, progress);
+    const pool = itemsFor(lessons, progress, myWords);
     return buildSession(pool, getState, { newLimit: 0, maxReviews: REVIEW_LIMIT, now: Date.now() });
-  }, [progress, getState]);
+  }, [progress, getState, myWords]);
 
   const persist = useCallback((next) => {
     setProgress(next);
@@ -88,6 +90,18 @@ export function useLesson() {
     });
   }, []);
 
+  // Thêm từ vào từ vựng của NGÀY đang học. Gắn vào bài vừa xong nếu hôm nay đã học, còn không thì
+  // gắn vào bài sắp học — người học coi cả hai là "hôm nay".
+  const addWord = useCallback((entry) => {
+    const day = (lastCompleted(lessons, progress)?.day) || pending?.day;
+    if (!day) return;
+    setMyWords((prev) => {
+      const next = addMyWord(prev, day, entry, Date.now());
+      saveMyWords(next);
+      return next;
+    });
+  }, [progress, pending]);
+
   // Ghi câu người học nói đúng — bằng chứng tiến bộ trên màn đóng ngày.
   const said = useCallback(
     (text, score) => {
@@ -113,6 +127,9 @@ export function useLesson() {
     days: recentDays(progress, 14, Date.now()),
     saidBest: lesson ? saidFor(progress, lesson.day) : null,
     lastDone: lastCompleted(lessons, progress),
+    myWords,
+    myWordCount: countMyWords(myWords),
+    addWord,
     start,
     startExt,
     exit,

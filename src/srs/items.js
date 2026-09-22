@@ -36,6 +36,20 @@ export function patItem(lesson) {
   };
 }
 
+// Item cho từ NGƯỜI HỌC tự thêm ở màn luyện nói (spec §2.5).
+// `sub` ghi rõ nguồn để lúc ôn biết đây là từ mình tự nhặt, không phải từ bài.
+export function myWordItems(day, words = []) {
+  return words.map((x) => ({
+    id: wordId(day, x.w),
+    kind: WORD,
+    day: Number(day),
+    label: x.w,
+    sub: x.m || "(từ bạn tự thêm)",
+    mine: true,
+    variants: [{ vi: x.m || x.w, en: x.en || x.w }],
+  }));
+}
+
 // Item từ vựng của một bài (mỗi từ một item).
 export function wordItems(lesson) {
   if (!lesson || lesson.review || !Array.isArray(lesson.words)) return [];
@@ -57,13 +71,28 @@ export function itemsOf(lesson, { includeWords = false } = {}) {
 
 // Toàn bộ item đủ điều kiện vào hàng đợi ôn, dựa trên tiến độ khoá học.
 // progress: { [day]: { core: bool, ext: bool } } — xem `course.js`.
-// Bài chưa học xong lõi thì CHƯA sinh item nào: không ôn thứ chưa từng được dạy.
-export function itemsFor(lessons = [], progress = {}) {
+// myWords: { [day]: [{w,m,en}] } — từ người học tự thêm, xem `myWords.js`.
+//
+// Bài chưa học xong lõi thì CHƯA sinh item của bài: không ôn thứ chưa từng được dạy.
+// NHƯNG từ TỰ THÊM vào ngay, KHÔNG cần điều kiện gì — đây là ngoại lệ cố ý của §2.3: người học đã
+// chủ động lưu nó thì nó phải quay lại, không thì lưu làm gì.
+export function itemsFor(lessons = [], progress = {}, myWords = {}) {
   const out = [];
+  const seen = new Set();
+  const push = (items) => {
+    for (const it of items) {
+      if (seen.has(it.id)) continue; // từ bài THẮNG nếu người học thêm trùng tên
+      seen.add(it.id);
+      out.push(it);
+    }
+  };
   for (const l of lessons) {
     const p = progress[l.day];
     if (!p || !p.core) continue;
-    out.push(...itemsOf(l, { includeWords: !!p.ext }));
+    push(itemsOf(l, { includeWords: !!p.ext }));
+  }
+  for (const [day, words] of Object.entries(myWords || {})) {
+    push(myWordItems(day, words));
   }
   return out;
 }

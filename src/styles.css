@@ -697,3 +697,150 @@ h1, h2 { margin: 0; line-height: 1.2; font-family: var(--font-display); }
   .screen { justify-content: flex-start; }
   .spacer { flex: 0 0 22px; }
 }
+
+/* ── Cuộc gọi với gia sư ─────────────────────────────────── */
+.call { padding-bottom: 26px; }
+
+.call-live { display: inline-flex; align-items: center; gap: 8px; }
+.call-dot {
+  width: 7px; height: 7px; border-radius: 99px;
+  background: var(--red);
+  animation: livedot 1.6s ease-in-out infinite;
+}
+@keyframes livedot { 50% { opacity: 0.25; } }
+
+.call-log {
+  flex: 1;
+  min-height: 180px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 4px 0;
+}
+
+.turn { display: flex; flex-direction: column; gap: 5px; max-width: 92%; }
+.turn-ai { align-self: flex-start; }
+.turn-me { align-self: flex-end; align-items: flex-end; }
+
+.turn-who {
+  font-family: var(--font-display);
+  font-size: 10px; font-weight: 700;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--muted);
+}
+
+.turn-body {
+  border-radius: 16px;
+  padding: 13px 15px;
+  font-size: 17px;
+  line-height: 1.5;
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+.turn-ai .turn-body { border-bottom-left-radius: 5px; cursor: pointer; }
+.turn-me .turn-body {
+  border-bottom-right-radius: 5px;
+  background: var(--lime-dim);
+  border-color: rgba(200, 250, 60, 0.3);
+}
+
+.turn-tools { display: flex; flex-wrap: wrap; gap: 6px; }
+.turn-tools .btn { padding: 7px 11px; font-size: 12px; }
+
+.lookup-word { cursor: pointer; border-bottom: 1px dotted var(--line-hot); }
+.lookup-word:hover { color: var(--lime); border-bottom-color: var(--lime); }
+
+/* Dải mẫu câu cần dùng — tick dần trong lúc nói. */
+.call-goals { display: flex; flex-wrap: wrap; gap: 6px; }
+.goal-chip {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 11px;
+  border-radius: 99px;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  background: var(--surface);
+}
+.goal-chip.on { color: var(--lime-ink); background: var(--lime); border-color: transparent; }
+
+/* ── Màn brief ───────────────────────────────────────────── */
+.brief-row {
+  display: flex; justify-content: space-between; gap: 14px;
+  padding: 10px 0; font-size: 15px;
+}
+.brief-row + .brief-row { border-top: 1px solid var(--line); }
+.brief-row span { color: var(--muted); flex-shrink: 0; }
+.brief-row b { text-align: right; }
+
+.brief-pat {
+  font-family: var(--font-display);
+  font-weight: 700; font-size: 17px;
+  letter-spacing: -0.01em;
+  padding: 9px 0;
+}
+.brief-pat + .brief-pat { border-top: 1px solid var(--line); }
+
+.brief-more { color: var(--muted); font-size: 13px; }
+.brief-more summary { cursor: pointer; padding: 8px 0; }
+
+/* ── Tổng kết ────────────────────────────────────────────── */
+.sum-list { margin: 6px 0 12px; padding-left: 20px; color: #ccd5de; font-size: 15px; }
+.sum-list li { margin-bottom: 5px; }
+
+/* ── Tra nghĩa nổi ───────────────────────────────────────── */
+.lookup-pop {
+  position: fixed;
+  left: 50%; bottom: 18px;
+  transform: translateX(-50%);
+  width: calc(100% - 28px);
+  max-width: 500px;
+  z-index: 60;
+  display: flex; align-items: center; gap: 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--line-hot);
+  border-radius: 14px;
+  padding: 12px 14px;
+  font-size: 14px;
+  box-shadow: 0 20px 50px -20px rgba(0, 0, 0, 0.8);
+}
+.lookup-pop span { flex: 1; min-width: 0; }
+
+/* ── Modal thêm từ ───────────────────────────────────────── */
+.modal-back {
+  position: fixed; inset: 0; z-index: 70;
+  background: rgba(4, 6, 8, 0.72);
+  backdrop-filter: blur(3px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 18px;
+}
+.modal-card {
+  width: 100%; max-width: 430px;
+  display: flex; flex-direction: column; gap: 9px;
+  background: var(--surface);
+  border: 1px solid var(--line-hot);
+  border-radius: var(--radius);
+  padding: 18px;
+}
+
+.inp {
+  width: 100%;
+  font: inherit;
+  color: var(--text);
+  background: var(--ink-2);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px 14px;
+  resize: vertical;
+}
+.inp:focus { outline: none; border-color: var(--lime); }
+.inp::placeholder { color: var(--muted); }
+.inp-row { display: flex; gap: 8px; align-items: stretch; }
+.inp-row .inp { flex: 1; }
+
+/* Từ người học tự thêm, hiện dưới mẫu câu của ngày đó ở màn Tiến bộ. */
+.learned-mine {
+  margin-top: 8px;
+  font-size: 13px;
+  color: var(--ember);
+}
