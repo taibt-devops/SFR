@@ -31,7 +31,7 @@ function buildFocus() {
   return parts.join(" · ");
 }
 
-export function useCall({ dueWords = [], level = "A2", topic = "", roleplay = false, onAddWord }) {
+export function useCall({ dueWords = [], level = "A2", topic = "", roleplay = false, onAddWord, focusHint = "" }) {
   const [history, setHistory] = useState([]);
   const [phase, setPhase] = useState("idle"); // idle | recording | thinking | error
   const [error, setError] = useState("");
@@ -43,7 +43,9 @@ export function useCall({ dueWords = [], level = "A2", topic = "", roleplay = fa
   const [scn, setScn] = useState(() => (roleplay && !topic ? pickScenario() : null));
   const [scnLoading, setScnLoading] = useState(false);
 
-  const focus = useMemo(buildFocus, []);
+  // Điểm yếu từ hồ sơ gia sư (§10.6c) ưu tiên hơn hồ sơ CEFR — nó tươi hơn, cập nhật hằng ngày.
+  const profileFocus = useMemo(buildFocus, []);
+  const focus = focusHint || profileFocus;
   const recRef = useRef(null);
   const streamRef = useRef(null);
   const chunksRef = useRef([]);

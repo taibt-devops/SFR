@@ -7,7 +7,7 @@ import Login from "./components/Login.jsx";
 import { useLesson } from "./hooks/useLesson.js";
 import { completedCount, learnedPatterns } from "./srs/course.js";
 import { latestLevel, loadSpeaking } from "./srs/speaking.js";
-import { drillsFor } from "./srs/tutor.js";
+import { drillsFor, focusFor, topErrors } from "./srs/tutor.js";
 
 import Today from "./components/Today.jsx";
 import StepReview from "./components/StepReview.jsx";
@@ -66,6 +66,14 @@ function AppMain() {
     return [...fixDrills, ...own.slice(0, Math.max(0, own.length - fixDrills.length))];
   }, [fixDrills, lesson]);
 
+  // Gia sư ép đúng chỗ đang yếu: điểm chú ý mới nhất + 2 lỗi dai dẳng nhất (§10.6c). ĐẶT CÙNG các
+  // useMemo khác ở đầu hàm, TRƯỚC mọi `return` sớm bên dưới — xem lý do ở comment của fixDrills.
+  const focusHint = useMemo(() => {
+    const f = focusFor(L.tutor);
+    const tags = topErrors(L.tutor, loadSpeaking(), 2).map((e) => e.tag).join(", ");
+    return [f, tags && "lỗi hay lặp: " + tags].filter(Boolean).join(" · ");
+  }, [L.tutor]);
+
   if (view === "progress") {
     return <Progress lessons={L.lessons} progress={L.progress} streak={L.streak} onBack={home} />;
   }
@@ -80,6 +88,7 @@ function AppMain() {
         topic={view === "roleplay" ? freeScene : TRACK_VI[L.pending?.track || "daily"]}
         roleplay={view === "roleplay"}
         onAddWord={L.addWord}
+        focusHint={focusHint}
         onBack={home}
       />
     );
@@ -159,6 +168,7 @@ function AppMain() {
             topic={lesson.scene}
             roleplay
             onAddWord={L.addWord}
+            focusHint={focusHint}
             onBack={done}
           />
         );
@@ -181,6 +191,7 @@ function AppMain() {
             level={latestLevel(loadSpeaking()) || "A2"}
             topic={TRACK_VI[lesson.track]}
             onAddWord={L.addWord}
+            focusHint={focusHint}
             onBack={done}
           />
         );

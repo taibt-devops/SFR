@@ -7,12 +7,12 @@ import CallScreen from "./CallScreen.jsx";
 import CallSummary from "./CallSummary.jsx";
 import AddWordModal from "./AddWordModal.jsx";
 
-export default function Call({ dueWords = [], level = "A2", topic = "", roleplay = false, onAddWord, onBack }) {
+export default function Call({ dueWords = [], level = "A2", topic = "", roleplay = false, onAddWord, focusHint = "", onBack }) {
   // Trò chuyện tự do: người học được CHỌN nói về cái gì. Không phá C9 — C9 cấm bắt chọn trước
   // BÀI HỌC hằng ngày, còn đây là phần ngoài streak, chọn chủ đề chính là lý do nó tồn tại.
   // null = "theo bài đã học" (gia sư tự lái quanh các mẫu câu).
   const [chosen, setChosen] = useState(null);
-  const c = useCall({ dueWords, level, topic: roleplay ? topic : chosen || topic, roleplay, onAddWord });
+  const c = useCall({ dueWords, level, topic: roleplay ? topic : chosen || topic, roleplay, onAddWord, focusHint });
 
   if (c.summary) {
     return (
