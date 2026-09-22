@@ -889,13 +889,19 @@ Thêm route vào `server/proxy.mjs` (cùng khuôn với `/assess`, `/summary`).
   hints: [{ itemId, q, why }] }           // gợi ý cho LẦN GẶP SAU của item — xem 10.7
 ```
 
-**Bảng nhãn lỗi CỐ ĐỊNH** (enum, không cho Claude tự chế):
-`article` · `tense` · `preposition` · `word-order` · `aux-verb` · `plural` · `pronoun` ·
-`word-choice` · `pronunciation`
+**Bảng nhãn lỗi CỐ ĐỊNH — DÙNG LẠI bảng đã có của `/assess`**, KHÔNG đặt bảng mới:
 
-> Vì sao phải đóng: nhãn tự do thì **không đếm được qua nhiều ngày**. "thiếu mạo từ", "quên a/an",
-> "article missing" là ba chuỗi khác nhau → ba lỗi khác nhau → hồ sơ vô dụng. Nhãn lạ bị **bỏ**,
-> không cố đoán.
+`mạo từ` · `chia động từ/thì` · `số ít-số nhiều` · `giới từ` · `trật tự từ` · `từ vựng hạn chế` ·
+`liên kết-mạch lạc` · `phát âm` · `ngập ngừng-trôi chảy`
+
+> **Sửa so với bản nháp đầu.** Tôi đã định nghĩ ra một enum tiếng Anh mới (`article`, `tense`…).
+> Nhưng `server/proxy.mjs#handleAssess` **đã có sẵn đúng bảng này**, và `speaking.js#speakingProfile`
+> đang đếm `topTags` theo nó. Hai bảng song song sẽ **chẻ đôi hồ sơ**: cùng một lỗi mạo từ, chấm CEFR
+> đếm vào `"mạo từ"` còn phân tích cuối buổi đếm vào `"article"` → không cộng lại được. Đó đúng là
+> cái bệnh mà bảng cố định sinh ra để chữa.
+>
+> Nhờ dùng chung bảng, `topErrors()` cộng được cả hai nguồn: lỗi từ chấm CEFR (2–3 lần/tuần) và lỗi
+> từ phân tích hằng ngày. Nhãn lạ bị **bỏ**, không cố đoán.
 
 ### 10.5. Hồ sơ năng lực — `srs/tutor.js`
 
@@ -911,7 +917,7 @@ Hàm THUẦN (có test), suy ra hồ sơ từ kho đó:
 |---|---|
 | `addAttempt(store, day, attempt)` | store mới |
 | `setAnalysis(store, day, analysis)` | store mới |
-| `topErrors(store, n, days)` | `[{ tag, count }]` — lỗi lặp nhiều nhất trong N ngày gần đây |
+| `topErrors(store, speakingList, n, days)` | `[{ tag, count }]` — gộp nhãn từ phân tích hằng ngày VÀ từ chấm CEFR (`speaking.js`), vì hai bên dùng chung bảng nhãn |
 | `focusFor(store)` | chuỗi `focus` của ngày gần nhất, hoặc `""` |
 | `drillsFor(store, day)` | 2 câu sửa lỗi sinh từ NGÀY TRƯỚC, để chèn vào hôm nay |
 | `hintFor(store, itemId)` | `{ q, why }` gợi ý cho item sắp ôn, hoặc `null` |
