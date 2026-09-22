@@ -135,3 +135,36 @@ export function clearHint(store = {}, itemId) {
   }
   return store;
 }
+
+// Đếm nhãn lỗi trong một tuần (6 ngày/tuần, khớp §5).
+function countsInWeek(store, week) {
+  const from = (week - 1) * 6 + 1;
+  const to = week * 6;
+  const counts = {};
+  for (let d = from; d <= to; d++) {
+    for (const e of store?.[d]?.analysis?.errors || []) {
+      if (ERROR_TAGS.includes(e.tag)) counts[e.tag] = (counts[e.tag] || 0) + 1;
+    }
+  }
+  return counts;
+}
+
+// So tuần này với tuần trước. So TƯƠNG ĐỐI chứ không phải điểm tuyệt đối: "mạo từ từ 6 xuống 1"
+// có ý nghĩa với người học, "bạn đạt B1" thì không.
+export function weeklyReport(store = {}, week) {
+  const before = countsInWeek(store, week - 1);
+  const after = countsInWeek(store, week);
+  const fixed = [];
+  const improved = [];
+  const worse = [];
+  const appeared = [];
+  for (const tag of new Set([...Object.keys(before), ...Object.keys(after)])) {
+    const b = before[tag] || 0;
+    const a = after[tag] || 0;
+    if (b && !a) fixed.push(tag);
+    else if (!b && a) appeared.push(tag);
+    else if (a < b) improved.push({ tag, before: b, after: a });
+    else if (a > b) worse.push({ tag, before: b, after: a });
+  }
+  return { fixed: fixed.sort(), improved, appeared: appeared.sort(), worse };
+}

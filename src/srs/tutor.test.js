@@ -14,6 +14,7 @@ import {
   setAnalysis,
   topErrors,
   TUTOR_KEY,
+  weeklyReport,
 } from "./tutor.js";
 
 function mockLocalStorage() {
@@ -185,5 +186,37 @@ describe("hintFor / useHint", () => {
   it("clearHint với id không tồn tại → trả nguyên store", () => {
     const store = { 2: mkDay([], { hints: [] }) };
     expect(clearHint(store, "pat::9")).toBe(store);
+  });
+});
+
+describe("weeklyReport", () => {
+  const store = {
+    // tuần 1 = ngày 1..6, tuần 2 = ngày 7..12
+    1: mkDay(["mạo từ", "giới từ"]),
+    2: mkDay(["mạo từ"]),
+    7: mkDay(["mạo từ"]),
+    8: mkDay(["trật tự từ"]),
+  };
+
+  it("so tuần này với tuần trước: giảm / mới / hết", () => {
+    const r = weeklyReport(store, 2);
+    expect(r.fixed).toEqual(["giới từ"]);          // tuần 1 có, tuần 2 hết
+    expect(r.improved).toEqual([{ tag: "mạo từ", before: 2, after: 1 }]);
+    expect(r.appeared).toEqual(["trật tự từ"]);    // tuần 2 mới xuất hiện
+  });
+
+  it("tuần 1 (không có tuần trước) → mọi lỗi đều là 'mới', không có 'hết'", () => {
+    const r = weeklyReport(store, 1);
+    expect(r.fixed).toEqual([]);
+    expect(r.appeared.sort()).toEqual(["giới từ", "mạo từ"]);
+  });
+
+  it("tuần không có dữ liệu → mọi mảng rỗng", () => {
+    expect(weeklyReport({}, 3)).toEqual({ fixed: [], improved: [], appeared: [], worse: [] });
+  });
+
+  it("lỗi tăng lên thì vào 'worse'", () => {
+    const s = { 1: mkDay(["giới từ"]), 7: mkDay(["giới từ"]), 8: mkDay(["giới từ"]) };
+    expect(weeklyReport(s, 2).worse).toEqual([{ tag: "giới từ", before: 1, after: 2 }]);
   });
 });
