@@ -238,6 +238,7 @@ thành thứ *suy ra từ bài* để nạp vào SM-2.
 
   // -- 1% của ngày --
   pat: "I'd like + N / to V",          // mẫu câu (chuỗi hiển thị)
+  patKey: "I'd like",                  // mảnh chữ BẮT BUỘC có trong mọi câu của bài (xem L4)
   patVi: "Tôi muốn... (lịch sự)",      // nghĩa tiếng Việt
   note: "Lich su hon 'I want'. Dung khi goi mon, mua do, nho va.", // 1-2 câu, KHÔNG thuật ngữ ngữ pháp
 
@@ -279,8 +280,12 @@ thành thứ *suy ra từ bài* để nạp vào SM-2.
 | L1 | `day` duy nhất, liên tục 1..72; `week = ceil(day / 6)` | Lộ trình tuyến tính, không lỗ hổng |
 | L2 | `drills` (lõi) **không được** chứa từ nào trong `words` của chính bài đó | Lõi phải chạy độc lập với phần mở rộng (nguyên tắc 0.2.2) |
 | L3 | `ex.length >= 3`, `drills.length === 3`, `words.length <= 6`, `drills2.length <= 2` | Giữ đúng ngân sách 15'/10' |
-| L4 | Mọi `words[].en` phải chứa mẫu câu của bài | Từ vựng luôn có chỗ bám (0.3) |
-| L5 | Ngày `day % 6 === 0` là ngày chốt tuần → xem 3.4 | Nhịp tuần |
+| L4 | Mọi câu (`ex`, `drills`, `words[].en`, `drills2`) phải chứa nguyên văn `patKey` | Từ vựng luôn có chỗ bám (0.3) |
+| L5 | Ngày `day % 6 === 0` có hình dạng rút gọn `{ day, week, track, title, review: true }` — KHÔNG có `pat`. Mọi ngày khác bắt buộc có `pat`. | Nhịp tuần (3.4) |
+
+> **Vì sao có `patKey`:** L4 nói "từ vựng phải bám mẫu câu", nhưng `pat` là chuỗi hiển thị cho người
+> đọc (`I'd like + N / to V`) nên không so khớp máy được. `patKey` là mảnh chữ nguyên văn (`I'd like`)
+> để test kiểm được thật, thay vì L4 chỉ là lời khuyên suông.
 
 ### 2.3. Review item — cầu nối sang SM-2
 
