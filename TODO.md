@@ -63,10 +63,13 @@
 
 - **cura-dev không ổn định** — treo RCU / Docker hang tái phát, container từng mất DNS. Whisper/Kokoro
   không gọi được → kiểm tra host TRƯỚC khi nghi ngờ code.
-- 🔴 **`CLAUDE_TOKEN` trên cura-dev ĐÃ HẾT HẠN** (xác nhận 2026-09-22: `/ping` trả `{"ok":true}` nên
-  `PROXY_SECRET` vẫn tốt, nhưng gọi Claude thật trả **401**). Hệ quả: trò chuyện, đóng vai, chấm CEFR,
-  mini-story, mining đều chết; phần học từ + nói + chấm phát âm vẫn chạy (Whisper/Kokoro không cần token).
-  Xoay: `claude setup-token` (tương tác) rồi `bash scripts/set-token.sh`.
+- ✅ **`CLAUDE_TOKEN` đã xoay 2026-09-22** — trước đó hết hạn (401). Sau khi thay: `/` `200`,
+  `/scenario` `200`, và gọi qua đúng đường trình duyệt (`https://…/api/`) cũng `200`.
+  Cách xoay: `claude setup-token` (tương tác, phải chạy trong terminal thật) → `bash scripts/set-token.sh`.
+- ⚠️ **Việc này sẽ lặp lại.** Proxy giữ một bản token TĨNH trong `.env` nên không tự làm mới được
+  như Claude Code. Token `sk-ant-oat01-…` có hạn; khi hết, mọi thứ gọi Claude chết (trò chuyện, đóng
+  vai, chấm CEFR, mini-story, mining) còn phần lõi vẫn chạy (Whisper/Kokoro không cần token).
+  Muốn hết hẳn thì phải cho proxy tự refresh bằng refresh token — chưa làm.
 - Auth 401/403 sau khi đã xoay token → kiểm tra khối system "You are Claude Code…" trong
   `server/proxy.mjs` đầu tiên.
 - **Nội dung mới chỉ có tuần 1–2.** Tuần 3–12 mới có khung mẫu câu (spec §5), soạn tiếp theo đợt.
