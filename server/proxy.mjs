@@ -355,6 +355,44 @@ async function handleTts(body, res) {
   }
 }
 
+// Phân tích cuối buổi (spec §10.4). Nhận toàn bộ câu người học nói trong ngày, trả lỗi + 2 câu sửa
+// + 1 điều cần chú ý + gợi ý mức nhớ cho lần gặp sau.
+//
+// Hai điều BẮT BUỘC nói với Claude, đây là chỗ quyết định chất lượng:
+//  1. Bản ghi từ nhận dạng giọng CÓ THỂ SAI — bỏ qua sai lệch giống lỗi nghe.
+//  2. Nhãn lỗi phải chọn NGUYÊN VĂN từ bảng, trùng bảng của /assess để hồ sơ cộng lại được.
+async function handleTutor(body) {
+  const { level = "A2", pattern = "", attempts = [], recentErrors = [] } = body;
+  const lines = attempts
+    .slice(0, 40)
+    .map((a, i) => `${i + 1}. [${a.itemId || a.kind || "drill"}] đích: "${a.target}" | nghe được: "${a.heard}" | khớp ${Math.round((a.score || 0) * 100)}%`)
+    .join("\n");
+  const recent = recentErrors.map((e) => `${e.tag} (${e.count} lần)`).join(", ");
+
+  const out = await callClaude({
+    model: MODEL_SMART,
+    maxTokens: 900,
+    system:
+      "Bạn là gia sư nói tiếng Anh, đang xem lại buổi học hôm nay của một học viên người Việt trình độ " + level + ". " +
+      (pattern ? 'Mẫu câu hôm nay: "' + pattern + '". ' : "") +
+      (recent ? "Lỗi dai dẳng gần đây: " + recent + ". " : "") +
+      "QUAN TRỌNG: phần 'nghe được' do Whisper nhận dạng nên CÓ THỂ SAI. " +
+      "BỎ QUA mọi sai lệch giống lỗi nghe (âm gần giống, mất âm cuối, nối âm, đồng âm). " +
+      "Chỉ bắt lỗi có HÌNH DẠNG NGỮ PHÁP THẬT. Khớp thấp mà câu nghe được vẫn hợp lý → coi là nghe nhầm, KHÔNG phải lỗi. " +
+      "THÀ BỎ SÓT CÒN HƠN BỊA RA LỖI. " +
+      'CHỈ trả JSON: {"errors":[{"tag":"..","vi":"..","evidence":"..","fix":".."}],"strengths":[".."],' +
+      '"focus":"..","drills":[{"vi":"..","en":".."}],"hints":[{"itemId":"..","q":2,"why":".."}]}. ' +
+      "tag CHỌN NGUYÊN VĂN từ: " +
+      '"mạo từ","chia động từ/thì","số ít-số nhiều","giới từ","trật tự từ","từ vựng hạn chế","liên kết-mạch lạc","phát âm","ngập ngừng-trôi chảy". ' +
+      "focus = ĐÚNG MỘT điều cần chú ý buổi sau, tiếng Việt, ngắn. " +
+      "drills = ĐÚNG 2 câu luyện nhắm vào lỗi vừa thấy (vi = câu tiếng Việt để dịch, en = câu tiếng Anh chuẩn). " +
+      "hints = chỉ cho dòng có itemId, q là 2 (chưa nhớ) / 3 (khó) / 4 (tốt) / 5 (dễ), why ngắn bằng tiếng Việt. " +
+      "Không có lỗi đáng kể thì errors=[]. Mọi chữ tiếng Việt ngắn & cụ thể. KHÔNG thêm gì ngoài JSON.",
+    messages: [{ role: "user", content: lines || "(học viên không nói câu nào)" }],
+  });
+  return extractJsonObject(out) || { errors: [], strengths: [], focus: "", drills: [], hints: [] };
+}
+
 const ROUTES = {
   "/": handleChat,
   "/scenario": handleScenario,
@@ -366,6 +404,7 @@ const ROUTES = {
   "/translate": handleTranslate,
   "/ipa": handleIpa,
   "/patterns": handlePatterns,
+  "/tutor": handleTutor,
 };
 
 http
