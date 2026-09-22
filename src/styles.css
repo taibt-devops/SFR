@@ -920,3 +920,43 @@ h1, h2 { margin: 0; line-height: 1.2; font-family: var(--font-display); }
 }
 .topic-pick .goal-chip:hover { border-color: var(--line-hot); color: var(--text); }
 .topic-pick .goal-chip.on:hover { color: var(--lime-ink); }
+
+/* ── Vạch xuất phát (màn chờ khi chưa học gì) ────────────── */
+.start-title {
+  font-size: clamp(30px, 9vw, 40px);
+  letter-spacing: -0.035em;
+  margin-top: 8px;
+}
+
+/* Lời hứa 15 phút tới — số thứ tự là hình tròn nhỏ, đọc lướt được. */
+.plan-list {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.plan-list li {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 11px 0;
+  font-size: 16px;
+  color: #d3dbe4;
+}
+.plan-list li + li { border-top: 1px solid var(--line); }
+.plan-list b {
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 99px;
+  background: var(--lime-dim);
+  border: 1px solid rgba(200, 250, 60, 0.28);
+  color: var(--lime);
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 800;
+}

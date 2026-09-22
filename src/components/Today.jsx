@@ -2,13 +2,18 @@
 // Không chọn chủ đề, không chọn trình độ, không chọn chế độ (C9): chương trình đã quyết sẵn bài
 // của hôm nay, việc của người học chỉ là bấm bắt đầu.
 //
-// Phần động lực ở đây là BẰNG CHỨNG CÔNG SỨC, không phải lời cổ vũ: vòng tiến độ tới 72 mẫu câu,
-// chuỗi ngày, và dải 14 ngày cho thấy rõ mình đã bỏ ngày nào.
-import { TOTAL_DAYS } from "../data/course/outline.js";
+// Màn này có HAI hình dạng, vì ngày đầu và ngày thứ ba cần hai thứ khác hẳn nhau:
+//
+//  • Chưa học gì  → VẠCH XUẤT PHÁT. Bản đầu hiện vòng tiến độ rỗng + "0 ngày liên tục" +
+//    "0 mẫu câu" + 14 ô xám: một bức tường số 0, đúng vào lúc người học cần động lực nhất.
+//    Thay bằng lời hứa cụ thể 15 phút tới sẽ làm gì — người mới cũng chưa biết điều đó.
+//  • Đã có tiến độ → BẢNG THÀNH TÍCH. Vòng tiến độ, chuỗi ngày, dải 14 ngày, mẫu câu gần nhất.
+//    Lúc này các con số mới có nghĩa, và nhìn thấy chúng chính là động lực.
 import { useState } from "react";
 import Ring from "./Ring.jsx";
 import { isMuted, setMuted, tick } from "../utils/sfx.js";
 import { useCountUp } from "../hooks/useCountUp.js";
+import { TOTAL_DAYS } from "../data/course/outline.js";
 
 function Strip({ days }) {
   return (
@@ -36,6 +41,23 @@ function FreeTalk({ onRoleplay, onChat, onWarmup }) {
   );
 }
 
+// Lời hứa cụ thể cho 15 phút tới — người mới chưa biết sắp phải làm gì.
+function Plan({ review }) {
+  const steps = review
+    ? ["Ôn lại mẫu câu cả tuần", "Chấm trình độ nói", "Trò chuyện tự do"]
+    : ["Nghe 4 câu, đoán nghĩa", "Lộ mẫu câu của hôm nay", "Nói 5 câu bằng mồm"];
+  return (
+    <div className="card">
+      <div className="eyebrow">15 phút tới</div>
+      <ol className="plan-list">
+        {steps.map((s, i) => (
+          <li key={s}><b>{i + 1}</b>{s}</li>
+        ))}
+      </ol>
+    </div>
+  );
+}
+
 export default function Today({
   lesson, streak, doneToday, completed, days, last,
   onStart, onProgress, onWarmup, onRoleplay, onChat,
@@ -50,7 +72,7 @@ export default function Today({
     const next = !mute;
     setMuted(next);
     setMute(next);
-    if (!next) tick(); // bật lại thì kêu một tiếng cho biết là đã bật
+    if (!next) tick();
   };
 
   // Hết phần đã soạn — nói thật thay vì hiện màn trống khó hiểu.
@@ -69,28 +91,68 @@ export default function Today({
     );
   }
 
+  const fresh = completed === 0;
+
+  const hud = (
+    <div className="hud">
+      <span><b>1%</b><i>/</i>NGÀY</span>
+      <span>
+        TUẦN <b>{lesson.week}</b><i>/</i>{Math.ceil(TOTAL_DAYS / 6)}
+        <button className="hud-mute" onClick={toggleMute} title={mute ? "Bật âm" : "Tắt âm"}>
+          {mute ? "🔇" : "🔊"}
+        </button>
+      </span>
+    </div>
+  );
+
+  const cta = (
+    <button
+      className="btn btn-primary cta-hero reveal"
+      style={{ "--d": "250ms" }}
+      onClick={() => { tick(); onStart(); }}
+    >
+      {doneToday ? "Học tiếp bài sau" : "Bắt đầu"}
+      <span>{doneToday ? "✓ 1% hôm nay đã xong" : "15 phút · bắt buộc"}</span>
+    </button>
+  );
+
+  // ── Vạch xuất phát: chưa có gì để khoe, nên hứa thay vì đếm ──
+  if (fresh) {
+    return (
+      <div className="screen screen-home">
+        {hud}
+
+        <div className="reveal" style={{ "--d": "40ms" }}>
+          <div className="eyebrow">Ngày đầu tiên</div>
+          <h1 className="t-hero-title start-title">{lesson.title}</h1>
+          <p className="t-hero-sub">
+            Mỗi ngày đúng một mẫu câu. Sau {TOTAL_DAYS} ngày là {TOTAL_DAYS} cách nói bạn chưa có hôm nay.
+          </p>
+        </div>
+
+        <div className="reveal" style={{ "--d": "140ms" }}>
+          <Plan review={lesson.review} />
+        </div>
+
+        <div className="spacer" />
+        {cta}
+        <div className="reveal" style={{ "--d": "310ms" }}>
+          <FreeTalk {...talk} />
+        </div>
+      </div>
+    );
+  }
+
+  // ── Bảng thành tích ──
   return (
     <div className="screen screen-home">
-      <div className="hud">
-        <span><b>1%</b><i>/</i>NGÀY</span>
-        <span>
-          TUẦN <b>{lesson.week}</b><i>/</i>12
-          <button className="hud-mute" onClick={toggleMute} title={mute ? "Bật âm" : "Tắt âm"}>
-            {mute ? "🔇" : "🔊"}
-          </button>
-        </span>
-      </div>
+      {hud}
 
       <div className="t-hero reveal" style={{ "--d": "40ms" }}>
         <Ring value={completed} total={TOTAL_DAYS} label={lesson.day} sub={`/ ${TOTAL_DAYS}`} />
         <div className="t-hero-txt">
           <div className="eyebrow">{lesson.review ? "Chốt tuần" : "Bài hôm nay"}</div>
           <h1 className="t-hero-title">{lesson.title}</h1>
-          <p className="t-hero-sub">
-            {lesson.review
-              ? "Không có mẫu câu mới. Ôn lại, chấm trình độ, rồi nói tự do."
-              : "Một mẫu câu mới. 15 phút, nói bằng mồm."}
-          </p>
         </div>
       </div>
 
@@ -109,8 +171,7 @@ export default function Today({
         <Strip days={days} />
       </div>
 
-      {/* Lấp khoảng giữa màn bằng thứ CÓ ÍCH: mẫu câu gần nhất + câu chính bạn đã nói ra.
-          Nhìn thấy bằng chứng mình từng nói được là động lực; khoảng trống thì không. */}
+      {/* Bằng chứng mình từng nói được — mạnh hơn mọi con số. */}
       {last && (
         <div className="t-last reveal" style={{ "--d": "230ms" }}>
           <div className="step-kicker">Gần nhất bạn nắm được</div>
@@ -120,18 +181,10 @@ export default function Today({
       )}
 
       <div className="spacer" />
-
-      {/* Nhãn phải nói ĐÚNG việc nút sẽ làm: `lesson` ở đây luôn là bài CHƯA xong lõi, nên khi hôm
-          nay đã học rồi thì bấm vào là mở bài KẾ TIẾP, không phải học lại bài cũ. */}
-      <button className="btn btn-primary cta-hero reveal" style={{ "--d": "250ms" }} onClick={() => { tick(); onStart(); }}>
-        {doneToday ? "Học tiếp bài sau" : "Bắt đầu"}
-        <span>{doneToday ? "✓ 1% hôm nay đã xong" : "15 phút · bắt buộc"}</span>
-      </button>
-
+      {cta}
       <div className="reveal" style={{ "--d": "310ms" }}>
         <FreeTalk {...talk} />
       </div>
-
       <button className="btn-link" onClick={onProgress}>Tôi nói được gì rồi →</button>
     </div>
   );
