@@ -31,3 +31,45 @@ export function addAttempt(store, day, attempt, now = Date.now()) {
   const list = [...(prev.attempts || []), { ...attempt, at: now }].slice(-MAX_ATTEMPTS);
   return { ...store, [day]: { ...prev, attempts: list } };
 }
+
+// Bảng nhãn lỗi — DÙNG LẠI đúng bảng của server/proxy.mjs#handleAssess.
+// Đặt bảng mới sẽ chẻ đôi hồ sơ: cùng lỗi mạo từ mà hai nguồn đếm vào hai khoá khác nhau.
+export const ERROR_TAGS = [
+  "mạo từ",
+  "chia động từ/thì",
+  "số ít-số nhiều",
+  "giới từ",
+  "trật tự từ",
+  "từ vựng hạn chế",
+  "liên kết-mạch lạc",
+  "phát âm",
+  "ngập ngừng-trôi chảy",
+];
+
+const str = (v) => (typeof v === "string" ? v.trim() : "");
+
+// Lọc gói Claude trả về. Sai khuôn → null; sai từng phần → bỏ phần đó, giữ phần còn lại.
+export function sanitizeAnalysis(raw) {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+  const errors = (Array.isArray(raw.errors) ? raw.errors : [])
+    .filter((e) => e && ERROR_TAGS.includes(e.tag))
+    .map((e) => ({ tag: e.tag, vi: str(e.vi), evidence: str(e.evidence), fix: str(e.fix) }));
+  const drills = (Array.isArray(raw.drills) ? raw.drills : [])
+    .filter((d) => d && str(d.vi) && str(d.en))
+    .map((d) => ({ vi: str(d.vi), en: str(d.en) }))
+    .slice(0, 2);
+  const hints = (Array.isArray(raw.hints) ? raw.hints : [])
+    .filter((h) => h && str(h.itemId) && Number.isInteger(h.q) && h.q >= 2 && h.q <= 5)
+    .map((h) => ({ itemId: str(h.itemId), q: h.q, why: str(h.why) }));
+  const strengths = (Array.isArray(raw.strengths) ? raw.strengths : []).map(str).filter(Boolean);
+  return { errors, strengths, focus: str(raw.focus), drills, hints };
+}
+
+export function analysisFor(store, day) {
+  return store?.[day]?.analysis || null;
+}
+
+export function setAnalysis(store, day, raw, now = Date.now()) {
+  const prev = store?.[day] || { attempts: [] };
+  return { ...store, [day]: { ...prev, analysis: sanitizeAnalysis(raw), at: now } };
+}
