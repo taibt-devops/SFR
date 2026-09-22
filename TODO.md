@@ -1,94 +1,72 @@
-# TODO — index
+# TODO — index (viết lại "1% mỗi ngày")
 
-> Root chỉ là index. Chi tiết "xong khi" → spec `Lo_trinh_Spaced_Repetition_Flashcard.md`.
-> 1 task ≈ 1 commit, **< 100 LOC**. Sau mỗi task: kiểm chứng → cập nhật trạng thái → commit.
+> Root chỉ là index. Chi tiết "xong khi" → spec `Lo_trinh_Spaced_Repetition_Flashcard.md` §8, §9.
+> 1 task ≈ 1 commit, **< 100 LOC**. Sau mỗi task: chạy test → kiểm chứng → cập nhật trạng thái → commit.
 > Trạng thái: `[ ]` TODO · `[~]` đang làm · `[x]` DONE · `[!]` BLOCKED.
-
-## Thứ tự khuyến nghị (ưu tiên "học hiệu quả")
-`M1→M4` → **`M9`** ⭐ → `M5→M6` → **`M10`** ⭐ → `M11→M12` → `M7→M8`
-⭐ = tính năng tạo khác biệt lớn nhất so với flashcard thường.
+> Branch: `rewrite-1-percent`.
 
 ---
 
-## M1 — Engine (B1–3)  ✅ DONE
-- [x] Scaffold Vite + React + Vitest
-- [x] `src/srs/sm2.js` (review/preview/isDue/buildSession) + test
-- [x] `src/srs/storage.js` (load/save/reset) + test
-- [x] `src/data/vocab.js` (nguồn dữ liệu) + test
+## Nền (spec + dữ liệu)
 
-## M2 — Học cơ bản (B4–6)
-- [x] **B5** `srs/session.js`: hàng đợi in-memory (`currentCard`/`answerQueue`/`isSessionDone`) tách state lưu ("Chưa nhớ" đẩy cuối queue, KHÔNG dựa `due`) + thống kê `computeStats`/`nextDueAt`; **9 test pass**. *(C3, §1.6)*
-- [x] **B4** `StudySession` + `RatingBar` + hook `useStudy` + `styles.css` (dark/teal theo mockup); lật thẻ (Space/chạm) → `m/e/d/col` chip; 4 nút preview; phím `1–4`; "Chưa nhớ" quay lại trong phiên (C3). **Verify tay qua Playwright OK.**
-- [x] **B6** `Dashboard` + `utils/format.js`: 4 số liệu (`computeStats`), chip chọn chủ đề (scope), "Ôn N thẻ" (= `buildSession` tôn trọng newLimit/maxReviews) + "X mới + Y ôn lại", empty-state hiện `min(due)` kế. **Verify tay Playwright OK → M2 xong.**
+- [x] **R1** Viết lại spec + CLAUDE.md — C2 → C2′, thêm C9–C12 (ma sát 0 · nói bắt buộc · không mất
+      bài · streak chỉ đếm lõi). Giữ nguyên Phần 1 (SM-2).
+- [ ] **R2** `data/course/week01.js` (6 bài) + `outline.js` (khung tuần 3–12) + `course.test.js`
+      (ràng buộc L1–L5).
+- [ ] **R16** `data/course/week02.js` (6 bài) — làm sau khi luồng chạy được, trước khi dùng thật.
 
-## M3 — Quản lý data (B7)  ✅ DONE
-- [x] **B7** `srs/vocabStore.js` (+9 test) + `hooks/useVocab.js` + `DataManager.jsx`: gộp built-in + `phrasal-vocab-user-v1` (trùng id user đè); thêm/sửa, import (dán JSON/file) báo thêm/trùng/lỗi, export file, xoá. **Verify Playwright OK.**
-- [x] **Dọn data**: gộp `vocab.js` + `vocab_batch2..6.js` (900 từ / 60 chủ đề, không trùng id) vào `src/data/vocab.js`.
+## Lõi thuần (bắt buộc có test, không phụ thuộc React)
 
-## M4 — Hoàn thiện UI (B8)  ✅ DONE
-- [x] **B8** "Đặt lại tiến độ" (confirm → xoá `phrasal-srs-v1` + reset state ngay); 60 chủ đề → **dropdown** gọn; phím tắt `Space`/`1–4` (đã có B4); dark/responsive. **Verify Playwright OK.**
+- [ ] **R3** `srs/items.js` — bài → review item `pat::<day>` / `word::<day>::<w>`. KHÔNG đụng SM-2.
+- [ ] **R4** `srs/lesson.js` — máy trạng thái `CORE_STEPS`/`EXT_STEPS`, `todayLesson`/`nextStep`/
+      `completeStep`. Nhận `now`, không mutate. (C11: bài gắn tiến độ, không gắn lịch.)
+- [ ] **R5** `srs/course.js` — tiến độ khoá + streak (chỉ đếm lõi, C12) + `saidBest`.
 
-## M9 — Ôn đa dạng ⭐ (B13–14) — *làm NGAY sau M4; chỉ cần M1–M2*
-- [x] **B13** `srs/cardTypes.js` **thuần + 10 test**: `makeCloze` (khoét cụm từ, fallback null khi `v` không có trong `e`); `checkAnswer`/`normalize` (bỏ hoa thường/trim); `suggestedQ` (sai→2); `availableTypes`/`pickType` (tất định theo seed); `isAutoGraded`. *(§5.1, không đổi SM-2)*
-- [x] **B14** `StudySession` đa kiểu (`recall/cloze/listen/produce/reverse`, phase prompt→revealed) + toggle "Chế độ sản xuất" (ưu tiên produce/reverse) + `RatingBar` nhận `suggestedQ`; auto-chấm cloze/listen gợi ý `q` (sai→"Chưa nhớ"), `q` vẫn người học chọn; listen dùng `speechSynthesis`. **Verify Playwright OK → M9 xong.** *(§5.1–5.2)*
+## Giao diện (viết lại từ đầu)
 
-## M5 — Não hội thoại (B9) — *nền tảng voice + mining*
-- [x] **B9** `server/proxy.mjs` (Node thuần, fetch built-in): `CLAUDE_TOKEN`+`PROXY_SECRET` (env), header OAuth Bearer + `anthropic-beta`, model `claude-opus-4-8`, routes `POST /` (chat) + `POST /mine`. `.env.example` thêm; `.gitignore` đã chặn `.env`. **Smoke-test gate/route OK (OPTIONS/401/404/forward). Live cần token thật.** *(C6,C7)*
+- [ ] **R6** Gỡ 9 màn cũ khỏi `App.jsx`, dựng khung điều hướng mới. Build sạch.
+- [ ] **R7** `styles.css` mới + `Today.jsx` — màn chờ **một nút**, chạy được trên điện thoại. (C9)
+- [ ] **R8** `StepListen` (nhịp 1) + `StepPattern` (nhịp 2) — Kokoro đọc được.
+- [ ] **R9** `StepSpeak` (nhịp 4) — nói → Whisper → `voiceMatch` chấm → Kokoro đọc mẫu. **Verify LIVE.**
+      KHÔNG ô gõ chữ (C10).
+- [ ] **R10** `StepReview` (nhịp 0) — ôn nhanh lấy đúng item đến hạn, không lộ chữ "SRS".
+- [ ] **R11** `DayDone` — đóng ngày, streak +1, hiện `saidBest`.
+- [ ] **R12** Mở rộng 10': `StepWords` (nhịp 3) + `drills2` (4b) + roleplay (nhịp 5).
+- [ ] **R13** Ngày chốt tuần (`day % 6 === 0`) → `SpeakingAssess` + `VoiceChat` chat (**màn cũ, giữ nguyên**).
+- [ ] **R14** `Progress.jsx` — "Tôi nói được gì rồi": mẫu câu + câu chính mình đã nói.
 
-## M6 — Nghe & nói (B10–11)  — frontend xong, chờ Whisper+token để verify LIVE
-- [~] **B10** `ai/whisper.js` (gửi audio → whisper-server `/inference`, `VITE_WHISPER_URL`). **Cần bạn cài `whisper.cpp` server.** Caveat: MediaRecorder xuất webm/opus → whisper cần ffmpeg/convert sang wav 16kHz.
-- [x] **B11** `ai/chat.js` (gọi proxy `/`) + `VoiceChat.jsx`: nút "Bắt đầu nói" (mic trong cú chạm), ghi âm→Whisper→`reply(history,dueWords)`→`speechSynthesis`, hội thoại đa lượt (gửi lại history), bong bóng 2 chiều + nút 🔊. **Verify Playwright: render + dueWords + lỗi mic gracefully.** Vòng nói đầy đủ cần mic+Whisper+token. *(C8)*
+## Dọn & triển khai
 
-## M10 — Mining ⭐ (B15) — *cần M5*  ✅ DONE
-- [x] **B15** Proxy `/mine` (bóc JSON an toàn) + `ai/mine.js` (client, chỉ `x-proxy-secret`, không token) + `MiningPanel.jsx` (dán text → loading/error-retry/review → tick → `importText` merge). Nối vào `DataManager`. **Verify luồng UI qua proxy giả OK; live cần token.** *(§5.3)*
-
-## M11 — Voice nâng cao (B16–18) — frontend xong, verify ✓-mark/diff cần vòng nói LIVE
-- [x] **B16** `utils/voiceMatch.js#matchSpoken` (+test) → đối chiếu transcript với `dueWords` → checklist ✓ (cờ mềm, KHÔNG sửa q/lịch); chips trên VoiceChat. *(§5.4)*
-- [x] **B17** `voiceMatch.js#diffWords` (+test) + nút "🎯 Đọc theo" mỗi câu Claude → so phát âm mức từ, tô đỏ từ lệch. *(§5.5)*
-- [x] **B18** Nút "＋ Thẻ" mỗi câu Claude → form lưu nhanh (`c="Sổ lỗi (luyện nói)"`, e=câu) qua `addWord`. *(§5.6)*
-  - _Verify: pure logic (4 test) + chips render OK. ✓-mark/diff/lưu thật cần mic+Whisper+token._
-
-## M12 — Input & động lực (B19–20)  ✅ DONE
-- [x] **B19** Mini-story: proxy `/story` + `ai/story.js` + `MiniStory.jsx` (loading/error-retry/done, TTS "Đọc to", dùng `dueWords`). **Verify qua proxy giả OK; live cần token.** *(§5.7)*
-- [x] **B20** `srs/stats.js` (+6 test): `recordReview`/`streakFor`/`todayReviewedFor` (key `phrasal-stats-v1`); nối `useStudy` (ghi mỗi lần đánh giá) + streak-bar trên Dashboard. **Verify Playwright: chuỗi 1 ngày, hôm nay 1/20.** *(§5.8)*
-
-## M7 — App điện thoại (B12)  ✅ DONE
-- [x] **B12** PWA: `vite-plugin-pwa` (autoUpdate, workbox precache 11 entries) + manifest (standalone, theme `#0f1115`) + icon 192/512/maskable + apple-touch + favicon. **Verify Playwright: SW đăng ký (scope /), manifest linked, secure context.** _Test cài thật trên điện thoại cần HTTPS (M8)._
-
-## M8 — Expose (tùy chọn, §4.2)
-- [ ] Cloudflare Tunnel (HTTPS) + khóa (`x-proxy-secret` và/hoặc Cloudflare Access). Giữ riêng tư.
+- [ ] **R15** Xoá file ở spec §7.3 + dọn key `phrasal-*` một lần (cờ `srf-reset-v1`). Không import mồ côi.
+- [ ] **R17** Deploy cura-dev: `docker compose up -d --build`, vào được cổng 8088.
 
 ---
 
-## M13 — Rà soát PHƯƠNG PHÁP HỌC (T1 ✅ xong · T2–T7 chưa làm — ĐÁNH GIÁ LẠI trước khi code)
+## Giữ nguyên — KHÔNG đụng (spec §7.1)
 
-> Nguồn: audit 8 nguyên lý học (SRS · recall · difficulty · production · input/story · chunking · interleaving · self-reference) ngày 2026-07-01. Chấm: ✅ chuẩn · 🟡 một phần · 🔴 cho có. **KHÔNG code cho tới khi chủ dự án duyệt từng mục** (nhiều mục đụng UX/pedagogy, cần quyết định chủ đích — không tự suy diễn theo CLAUDE.md).
->
-> **Sợi chỉ đỏ:** ~~kiểu ôn chọn bằng `seed` xoay vòng — KHÔNG theo độ thành thạo từng thẻ~~ → **ĐÃ VÁ ở T1** (dùng `pickAdaptiveType` theo `reps`).
+`srs/sm2.js` · `srs/storage.js` · `srs/daily.js` · `srs/speaking.js` · `srs/coachMemory.js` ·
+`srs/warmup.js` · `utils/voiceMatch.js` · `utils/fluency.js` · `utils/tts.js` · `ai/*` ·
+`server/*` · `deploy/*` · `Dockerfile` · `docker-compose.yml`
 
-- [x] **T1 🔴 Desirable difficulty — `pickType` thích ứng theo `reps`** *(tác động cao nhất)* — ✅ **XONG** (commit `03b4cfc`, 2026-07-01)
-  - Cũ: thẻ mới toanh có thể bị produce/cloze/listen ngay lần đầu → test-before-teach, gây nản.
-  - Đã làm: [`cardTypes.pickAdaptiveType(card, state, seed)`](src/srs/cardTypes.js) — mới/vừa quên (reps<1)→recall/listen; đang học (reps 1–2)→cloze/recall; đã cứng (reps≥3)→produce/reverse. Fallback kiểu hợp lệ nếu tầng trống. [StudySession.jsx] dùng hàm này thay `pickType`. Thuần + 3 test (69 pass), KHÔNG đụng SM-2. (Bậc thang dùng `reps` thay vì `reps+ef` cho đơn giản/tất định.)
-- [ ] **T2 🟡 Active recall — "recall" bớt thụ động**
-  - Hiện: recall chỉ lật thẻ + tự chấm (dựa tính trung thực). Cân nhắc: buộc nghĩ-rồi-lật (đếm giờ) HOẶC gõ nghĩa. *(Quyết định UX — hỏi trước.)*
-- [ ] **T3 🟡 Production — ~~gate produce sau `reps≥2`~~ (XONG ở T1) + prompt self-reference** *(còn lại: prompt)*
-  - Phần gate produce theo `reps` đã nằm trong T1. Còn lại: đổi prompt produce → "đặt câu VỀ CHÍNH BẠN" (kích self-reference, gộp T6).
-- [ ] **T4 🟡 Input/story — đưa câu ngữ cảnh vào đầu thẻ MỚI + lưu/tái dùng story**
-  - Hiện MiniStory tách rời, sinh xong không lưu. Cân nhắc: thẻ mới hiện `e` (câu) trước khi lộ nghĩa; lưu story để nghe lại. *(Đụng luồng học chính — cần duyệt.)*
-- [ ] **T5 🟡 Chunking — card-type "điền/hỏi collocation" (dùng `col`)**
-  - Hiện chỉ cloze khai thác chunk; `col` chỉ hiện thụ động mặt sau. Cân nhắc kiểu ôn hỏi theo cụm.
-- [ ] **T6 🟡 Self-reference ở flashcard** — sửa 1 dòng prompt produce (gộp T3).
-- [ ] **T7 ✅→tinh chỉnh SRS — xen kẽ new/due trong `buildSession`**
-  - Hiện thẻ mới xếp CUỐI hết ([sm2.js:74]). Cân nhắc trộn xen kẽ. Nhỏ, có test. *(SM-2 core — cẩn trọng, giữ C1/C3.)*
+> Test SM-2 cũ phải pass **nguyên vẹn** suốt quá trình viết lại — đó là bằng chứng engine không bị đụng.
 
-> **Đã CHUẨN, không cần đụng:** SRS core (SM-2 đúng §1.3, C1/C3), Interleaving (trộn chủ đề + xoay kiểu).
+## Giữ nhưng thay vỏ (spec §7.2)
 
----
-
-## Archive
-- M1 hoàn tất (scaffold + sm2 + storage + vocab, có test).
+`VoiceChat` (roleplay → nhịp 5; chat → ngày chốt tuần) · `SpeakingAssess` (ngày chốt tuần) ·
+`WarmupTalk` (tuỳ chọn từ màn chờ) · `ProgressChart` (cuối màn Tiến bộ) · `Login` · `ErrorBoundary` ·
+`TtsControls`
 
 ## Known Issues / BLOCKED
-- **Proxy/mining chưa verify LIVE** (cần `CLAUDE_TOKEN` thật). Để chạy thật: `cp .env.example .env`, điền `CLAUDE_TOKEN` (`claude setup-token`) + `PROXY_SECRET` + `VITE_PROXY_*`, chạy `node server/proxy.mjs`, build/preview lại. Proxy đã thêm khối system "You are Claude Code…" (yêu cầu cho token OAuth subscription) — nếu auth lỗi 401/403, đây là chỗ kiểm tra đầu tiên.
-- ~~Dashboard 60 chip chủ đề quá dài~~ → đã chuyển dropdown ở B8.
-- `vocab_batch2+` có thêm field `pat` (mẫu câu) ngoài schema C2 `{c,v,m,e,d,col}` — vô hại (UI bỏ qua); cân nhắc dùng `pat` để học kèm sau này.
+
+- **cura-dev không ổn định** — treo RCU / Docker hang tái phát, container từng mất DNS. Whisper/Kokoro
+  không gọi được → kiểm tra host TRƯỚC khi nghi ngờ code.
+- **Proxy chưa verify LIVE với token thật** — cần `CLAUDE_TOKEN` (`claude setup-token`) trong `.env`.
+  Auth 401/403 → kiểm tra khối system "You are Claude Code…" trong `server/proxy.mjs` đầu tiên.
+- **Nội dung mới chỉ có tuần 1–2.** Tuần 3–12 mới có khung mẫu câu (spec §5), soạn tiếp theo đợt.
+
+## Archive — bản cũ (2026-06-30 → 2026-07-13)
+
+M1–M12 đã hoàn tất: engine SM-2 + test, flashcard 900 từ/60 chủ đề, ôn đa dạng (cloze/listen/produce),
+proxy Claude + mining, voice chat + đóng vai, chấm CEFR, PWA, Kokoro TTS, biểu đồ tiến độ 14 ngày.
+Phần **engine + hạ tầng giữ lại**; phần **9 màn UI + dữ liệu từ vựng bị thay** (spec §0.1 giải thích
+vì sao). Mục T2–T7 (rà soát phương pháp học) đã được hấp thụ vào thiết kế mới, không theo dõi riêng nữa.

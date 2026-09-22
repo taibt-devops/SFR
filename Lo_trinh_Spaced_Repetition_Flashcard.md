@@ -1,13 +1,68 @@
-# Lịch ôn từ vựng (Spaced Repetition) — Thuật toán & Lộ trình cho Claude Code
+# SRF — Chương trình nói tiếng Anh "1% mỗi ngày"
 
-> **Mục tiêu:** xây app flashcard **từ vựng theo chủ đề** (hiện 150 từ / 10 chủ đề trong `vocab.js`, mục tiêu ~1000) để **tự sắp lịch ôn** theo thuật toán **SM-2**, **lưu tiến độ** qua các lần mở app, và cho phép **nạp thêm từ vựng ngay trong app** (không phải sửa file mỗi lần).
+> **Source of truth.** Code lệch spec → spec đúng, code phải catch up. Đổi spec phải có xác nhận
+> của chủ dự án. Spec này **thay thế toàn bộ** bản "Spaced Repetition Flashcard" cũ (2026-06-30),
+> trừ Phần 1 (SM-2) được giữ nguyên vì engine không đổi.
 >
-> **App dùng Claude API.** Vai trò của Claude: **bộ não hội thoại** cho tính năng *luyện nói* — vòng lặp **Whisper (nghe → chữ) → Claude (hiểu & trả lời) → Web Speech API (đọc to)**. Claude là khâu "suy nghĩ và trả lời" ở giữa. Chi tiết ở **Phần 3**.
->
-> Từ bản nâng cấp, Claude còn là **trợ lý dữ liệu học**: nạp từ vựng từ văn bản thật (*mining*), sinh câu/mini-story luyện đọc-nghe — xem **Phần 5 (Tầng học hiệu quả)**. **Ràng buộc duy nhất còn lại:** Claude **KHÔNG** tính `q`/lịch SM-2 — `q` luôn do người học tự chấm, lịch luôn do `srs/sm2.js` thuần tính.
-> Tài liệu gồm 2 phần: (1) đặc tả thuật toán, (2) lộ trình triển khai từng bước để đưa cho Claude Code.
+> Ngày viết lại: 2026-09-22 · Quyết định bởi chủ dự án sau khi audit bản cũ.
 
 ---
+
+## Phần 0 — Sản phẩm
+
+### 0.1. Vì sao viết lại
+
+Bản cũ là một **hộp đồ nghề**: 9 màn hình, mở app ra phải tự chọn chủ đề → trình độ → chế độ rồi mới
+học được. Người dùng phải tự làm thầy cho chính mình. Hệ quả (chủ dự án tự đánh giá, 2026-09-22):
+
+| Triệu chứng | Nguyên nhân gốc |
+|---|---|
+| "Luồng học rối, không biết bắt đầu từ đâu" | Mỗi buổi học bắt đầu bằng 3 quyết định |
+| "Học mãi không thấy tiến bộ" | Đơn vị đo là "đã ôn N thẻ" — hôm nay giống hệt hôm qua, không kể lại được |
+| "Dùng vài hôm rồi bỏ" | Không có bản rút gọn cho ngày bận → ngày bận đầu tiên = ngày bỏ |
+| "Giao diện nhìn cũ/xấu" | Hệ quả của việc nhồi 8 lựa chọn lên một màn |
+
+Cả bốn cùng một gốc. Bản mới đổi bản chất sản phẩm: **app là ông thầy, không phải cái hộp.**
+Mở ra → nó bảo hôm nay học gì → làm theo → xong.
+
+### 0.2. Nguyên tắc (thứ tự ưu tiên khi có xung đột)
+
+1. **Ma sát bằng không.** Mở app là học được ngay. Không dropdown, không toggle, không chọn chủ đề
+   trước khi bắt đầu. Mọi lựa chọn đều do chương trình quyết sẵn theo ngày.
+2. **Ngày tệ nhất vẫn tiến được.** Luôn tồn tại một phiên bản 15 phút hoàn thành được lúc mệt nhất.
+3. **Nói bằng mồm là bắt buộc.** Không có ô gõ chữ thay cho nói. Gõ chữ là chỗ người học trốn.
+4. **Tiến bộ phải kể lại được.** Cuối ngày người học nói được "hôm nay tôi học `I'd rather ... than ...`",
+   không phải "tôi ôn 20 thẻ".
+5. **Không tạo áp lực.** Phần mở rộng là phần thưởng cho ngày khoẻ, không phải món nợ cho ngày mệt.
+   Bỏ phần mở rộng: không nhắc, không cảnh báo, không mất streak.
+
+### 0.3. Đơn vị của "1%" = 1 mẫu câu / ngày
+
+Mỗi ngày người học nắm **đúng 1 mẫu câu** (sentence pattern) và tối đa 6 từ ghép vừa vào mẫu đó.
+
+Chọn mẫu câu làm đơn vị, không chọn từ vựng, vì ba lý do:
+
+- **Kể lại được.** "Hôm nay tôi học `I'd rather X than Y`" là một mốc cụ thể, nhớ được. "Hôm nay tôi
+  ôn 20 thẻ" thì mọi ngày như nhau — não không ghi nhận đó là tiến bộ.
+- **Sinh ra câu, không sinh ra nghĩa.** Chủ dự án tự đánh giá yếu nhất ở *cấu trúc câu*. Thuộc 50 từ
+  rời vẫn không ghép nổi một câu; thuộc 1 mẫu thì mở khoá được hàng chục câu.
+- **Từ vựng có chỗ bám.** 6 từ mỗi ngày không học rời mà nhét thẳng vào mẫu hôm đó. Học `craving`
+  không phải để thuộc nghĩa "sự thèm", mà để bật ra `I've got a craving for something sweet.`
+
+**Hệ quả bắt buộc:** đơn vị nội dung của app là **bài học (lesson)**, không phải **thẻ (card)**.
+Đây là chỗ phá vỡ constraint C2 của CLAUDE.md cũ — xem Phần 2.
+
+### 0.4. Đối tượng & mục tiêu
+
+- Một người dùng duy nhất (chủ dự án): kỹ sư DevOps người Việt, đọc/viết kỹ thuật ổn, **yếu từ vựng
+  và cấu trúc câu khi nói**.
+- Quỹ thời gian thật: 20–30 phút/ngày → chia **15 phút bắt buộc + 10 phút tuỳ chọn**.
+- Hai mục tiêu 3–6 tháng: (a) giao tiếp đời thường & du lịch, (b) phỏng vấn & làm remote nước ngoài.
+- App cá nhân, chạy all-local trên cura-dev. Không đa người dùng, không đăng ký, không đồng bộ đám mây.
+
+---
+
+> **Phần 1 giữ nguyên từ bản cũ** — engine SM-2 không đổi một dòng trong lần viết lại này.
 
 ## Phần 1 — Thuật toán lịch ôn (SM-2)
 
@@ -160,349 +215,514 @@ function resetProgress() { localStorage.removeItem(KEY); }
 
 ---
 
-## Phần 2 — Lộ trình triển khai (đưa cho Claude Code)
+## Phần 2 — Mô hình dữ liệu khoá học
 
-### Stack đề xuất
-- **Vite + React** (giữ giống app `.jsx` cũ). Thêm **TypeScript** nếu muốn an toàn kiểu — không bắt buộc.
-- Persistence = `localStorage` (không DB).
-- **Phần học từ (M1–M4): thuần client-side, không cần backend.** Có thể dùng độc lập ngay.
-- **Phần luyện nói (M5+): cần chạy local 2 tiến trình phụ** — `server/proxy.mjs` (Node, giữ token Claude Max) và `whisper-server` (STT). Xem Phần 3–4.
-- Đóng gói **PWA** để cài lên điện thoại; expose tùy chọn qua **Cloudflare Tunnel**.
+### 2.1. Thay đổi so với bản cũ (phá constraint C2)
 
-### Cấu trúc thư mục gợi ý
-```
-server/
-  proxy.mjs            // proxy Claude local: giữ token Max, header OAuth, lớp x-proxy-secret
-src/
-  data/vocab.js        // bộ từ vựng theo chủ đề ({c,v,m,e,d,col}); id suy ra tự động
-  srs/sm2.js           // review(), preview(), isDue(), buildSession() — thuần logic, có test
-  srs/storage.js       // loadProgress(), saveProgress(), resetProgress()
-  srs/vocabStore.js    // gộp vocab built-in + từ người dùng tự thêm; import/export JSON
-  srs/session.js       // hàm thống kê (đếm Mới/Đang học/Đã thuộc/Đến hạn)
-  ai/chat.js           // gọi proxy local → trả lời Claude (KHÔNG giữ token ở frontend)
-  components/
-    Dashboard.jsx      // màn hình chính: số liệu + chọn chủ đề + nút bắt đầu
-    StudySession.jsx   // lật thẻ + 4 nút đánh giá
-    RatingBar.jsx      // 4 nút kèm khoảng cách xem trước
-    Stats.jsx          // pipeline: Mới / Đang học / Đã thuộc
-    DataManager.jsx    // thêm/sửa từ, import/export JSON, gộp vào bộ built-in
-    VoiceChat.jsx      // luyện nói: mic → Whisper → Claude → đọc to
-  App.jsx
-```
+Bản cũ khoá cứng schema thẻ `{ c, v, m, e, d, col }` và `id = c + "::" + v` (constraint **C2**).
+Bản mới **bỏ C2**, thay bằng **C2′** dưới đây. Lý do: đơn vị học là bài, không phải thẻ; thẻ trở
+thành thứ *suy ra từ bài* để nạp vào SM-2.
 
-### Các bước (mỗi bước có tiêu chí "xong")
+> **C2′** — Nguồn nội dung là mảng `lessons` trong `src/data/course/`. Thẻ ôn (review item) **suy ra
+> tự động** từ bài, KHÔNG soạn tay và KHÔNG lưu trong file nội dung.
 
-**Bước 1 — Setup + dữ liệu.** Tạo project Vite + React. Dữ liệu đặt ở `data/vocab.js` (file đã có sẵn) theo schema sau. `id` **không** lưu trong từng phần tử mà được **suy ra tự động** khi export.
-
-| Trường | Tên đầy đủ | Ví dụ |
-|---|---|---|
-| `c` | category — chủ đề | `"Con người & Tính cách"` |
-| `v` | từ vựng | `"reliable"` |
-| `m` | nghĩa (kèm loại từ) | `"(adj) đáng tin cậy"` |
-| `e` | example — câu ví dụ tiếng Anh | `"She's the most reliable person on the team."` |
-| `d` | dịch tiếng Việt của câu ví dụ | `"Cô ấy là người đáng tin cậy nhất nhóm."` |
-| `col` | collocations — các cụm hay đi kèm (phân tách bằng ` · `) | `"a reliable source · reliable information"` |
+### 2.2. Schema bài học
 
 ```js
-// data/vocab.js — cấu trúc thật (đã có sẵn ~150 từ)
-const raw = [
-  { c: "Con người & Tính cách", v: "reliable", m: "(adj) đáng tin cậy",
-    e: "She's the most reliable person on the team — she never misses a deadline.",
-    d: "Cô ấy là người đáng tin cậy nhất nhóm — chưa bao giờ trễ hạn.",
-    col: "a reliable source · reliable information · a reliable friend" },
-  // … các từ khác
-];
-export const vocab = raw.map((x) => ({ ...x, id: x.c + "::" + x.v }));
-export default vocab;
-```
-→ *Xong khi:* import được mảng `vocab`, đếm đúng số thẻ, và `id` duy nhất (cảnh báo nếu `c::v` trùng — vì cùng một từ có thể nằm ở 2 chủ đề khác nhau vẫn ổn, nhưng trùng nguyên `c::v` thì hỏng).
+// src/data/course/week01.js
+{
+  day: 1,                      // 1..72, khoá duy nhất & thứ tự học
+  week: 1,                     // 1..12
+  track: "daily",              // "daily" (tuần 1-6) | "work" (tuần 7-12)
+  title: "Nói điều mình muốn", // tiêu đề ngắn hiện trên màn đóng ngày
 
-**Bước 2 — Engine SM-2 (`srs/sm2.js`).** Viết `review`, `preview`, `isDue`, `buildSession` đúng công thức ở Phần 1.3–1.4. Truyền `now` cố định vào test để kết quả tất định. Unit test tối thiểu:
-- (a) thẻ mới + *Tốt* (q=4) → `interval = 1`, `reps = 1`, `ef = 2.5` (q=4 không đổi ef), `due ≈ now + DAY`.
-- (b) đúng 3 lần liên tiếp (q=4) → `interval` đi `1 → 6 → 15` (≈ round(6×2.5)) và tăng dần.
-- (c) *Chưa nhớ* (q=2) → `reps = 0`, `lapses += 1`, `interval = 1`, và `ef` giảm so với trước.
-- (d) `ef` không bao giờ xuống dưới `1.3` dù bấm *Chưa nhớ* nhiều lần.
-- (e) `review()` KHÔNG mutate object `state` truyền vào.
-- (f) `buildSession`: tôn trọng `newLimit`, `maxReviews`, và lọc đúng `scope`.
-→ *Xong khi:* test pass.
+  // -- 1% của ngày --
+  pat: "I'd like + N / to V",          // mẫu câu (chuỗi hiển thị)
+  patVi: "Tôi muốn... (lịch sự)",      // nghĩa tiếng Việt
+  note: "Lich su hon 'I want'. Dung khi goi mon, mua do, nho va.", // 1-2 câu, KHÔNG thuật ngữ ngữ pháp
 
-**Bước 3 — Persistence (`srs/storage.js`).** load / save map vào `localStorage`; có `resetProgress()`.
-→ *Xong khi:* reload trang vẫn giữ nguyên tiến độ.
+  // -- Nhịp 1 (nghe trước) + nhịp 2 (lộ mẫu): 3 ví dụ, 2 câu đầu dùng cho nhịp 1 --
+  ex: [
+    { en: "I'd like a coffee, please.",      vi: "Cho tôi một cà phê." },
+    { en: "I'd like to check in, please.",   vi: "Tôi muốn làm thủ tục nhận phòng." },
+    { en: "I'd like the one by the window.", vi: "Tôi muốn cái cạnh cửa sổ." }
+  ],
 
-**Bước 4 — Màn hình ôn (`StudySession` + `RatingBar`).** Mặt trước hiện từ (`v`). Bấm/`Space` lật → mặt sau hiện nghĩa (`m`), ví dụ (`e`), bản dịch (`d`), và collocations (`col`, tách theo ` · ` thành các chip). 4 nút đánh giá, mỗi nút kèm khoảng cách xem trước. Cập nhật state + lưu sau mỗi lần đánh giá.
-→ *Xong khi:* ôn hết hàng đợi được; bấm *Chưa nhớ* thì thẻ hiện lại trong phiên; mặt sau hiển thị đủ `m/e/d/col`.
+  // -- Nhịp 4 (LÕI): 3 câu drill, CHỈ dùng từ dễ - không phụ thuộc `words` --
+  drills: [
+    { vi: "Cho tôi một ly trà.",    en: "I'd like a tea." },
+    { vi: "Tôi muốn đặt bàn.",      en: "I'd like to book a table." },
+    { vi: "Tôi muốn xem thực đơn.", en: "I'd like to see the menu." }
+  ],
 
-**Bước 5 — Logic phiên (`srs/session.js`).** `buildSession` với `newLimit` (mặc định 20), `maxReviews` (mặc định 100) và lọc theo chủ đề. Quản lý **hàng đợi in-memory** tách khỏi state đã lưu (xem §1.4): bấm *Chưa nhớ* thì đẩy thẻ về cuối hàng đợi, các nút khác thì loại khỏi hàng đợi. Màn hình "hoàn thành" khi hết thẻ.
-→ *Xong khi:* số thẻ mỗi phiên đúng `newLimit`/`maxReviews` và đúng phạm vi chủ đề; bấm *Chưa nhớ* thẻ quay lại trong phiên nhưng phiên SAU (reload) thẻ đó đến hạn theo `due = +1 ngày`.
+  // -- Nhịp 3 (MỞ RỘNG): 6 từ, mỗi từ có câu dùng CHÍNH mẫu câu hôm nay --
+  words: [
+    { w: "refill", ipa: "/'ri:fil/", m: "(n) lần rót thêm",
+      en: "I'd like a refill, please.", vi: "Cho tôi rót thêm với." }
+    // ... đủ 6 từ
+  ],
 
-**Bước 6 — Màn hình chính (`Dashboard` + `Stats`).** Hiện 4 số liệu (mới / đang học / đã thuộc / đến hạn), chọn "Tất cả" hoặc 1 chủ đề, nút "Ôn N thẻ". Không có thẻ đến hạn → thông báo + thời điểm đến hạn kế tiếp.
-→ *Xong khi:* số liệu khớp với dữ liệu trong `localStorage`.
+  // -- Nhịp 4b (MỞ RỘNG): 2 câu khó hơn, ĐƯỢC dùng từ trong `words` --
+  drills2: [
+    { vi: "Tôi muốn rót thêm và tính tiền luôn.", en: "I'd like a refill and the bill, please." }
+  ],
 
-**Bước 7 — Quản lý dữ liệu trong app (`srs/vocabStore.js` + `DataManager.jsx`).** Cho phép nạp thêm từ vựng mà không phải sửa file:
-- `vocabStore` đọc bộ **built-in** (`data/vocab.js`) và bộ **người dùng tự thêm** (lưu `localStorage` key riêng, vd `phrasal-vocab-user-v1`), rồi **gộp** lại; khi trùng `id` thì bản người dùng đè bản built-in.
-- `DataManager.jsx`: form thêm/sửa 1 từ (`c,v,m,e,d,col`); **import** bằng cách dán JSON (mảng `{c,v,m,e,d,col}`) hoặc tải file `.json`; **export** toàn bộ từ người dùng ra JSON để sao lưu/chuyển máy. Validate: bỏ qua bản thiếu `c` hoặc `v`; báo số từ thêm/bị trùng/bị lỗi.
-- Thêm từ mới KHÔNG xoá tiến độ ôn của các thẻ cũ (state khớp theo `id`).
-→ *Xong khi:* dán một mảng JSON vài từ → chúng xuất hiện trong thống kê & phiên ôn ngay, vẫn còn sau khi reload; export rồi import lại cho kết quả y hệt.
-
-**Bước 8 — Hoàn thiện.** Phím tắt (`Space` lật, `1–4` đánh giá), giao diện tối dễ nhìn, responsive trên điện thoại, nút **Đặt lại tiến độ** (kèm xác nhận).
-→ *Xong khi:* dùng mượt trên điện thoại lẫn bàn phím.
-
-### Definition of Done (toàn app)
-- Mở app → thấy số liệu thật từ `localStorage`.
-- Ôn một phiên → khoảng cách thẻ thay đổi đúng SM-2; tiến độ vẫn còn sau khi đóng/mở lại.
-- Thẻ trả lời sai quay lại sớm; thẻ *Dễ* giãn ra lâu.
-- Lọc theo chủ đề và "Đặt lại tiến độ" hoạt động đúng.
-- Thêm/import từ vựng mới trong app hoạt động; từ mới vào phiên ôn được mà không mất tiến độ thẻ cũ.
-
----
-
-## Phần 3 — Tích hợp Claude API (tính năng luyện nói)
-
-### 3.1. Vai trò của Claude & pipeline
-
-Claude **không** dùng để tính `q`/lịch SM-2 (đó là việc của `srs/sm2.js` thuần + self-rating của người học). Ngoài ranh giới đó, Claude đóng **hai** vai trò: (1) **bộ não hội thoại** trong vòng luyện nói (mục này), và (2) **trợ lý dữ liệu học** — *mining* từ vựng và sinh câu/mini-story (xem **Phần 5**).
-
-> _Ghi chú lịch sử:_ ràng buộc cũ "**C5 — không dùng Claude để sinh data vocab**" đã được **gỡ** (chủ ý của chủ dự án) để bật tính năng *mining* ở §5.3. Phần "không dùng Claude để chấm `q`/lịch SM-2" **vẫn giữ** — đó là invariant đảm bảo SM-2 tất định, test được.
-
-```
-🎤 Mic ─▶ Whisper (STT: giọng → chữ) ─▶ Claude (hiểu + trả lời)
-                                              │
-   🔊 Loa ◀── Web Speech API (TTS: chữ → giọng) ◀──┘
-```
-
-- **Whisper** = chuyển giọng người dùng thành văn bản (Speech-to-Text). Chạy **local** bằng `whisper.cpp` (binary native, có `whisper-server`) — KHÔNG phải Claude, KHÔNG ra internet.
-- **Claude** = nhận văn bản, hiểu ngữ cảnh hội thoại, trả lời tự nhiên như một người bạn luyện tiếng Anh. **Khâu duy nhất ra internet thật** (gọi `api.anthropic.com`).
-- **Web Speech API** (`speechSynthesis`, có sẵn trong trình duyệt/điện thoại) = đọc to câu trả lời của Claude.
-
-> Liên hệ với phần học từ: nên cho Claude **ngữ cảnh các từ người dùng đang ôn** (`dueWords` từ `buildSession`) để nó dẫn dắt hội thoại xoay quanh các từ đó và sửa lỗi nhẹ nhàng.
-
-### 3.2. Xác thực: token Claude Max + proxy local (KHÔNG dùng API key trả-token)
-
-App này dùng **token của tài khoản Claude Max** (lấy bằng `claude setup-token`), không phải API key Console. Hệ quả kiến trúc:
-
-- Token Max là **OAuth** → gửi `Authorization: Bearer <token>` **+** header `anthropic-beta: oauth-2025-04-20` (KHÁC với API key dùng `x-api-key`).
-- **Không gọi thẳng từ trình duyệt được** (OAuth + CORS hay bị từ chối) → bắt buộc có **một proxy nhỏ chạy local** giữ token, thêm header, và là nơi browser/điện thoại gọi tới.
-- Đây là **vùng xám** (token subscription vốn dành cho Claude Code/Claude.ai) — chấp nhận cho dùng cá nhân; rủi ro: token hết hạn phải lấy lại, có thể bị siết.
-
-```js
-// server/proxy.mjs — chạy local: CLAUDE_TOKEN=... PROXY_SECRET=... node proxy.mjs  (localhost:8787)
-import http from "node:http";
-import Anthropic from "@anthropic-ai/sdk";
-
-const client = new Anthropic({
-  authToken: process.env.CLAUDE_TOKEN,                 // token từ `claude setup-token`
-  defaultHeaders: { "anthropic-beta": "oauth-2025-04-20" },
-});
-
-http.createServer(async (req, res) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");   // app local; siết lại khi expose
-  res.setHeader("Access-Control-Allow-Headers", "content-type, x-proxy-secret");
-  if (req.method === "OPTIONS") return res.end();
-
-  // Lớp khóa bắt buộc khi expose ra ngoài (token Max!)
-  if (req.headers["x-proxy-secret"] !== process.env.PROXY_SECRET)
-    return (res.statusCode = 401), res.end("unauthorized");
-
-  let body = ""; for await (const c of req) body += c;
-  const { history, dueWords = [] } = JSON.parse(body || "{}");
-
-  const msg = await client.messages.create({
-    model: "claude-opus-4-8",
-    max_tokens: 300,                                    // trả lời nói ngắn → giảm độ trễ
-    system:
-      "Bạn là người bạn luyện nói tiếng Anh thân thiện. Trả lời NGẮN (1–3 câu), tự nhiên, " +
-      "KHÔNG markdown/emoji (sẽ bị đọc to). Nhẹ nhàng sửa lỗi. Gợi dùng các từ khi hợp ngữ cảnh: " +
-      dueWords.join(", ") + ".",
-    messages: history,                                  // API stateless → gửi lại toàn bộ mỗi lượt
-  });
-  res.setHeader("content-type", "application/json");
-  res.end(JSON.stringify({ text: msg.content.find((b) => b.type === "text")?.text ?? "" }));
-}).listen(8787);
-```
-
-Frontend chỉ `fetch` tới proxy, **không đụng token**:
-
-```js
-// ai/chat.js
-export async function reply(history, dueWords = []) {
-  const r = await fetch(import.meta.env.VITE_PROXY_URL, {     // vd http://localhost:8787
-    method: "POST",
-    headers: { "content-type": "application/json", "x-proxy-secret": import.meta.env.VITE_PROXY_SECRET },
-    body: JSON.stringify({ history, dueWords }),
-  });
-  if (!r.ok) throw new Error("proxy " + r.status);
-  return (await r.json()).text;
+  // -- Nhịp 5 (MỞ RỘNG): tình huống đóng vai, nạp cho VoiceChat roleplay --
+  scene: "Goi mon o quan ca phe - ban la khach, gia su la nhan vien."
 }
 ```
 
-**Lưu ý kỹ thuật:**
-- Model **`claude-opus-4-8`** (ID đầy đủ, không thêm hậu tố ngày).
-- API **stateless** → mỗi lượt gửi lại **toàn bộ** `history`; append cả `user` lẫn `assistant` sau mỗi lượt.
-- Muốn giảm độ trễ "time-to-first-audio": đổi proxy sang `client.messages.stream(...)` + SSE, gom theo câu rồi đẩy dần sang `speechSynthesis`. Bản đầu cứ chờ trả lời xong cho đơn giản.
-- Token hết hạn → chạy lại `claude setup-token`, cập nhật biến môi trường, khởi động lại proxy.
+**Ràng buộc nội dung (kiểm bằng test, xem Phần 9):**
 
-### 3.3. Bước triển khai (nối tiếp lộ trình)
-
-**Bước 9 — Proxy Claude local (`server/proxy.mjs`).** Giữ token Max, thêm header OAuth, endpoint `POST /` nhận `{history, dueWords}` → trả `{text}`, có lớp `x-proxy-secret`.
-→ *Xong khi:* `curl` tới `localhost:8787` với secret đúng nhận được câu trả lời từ Claude.
-
-**Bước 10 — Whisper STT local (`server/whisper` hoặc dùng `whisper.cpp` server).** Cài/khởi `whisper-server` (model `base`/`small`). Frontend ghi âm bằng `MediaRecorder` → gửi audio tới Whisper → nhận transcript.
-→ *Xong khi:* nói một câu tiếng Anh, nhận lại đúng văn bản.
-
-**Bước 11 — Màn hình luyện nói (`ai/chat.js` + `components/VoiceChat.jsx`).** Nút **"Bắt đầu nói"** (kích hoạt trong cú chạm — cần cho iOS): ghi âm → Whisper → `reply(history, dueWords)` → `speechSynthesis` đọc to. Transcript hai chiều; lấy `dueWords` từ `buildSession`.
-→ *Xong khi:* nói trọn một vòng (nói → Claude trả lời → nghe đọc to), lịch sử giữ đúng qua nhiều lượt.
-
-**Bước 12 — Đóng gói PWA (`vite-plugin-pwa`).** `manifest.json` (tên, icon 192/512, `display: standalone`, theme), service worker. Cài được lên màn hình chính điện thoại như app.
-→ *Xong khi:* trên điện thoại "Thêm vào màn hình chính" ra icon, mở standalone toàn màn hình.
-
-### Definition of Done (tính năng luyện nói)
-- Bật proxy + Whisper local, mở app → nói một câu → nghe Claude trả lời đọc to.
-- Hội thoại nhiều lượt giữ đúng ngữ cảnh; Claude cố dùng/gợi các từ đang ôn.
-- Cài lên điện thoại dạng PWA, mở bằng icon, mic + đọc to hoạt động (qua HTTPS).
-
----
-
-## Phần 4 — Triển khai: chạy local + (tùy chọn) expose + PWA
-
-### 4.1. Chạy local (mặc định)
-Ba tiến trình trên máy bạn (máy phải bật khi dùng):
-1. `node server/proxy.mjs` — proxy Claude (token Max).
-2. `whisper-server` — STT local.
-3. `npm run dev` (hoặc `npm run preview` cho bản build) — frontend.
-
-Mọi thứ rất nhẹ (proxy ~30–50MB RAM, frontend tĩnh); phần "nặng" duy nhất là model Whisper khi phiên dịch giọng.
-
-### 4.2. (Tùy chọn) Truy cập qua điện thoại / expose ra domain
-- **Cloudflare Tunnel** (`cloudflared`): tạo URL HTTPS công khai trỏ về frontend local, gắn được domain riêng, **không mở cổng router**.
-- **HTTPS là bắt buộc**: mic (`getUserMedia`) và cài PWA chỉ chạy ở secure context. Tunnel cho HTTPS sẵn.
-- **Khóa lại — bắt buộc vì proxy giữ token Max**: bật lớp `x-proxy-secret` (đã có) và/hoặc **Cloudflare Access** (chỉ mình bạn đăng nhập). Public không khóa = ai có link cũng xài tài khoản Claude của bạn.
-- Giữ **riêng tư** (chỉ mình bạn dùng) để giảm rủi ro token Max bị siết.
-
-### 4.3. Lưu ý điện thoại (iOS/Android)
-- **iOS cần cú chạm người dùng** mới cho phát `speechSynthesis` và mở mic lần đầu → thiết kế nút "Bắt đầu nói" rõ ràng, không auto-play.
-- Mic trên điện thoại: audio gửi **về máy bạn** (Whisper local) qua tunnel để phiên dịch — tốn chút băng thông + độ trễ, chấp nhận được.
-
----
-
-## Phần 5 — Tầng học hiệu quả (Active Learning Layer)
-
-> **Mục tiêu:** biến app từ "lật thẻ" → "**máy luyện *sản xuất* ngôn ngữ**". Tầng này xây **TRÊN** engine SM-2 (Phần 1) — **KHÔNG đổi công thức SM-2**; chỉ đổi *cách hỏi* và *cách nạp từ*. `q` luôn do người học quyết (có thể *gợi ý* từ kết quả tự chấm rồi người học xác nhận); lịch luôn do `srs/sm2.js` thuần tính. Logic thuần (chọn kiểu thẻ, sinh cloze, so khớp đáp án) tách vào **`srs/cardTypes.js`** (có test), UI tách riêng.
->
-> **Nguyên tắc khoa học nền tảng:** (1) *active recall* — SM-2 lo; (2) *generation/production* — tự tạo câu, tự nói (§5.1–5.2); (3) *varied context* — gặp từ nhiều kiểu khác nhau (§5.1); (4) *personal relevance* — học từ trong thứ mình quan tâm (§5.3); (5) *comprehensible input* — nghe/đọc ở mức i+1 (§5.7).
-
-### 5.1. Đa dạng kiểu ôn (Varied Retrieval) — `srs/cardTypes.js`
-
-Mỗi thẻ đến hạn được hỏi bằng **một** trong các kiểu sau (xoay vòng / ngẫu nhiên theo thẻ trong phiên). **Tất cả suy ra từ field sẵn có `{v,m,e,d,col}` — KHÔNG cần Claude** (riêng `speak` cần whisper local — M5):
-
-| Kiểu | Mặt trước | Người học làm | Cách chấm |
-|---|---|---|---|
-| `recall` (mặc định) | `v` | nhớ nghĩa trong đầu | thủ công (4 nút) |
-| `cloze` | câu `e` khoét chỗ `v` → `____` | điền từ còn thiếu | **auto** (khớp chuỗi) → *gợi ý* `q` |
-| `listen` | TTS đọc `v` (hoặc `e`) qua Web Speech | gõ lại từ/câu nghe được | **auto** → *gợi ý* `q` |
-| `produce` | `v` + yêu cầu "đặt 1 câu dùng từ này" | gõ/nói một câu | thủ công, đối chiếu `e`/`col` |
-| `reverse` | `d` (câu tiếng Việt) | nói/gõ lại câu tiếng Anh | thủ công, đối chiếu `e` |
-| `speak` | nghĩa `m` + yêu cầu "nói từ tiếng Anh" | bấm mic, **nói** từ (Whisper nghe) | **auto** (transcript chứa nguyên văn `v`) → *gợi ý* `q`; mic/whisper lỗi → nút "Hiện đáp án" chấm thủ công |
-
-- **Auto-chấm** (`cloze`/`listen`): so chuỗi *không phân biệt hoa thường + trim*. **Sai → gợi ý `q=2` (Chưa nhớ)** nhưng vẫn cho người học override; **Đúng → hiện thanh 4 nút bình thường**. `q` cuối cùng vẫn đi qua `review()` y như cũ (**KHÔNG vi phạm C1**: SM-2 vẫn nhận `q` rồi tính lịch).
-- **Sinh cloze:** thay token `v` trong `e` (case-insensitive, theo ranh giới từ) bằng `____`. Nếu `v` **không** xuất hiện nguyên dạng trong `e` (biến cách, vd `"rely"` ≠ `"reliable"`) → **fallback về `recall`**. Hàm thuần, có test.
-- Card-type là chuyện **UI/phiên in-memory**, **KHÔNG** ghi vào SR state đã lưu.
-
-→ **Bước 13 (xong khi):** `srs/cardTypes.js` có test pass cho: chọn kiểu hợp lệ; sinh cloze đúng + fallback khi `v` không có trong `e`; so khớp đáp án bỏ qua hoa thường/khoảng trắng; map sai→gợi ý q=2.
-
-### 5.2. Chế độ "Sản xuất trước khi lật" (Generation Effect)
-
-Toggle **"Chế độ sản xuất"**: khi bật, ưu tiên kiểu `produce`/`reverse` — trước khi lộ mặt sau, người học **phải** tạo câu (gõ hoặc bấm mic nói trong cú chạm người dùng). Submit xong mới hiện `e/d/col` để đối chiếu rồi tự chấm. Đây là đòn bẩy ghi nhớ mạnh nhất; **chỉ phụ thuộc M1–M2**, nên làm sớm.
-
-→ **Bước 14 (xong khi):** trong phiên, chuyển được giữa các kiểu thẻ; bật "Chế độ sản xuất" thì phải nhập câu mới lật được; auto-chấm nối đúng vào thanh đánh giá; tiến độ SM-2 vẫn đúng như §1.
-
-### 5.3. Nạp từ vựng từ văn bản thật (Vocab Mining) — dùng Claude
-
-> Giải **bài toán DATA** (khỏi soạn tay ~850 từ) **và** tăng *personal relevance*: học đúng từ trong báo/lyrics/phụ đề/chat bạn đang đọc.
-
-- Mở rộng `DataManager`: dán đoạn text → gửi proxy endpoint **`POST /mine`** `{text, level}` → Claude trả về **mảng JSON** đúng schema `{c,v,m,e,d,col}` (nghĩa tiếng Việt + ví dụ tự nhiên), ưu tiên từ "đáng học" ở mức người dùng.
-- Người học **review + tick** từ muốn giữ → merge vào `phrasal-vocab-user-v1` qua `vocabStore` (trùng `id` thì bản người dùng đè).
-- **Validate client:** bỏ bản thiếu `c`/`v`; parse JSON an toàn (Claude có thể trả lẫn văn bản → bóc khối JSON); dedupe theo `id`; báo số **thêm / trùng / lỗi**. Thêm từ **không** xoá tiến độ thẻ cũ (state khớp `id`).
-
-→ **Bước 15 (xong khi):** dán một đoạn tiếng Anh → nhận danh sách từ đúng schema → tick vài từ → chúng vào thống kê & phiên ôn ngay, vẫn còn sau reload. (Cần **M5** — proxy.)
-
-### 5.4. Luyện nói có "nhiệm vụ" (Voice Missions) — nâng cấp `VoiceChat`
-
-- Đưa Claude `dueWords` (5–7 từ) + lệnh hệ thống: **dẫn hội thoại để ép người học dùng** các từ đó; cuối lượt/phiên liệt kê từ đã dùng đúng / chưa dùng.
-- Whisper transcript lời người học → client đối chiếu **từ `dueWords` nào thực sự được nói ra** → đánh dấu cờ mềm "spoken" (hiển thị động viên/tiến độ). **KHÔNG** tự sửa `q`/lịch SM-2 từ cờ này.
-
-→ **Bước 16 (xong khi):** nói một phiên, Claude chủ động gợi/ép dùng từ due; app báo đúng từ nào bạn đã nói ra. (Cần **M6**.)
-
-### 5.5. Phản hồi phát âm (Pronunciation) — tận dụng Whisper sẵn có
-
-- So transcript Whisper với câu mục tiêu (`e` hoặc câu vừa luyện) ở **mức từ** → tô từ lệch. Nhẹ nhàng, **không** chấm điểm gắt (Whisper không phải máy chấm phát âm chuẩn — chỉ là tín hiệu tham khảo).
-
-→ **Bước 17 (xong khi):** đọc một câu, app chỉ ra (tương đối) từ nào trật so với mục tiêu.
-
-### 5.6. Sổ lỗi → thẻ (Error Journal)
-
-- Lỗi Claude sửa khi luyện nói → nút **"Lưu thành thẻ"** → tạo thẻ mới (qua `vocabStore`, state khớp `id`, không mất tiến độ cũ). Học từ chính lỗi của mình.
-
-→ **Bước 18 (xong khi):** từ một lượt sửa lỗi, lưu được thành thẻ, thẻ đó vào phiên ôn kế tiếp.
-
-### 5.7. Input dễ hiểu (Comprehensible Input) — Mini-story
-
-- Chế độ "đọc/nghe": Claude sinh **2–3 câu** ở **đúng trình độ** dùng vài từ due → hiển thị + TTS đọc to (nghe + ôn cùng lúc). Không markdown/emoji (sẽ bị đọc to).
-
-→ **Bước 19 (xong khi):** bấm "Mini-story hôm nay" → ra đoạn ngắn dùng từ đang ôn, đọc to được. (Cần **M5**.)
-
-### 5.8. Động lực nhẹ (Gamification tối giản)
-
-- Streak ngày học, mục tiêu số thẻ/ngày, hiển thị `min(due)` kế tiếp. Lưu `localStorage` key `phrasal-stats-v1`. **KHÔNG** badge/coin/màu mè.
-
-→ **Bước 20 (xong khi):** học xong phiên → streak +1 nếu là ngày mới; dashboard hiện tiến độ mục tiêu ngày.
-
-### Definition of Done (Tầng học hiệu quả)
-- Một từ được ôn bằng nhiều kiểu khác nhau qua các phiên (recall/cloze/listen/produce/reverse); auto-chấm gợi ý `q` đúng nhưng người học vẫn quyết cuối.
-- Dán văn bản → mining ra từ đúng schema → vào deck không mất tiến độ cũ.
-- Luyện nói: Claude ép dùng từ due, app báo từ đã nói ra; lưu được lỗi thành thẻ.
-- Mini-story đọc to được; streak/mục tiêu ngày chạy.
-- **Mọi thứ trên KHÔNG đổi công thức SM-2; `q`/lịch vẫn tất định và test được.**
-
----
-
-## Kế hoạch thực hiện (milestones)
-
-| Mốc | Bước | Mục tiêu kiểm chứng |
+| # | Ràng buộc | Vì sao |
 |---|---|---|
-| **M1 — Engine** | 1–3 | SM-2 + persistence: test pass, reload giữ tiến độ |
-| **M2 — Học cơ bản** | 4–6 | Ôn trọn phiên, dashboard số liệu khớp, lọc chủ đề |
-| **M3 — Quản lý data** | 7 | Import/export JSON, thêm từ không mất tiến độ cũ |
-| **M4 — Hoàn thiện UI** | 8 | Phím tắt, giao diện tối, responsive, đặt lại tiến độ |
-| **M5 — Não hội thoại** | 9 | Proxy + token Max: `curl` nhận trả lời Claude |
-| **M6 — Nghe & nói** | 10–11 | Vòng nói→Claude→đọc to chạy trọn, đa lượt |
-| **M7 — App điện thoại** | 12 | PWA cài được, mic + TTS chạy qua HTTPS |
-| **M8 — Expose (tùy chọn)** | §4.2 | Cloudflare Tunnel + khóa, vào được từ điện thoại |
-| **M9 — Ôn đa dạng** ⭐ | 13–14 | Cloze/listen/produce/reverse chạy; auto-chấm gợi ý `q`; test `cardTypes` pass. **Chỉ cần M1–M2.** |
-| **M10 — Mining** ⭐ | 15 | Dán text → Claude trả JSON đúng schema → merge vào deck không mất tiến độ. **Cần M5 (proxy).** |
-| **M11 — Voice nâng cao** | 16–18 | Nhiệm vụ dùng từ due + đối chiếu "spoken"; phản hồi phát âm; sổ lỗi → thẻ. **Cần M6.** |
-| **M12 — Input & động lực** | 19–20 | Mini-story + TTS (cần M5); streak/mục tiêu ngày (client-side). |
+| L1 | `day` duy nhất, liên tục 1..72; `week = ceil(day / 6)` | Lộ trình tuyến tính, không lỗ hổng |
+| L2 | `drills` (lõi) **không được** chứa từ nào trong `words` của chính bài đó | Lõi phải chạy độc lập với phần mở rộng (nguyên tắc 0.2.2) |
+| L3 | `ex.length >= 3`, `drills.length === 3`, `words.length <= 6`, `drills2.length <= 2` | Giữ đúng ngân sách 15'/10' |
+| L4 | Mọi `words[].en` phải chứa mẫu câu của bài | Từ vựng luôn có chỗ bám (0.3) |
+| L5 | Ngày `day % 6 === 0` là ngày chốt tuần → xem 3.4 | Nhịp tuần |
 
-**Thứ tự khuyến nghị (đã cập nhật theo ưu tiên "học hiệu quả"):**
-1. **M1–M4** — app học từ chạy độc lập.
-2. **M9** ⭐ — *ôn đa dạng + chế độ sản xuất*. Thuần client (chỉ cần M1–M2), giá trị học **cao nhất**, làm **ngay sau M4** trước cả tính năng nói.
-3. **M5–M6** — nền tảng nói (proxy + Whisper + vòng nói cơ bản).
-4. **M10** ⭐ — *mining* (cần proxy ở M5): xoá bottleneck dữ liệu.
-5. **M11–M12** — voice nâng cao + mini-story + động lực.
-6. **M7–M8** — PWA + expose (bất cứ lúc nào sau M6).
+### 2.3. Review item — cầu nối sang SM-2
 
-⭐ = tính năng tạo khác biệt lớn nhất so với flashcard thường. Mỗi mốc chạy/kiểm tra trước khi sang mốc sau.
+SM-2 (Phần 1) **không đổi một dòng**. Nó chỉ cần `{ id }` và `getState(id)`. Bài học sinh ra item:
+
+```js
+// src/srs/items.js - THUẦN, có test
+// Mỗi bài sinh: 1 item mẫu câu + n item từ vựng (chỉ khi người học đã làm nhịp 3).
+export function itemsOf(lesson) { /* ... */ }
+
+// id có tiền tố phân loại để màn ôn biết hiển thị kiểu nào:
+//   "pat::1"          -> item mẫu câu (bài ngày 1)
+//   "word::1::refill" -> item từ vựng
+```
+
+| Loại item | Sinh khi | Hỏi thế nào ở nhịp 0 (ôn nhanh) |
+|---|---|---|
+| `pat::<day>` | Hoàn thành **lõi** ngày đó | Hiện câu tiếng Việt → **nói** câu tiếng Anh |
+| `word::<day>::<w>` | Hoàn thành **nhịp 3** ngày đó | Hiện từ → **nói** câu chứa từ đó |
+
+> Item từ vựng chỉ ra đời khi người học thực sự làm phần mở rộng. Đây là cơ chế **tự điều tiết nợ ôn
+> tập**: ngày bận không nạp từ mới → hôm sau hàng đợi không phình → 4 phút ôn vẫn đủ. Làm ngược lại
+> (bắt buộc nạp từ, ôn thì tuỳ chọn) chỉ cần 3 ngày bận là vỡ hàng đợi và người học bỏ app.
+
+### 2.4. Lưu trữ (localStorage, key có version)
+
+**Không đổi tên key nào của module cũ.** Các module ở 7.1 giữ nguyên đúng nghĩa đen — kể cả hằng số
+key của chúng. Bản mới chỉ **thêm một** key.
+
+| Key | Nội dung | Thuộc về |
+|---|---|---|
+| `srf-course-v1` | `{ [day]: { core, ext, doneAt, saidBest } }` | **MỚI** — `srs/course.js`, xem Phần 4 |
+| `phrasal-srs-v1` | map `{ [itemId]: SRstate }` | `srs/storage.js` giữ nguyên; chỉ nội dung đổi (id nay là `pat::`/`word::`) |
+| `phrasal-speaking-v1` | lịch sử chấm CEFR | `srs/speaking.js` giữ nguyên |
+| `phrasal-coach-v1` | ghi chú gia sư buổi trước | `srs/coachMemory.js` giữ nguyên |
+| `phrasal-daily-v1` | hoạt động theo ngày (biểu đồ 14 ngày) | `srs/daily.js` giữ nguyên |
+| `phrasal-warmup-v1` | lịch sử khởi động nói 1 phút | `srs/warmup.js` giữ nguyên |
+
+**Dọn một lần khi chạy bản mới lần đầu.** Chủ dự án đã chốt xoá sạch tiến độ cũ và soạn nội dung mới,
+nên không migrate gì hết. Khi khởi động, nếu chưa có cờ `srf-reset-v1` thì xoá toàn bộ các key trên
+(trừ cờ) **cộng thêm** key của những tính năng đã gỡ — `phrasal-vocab-user-v1`, `phrasal-stats-v1`,
+`phrasal-patterns-v1`, `phrasal-voicemode-v1` — rồi đặt cờ. Chạy đúng một lần, không lặp lại.
+
+> Vì sao phải xoá `phrasal-srs-v1` chứ không để kệ: id item đổi hoàn toàn từ `"<chủ đề>::<từ>"` sang
+> `"pat::<day>"` / `"word::<day>::<w>"`. State cũ không bao giờ khớp id mới — để lại chỉ tốn chỗ và
+> gây nhiễu khi debug.
 
 ---
 
-## Cần đưa cho Claude Code
-1. **Tài liệu này** (thuật toán + lộ trình).
-2. **File dữ liệu `vocab.js`** (đã có, ~150 từ / 10 chủ đề, mục tiêu ~1000) — Claude Code dùng trực tiếp làm bộ built-in. Bổ sung từ sau này có thể (a) thêm thẳng vào `vocab.js`, hoặc (b) dùng tính năng import trong app (Bước 7).
-3. *(Cho M5+)* **token Claude Max** lấy bằng `claude setup-token` (đặt vào biến môi trường `CLAUDE_TOKEN` của proxy, KHÔNG commit vào code) và cài sẵn **`whisper.cpp`** + model (`base`/`small`).
-4. *(Tùy chọn)* app `.jsx` cũ, để Claude Code giữ lại phần giao diện / hiệu ứng lật thẻ bạn đã thích.
+## Phần 3 — Buổi học
 
-## Prompt mẫu để bắt đầu với Claude Code
-> "Đây là đặc tả thuật toán spaced repetition (SM-2) và lộ trình kèm theo. Hãy dựng app **React (Vite)** đúng theo cấu trúc thư mục, làm **tuần tự theo các mốc M1→M8 (Bước 1→12)**, mỗi mốc chạy test/kiểm tra trước khi sang mốc sau. Ưu tiên hoàn thành **M1–M4** (app học từ chạy được) rồi mới làm tính năng nói.
->
-> Dữ liệu từ vựng dùng file `vocab.js` tôi đính kèm (schema `{c,v,m,e,d,col}`, `id` suy ra tự động). Persistence dùng `localStorage`. Có màn hình quản lý/import từ vựng (Bước 7).
->
-> Tính năng **luyện nói**: vòng **Whisper (STT local, whisper.cpp) → Claude → Web Speech (TTS)**. Claude gọi qua **proxy Node local** (`server/proxy.mjs`) giữ **token Claude Max** (lấy bằng `claude setup-token`), xác thực `Authorization: Bearer` + header `anthropic-beta: oauth-2025-04-20`, model `claude-opus-4-8`; frontend KHÔNG giữ token, chỉ `fetch` tới proxy kèm `x-proxy-secret`. Đóng gói **PWA** (`vite-plugin-pwa`) để cài lên điện thoại. Giao diện tối, phím tắt, responsive."
+### 3.1. Lõi — 15 phút, bắt buộc
+
+Chạy một mạch, mỗi nhịp một màn full-screen, trên đầu là thanh 4 chấm tiến trình. Không có menu,
+không nút quay lại chọn chủ đề.
+
+> **Về cách đánh số nhịp:** số thứ tự 0-5 là **định danh cố định** của từng loại nhịp, không phải thứ
+> tự chạy. Lõi chạy 0 → 1 → 2 → 4 (thiếu 3 là đúng: nhịp 3 nằm ở phần mở rộng). Giữ số cố định để
+> `lesson.js`, test và spec luôn gọi cùng một tên cho cùng một nhịp.
+
+| # | Nhịp | Phút | Nội dung | Nguồn dữ liệu |
+|---|---|---|---|---|
+| 0 | **Ôn nhanh** | 4' | 5-8 item đến hạn. Người học **không thấy chữ "SRS"** — chỉ thấy "ôn nhanh". | `buildSession(items, ..., { maxReviews: 8, newLimit: 0 })` |
+| 1 | **Nghe 2 câu** | 1' | Nghe `ex[0]`, `ex[1]` qua Kokoro, chọn nghĩa tiếng Việt. **Chưa lộ mẫu câu.** | `lesson.ex` |
+| 2 | **Lộ mẫu** | 3' | Hiện `pat` + `patVi` + `note` + cả 3 `ex`. Nghe lại được từng câu. | `lesson.pat/note/ex` |
+| 4 | **Nói 3 câu** | 7' | Hiện `drills[i].vi` → người học **nói** → Whisper → so với `drills[i].en` → Kokoro đọc mẫu. | `lesson.drills` |
+
+**Vì sao nhịp 1 đứng trước nhịp 2:** vào bài bằng tai rồi mới biết luật, không phải học luật rồi mới
+nghe. Thứ tự này khiến cấu trúc dính vào phản xạ thay vì nằm trong sổ tay. Nhịp 1 cố ý chỉ 1 phút để
+không ăn vào ngân sách của nhịp 4.
+
+**Nhịp 4 — quy tắc chấm (KHÔNG dùng Claude chấm điểm SM-2):**
+
+- Whisper trả transcript → so khớp với `drills[i].en` bằng `utils/voiceMatch.js` (**giữ nguyên module cũ**).
+- Khớp >= ngưỡng → dấu ✓, gợi ý `q = 4`. Lệch → hiện từ sai tô đỏ, cho nói lại **tối đa 2 lần**, gợi ý `q = 2`.
+- `q` **cuối cùng vẫn do người học tự chấm** (giữ constraint C5 cũ). Máy chỉ gợi ý.
+- Không có ô nhập chữ. Mic hỏng → hiện lỗi + nút thử lại, KHÔNG fallback sang gõ (nguyên tắc 0.2.3).
+
+Hết nhịp 4 → **đóng ngày ngay** (4.1). Phần mở rộng hiện ra *sau* màn đóng ngày.
+
+### 3.2. Mở rộng — 10 phút, tuỳ chọn
+
+| # | Nhịp | Phút | Nội dung | Nguồn |
+|---|---|---|---|---|
+| 3 | **6 từ mới** | 5' | Mỗi từ: nghe `words[i].en` → nghĩa → **nói lại câu đó**. Xong thì item `word::...` vào SM-2. | `lesson.words` |
+| 4b | **Nói 2 câu khó** | 3' | Như nhịp 4 nhưng dùng `drills2`, có từ vừa học. | `lesson.drills2` |
+| 5 | **Đóng vai** | 2' | Nạp `lesson.scene` vào **VoiceChat roleplay (giữ nguyên)**. | `lesson.scene` |
+
+Bỏ qua phần này: không nhắc, không đếm ngược, không đánh dấu đỏ. Làm xong cả 3 nhịp → ô ngày hôm đó
+được thêm dấu sao (xem 4.2).
+
+### 3.3. Máy trạng thái — `src/srs/lesson.js` (THUẦN, có test)
+
+Không phụ thuộc React, không gọi `Date.now()` bên trong (nhận `now` qua tham số) để test tất định.
+
+```js
+// Các nhịp theo thứ tự chạy thật:
+export const CORE_STEPS = ["review", "listen", "pattern", "speak"];
+export const EXT_STEPS  = ["words", "speak2", "roleplay"];
+
+// Bài của hôm nay = bài chưa hoàn thành lõi, có `day` nhỏ nhất.
+// KHÔNG gắn bài theo ngày trên lịch: nghỉ 3 ngày thì quay lại vẫn học tiếp bài kế, không "mất bài".
+export function todayLesson(lessons, progress) { /* ... */ }
+
+// Bước kế tiếp trong phiên, hoặc null nếu xong lõi.
+export function nextStep(day, progress, { ext = false } = {}) { /* ... */ }
+
+// Ghi nhận xong 1 nhịp -> trả progress MỚI (không mutate).
+export function completeStep(progress, day, step, now) { /* ... */ }
+
+// Lõi xong chưa / mở rộng xong chưa.
+export function isCoreDone(progress, day) { /* ... */ }
+export function isExtDone(progress, day) { /* ... */ }
+```
+
+**Quy tắc "không mất bài" (quan trọng):** bài học gắn với **tiến độ**, không gắn với ngày trên lịch.
+Nghỉ 5 ngày rồi quay lại thì vẫn vào bài kế tiếp chứ không nhảy cóc. Chỉ có **streak** là gắn lịch.
+Làm khác đi thì nghỉ một tuần là mất một tuần nội dung — lý do kinh điển khiến người ta không quay lại.
+
+### 3.4. Ngày thứ 6 mỗi tuần — chốt tuần
+
+Bài có `day % 6 === 0` không có mẫu câu mới. Thay vào đó (vẫn 15' lõi):
+
+| Nhịp | Phút | Nội dung |
+|---|---|---|
+| 0 | 5' | Ôn nhanh, hàng đợi **ưu tiên item của tuần vừa rồi** |
+| A | 5' | **Đánh giá CEFR** — `SpeakingAssess` (**giữ nguyên**), chủ đề = track của tuần |
+| B | 5' | **Trò chuyện tự do** — `VoiceChat` chế độ chat (**giữ nguyên**), gia sư dùng 5 mẫu câu trong tuần |
+
+Đây là chỗ đặt lại các màn nói cũ: chúng **không bị đập**, chỉ chuyển từ "nằm chờ trong menu" sang
+"có lịch cố định". Nhờ vậy giữ được công cụ mà vẫn bỏ được cái bẫy tự chọn (0.2.1). Đồng thời sửa
+mâu thuẫn của bản cũ (plan bắt chấm CEFR mỗi ngày trong khi chính app khuyên 2-3 lần/tuần).
+
+---
+
+## Phần 4 — Đóng ngày, streak, bằng chứng tiến bộ
+
+### 4.1. Màn đóng ngày
+
+Hiện ngay sau nhịp 4, **một màn duy nhất, không cuộn**:
+
+```
+                    ✓
+        1% hôm nay của bạn
+
+        I'd like + N / to V
+        Tôi muốn... (lịch sự)
+
+     Bạn vừa nói được:
+     "I'd like to book a table."
+
+            12 ngày liên tục
+
+   [ Học thêm 10 phút ]   [ Xong hôm nay ]
+```
+
+- **"Bạn vừa nói được"** = transcript Whisper của câu drill người học nói đúng và khớp cao nhất
+  (`saidBest`). Đây là bằng chứng tiến bộ do chính giọng người học tạo ra.
+- Nút **"Xong hôm nay"** đóng app về màn chờ — app **không mời học thêm**. Kết thúc dứt khoát khiến
+  lần sau mở ra nhẹ đầu.
+
+### 4.2. Streak
+
+- Streak **chỉ đếm phần lõi**. Xong 15' = tick, chuỗi +1.
+- Xong thêm mở rộng = thêm dấu sao trên ô ngày đó. **Không làm thì không mất gì.**
+- Ranh giới ngày = 00:00 giờ địa phương — dùng lại hàm `dayStart()` của `srs/daily.js` (module giữ
+  nguyên), KHÔNG tự viết lại cách tính ngày ở chỗ khác.
+- Streak thuộc về `srs/course.js` (đếm ngày hoàn thành **lõi**), **không** dùng `srs/stats.js` cũ —
+  module đó đếm theo lượt ôn thẻ, là đúng đơn vị của bản cũ nhưng sai đơn vị của bản này (xem 0.3).
+- Không có "streak freeze", không thông báo đẩy, không nhắc nhở. Nguyên tắc 0.2.5.
+
+### 4.3. Màn "Tôi nói được gì rồi"
+
+Màn duy nhất ngoài luồng học chính. Danh sách mẫu câu đã nắm, **mới nhất lên đầu**, mỗi dòng gồm:
+mẫu câu + nghĩa + **một câu do chính người học nói** (`saidBest`) + ngày.
+
+Đặt tuần 1 cạnh tuần 6 là thấy ngay khác biệt (`I want coffee` → `I'd rather grab something quick
+than sit down for a full meal`). Đây là thứ con số "đã ôn 120 thẻ" không bao giờ làm được — và là
+câu trả lời trực tiếp cho than phiền "học mãi không thấy tiến bộ".
+
+Phụ ở cuối màn: biểu đồ 14 ngày (**giữ nguyên** `ProgressChart` + `srs/daily.js`) và trình độ CEFR
+gần nhất.
+
+---
+
+## Phần 5 — Khung 12 tuần (72 mẫu câu)
+
+Tuần 1-6 track `daily` (đời thường & du lịch) · Tuần 7-12 track `work` (công việc, phỏng vấn, remote).
+Ngày 6 mỗi tuần = chốt tuần (3.4), không có mẫu mới.
+
+### Tuần 1 — Nói điều mình muốn
+| Ngày | Mẫu câu | Nghĩa |
+|---|---|---|
+| 1 | `I'd like + N / to V` | Tôi muốn... (lịch sự) |
+| 2 | `Could you + V ...?` | Nhờ ai làm gì |
+| 3 | `I'm looking for + N` | Tôi đang tìm... |
+| 4 | `Do you have + N?` | Có ... không? |
+| 5 | `How much is / are ...?` | Bao nhiêu tiền? |
+| 6 | — | Chốt tuần |
+
+### Tuần 2 — Nói về bản thân
+| Ngày | Mẫu câu | Nghĩa |
+|---|---|---|
+| 7 | `I work as + N / at + N` | Tôi làm nghề... / ở... |
+| 8 | `I've been ...ing for + time` | Tôi làm ... được bao lâu rồi |
+| 9 | `I'm into + N / I like ...ing` | Tôi thích... |
+| 10 | `I usually + V` | Thói quen |
+| 11 | `I'm not really + adj` | Phủ định nhẹ, tránh nói cộc |
+| 12 | — | Chốt tuần |
+
+### Tuần 3 — Hỏi đường & đi lại
+| Ngày | Mẫu câu | Nghĩa |
+|---|---|---|
+| 13 | `How do I get to + place?` | Đi tới ... bằng cách nào? |
+| 14 | `Where's the nearest + N?` | ... gần nhất ở đâu? |
+| 15 | `Is it far from + N?` | Có xa ... không? |
+| 16 | `I need to get to ... by + time` | Tôi cần tới ... trước ... |
+| 17 | `Could you tell me when to get off?` | Nhờ báo khi nào xuống |
+| 18 | — | Chốt tuần |
+
+### Tuần 4 — Ăn uống & nhà hàng
+| Ngày | Mẫu câu | Nghĩa |
+|---|---|---|
+| 19 | `I'll have the + N` | Tôi gọi món... |
+| 20 | `Does it come with + N?` | Có kèm ... không? |
+| 21 | `I'm allergic to + N` | Tôi dị ứng... |
+| 22 | `Could we get the bill, please?` | Cho tính tiền |
+| 23 | `It's a bit too + adj` | Hơi quá ... (phàn nàn nhẹ) |
+| 24 | — | Chốt tuần |
+
+### Tuần 5 — Kể chuyện đã xảy ra
+| Ngày | Mẫu câu | Nghĩa |
+|---|---|---|
+| 25 | `I went to ... last + time` | Tôi đã đi ... hôm... |
+| 26 | `It was + adj because ...` | Nó ... vì... |
+| 27 | `First ..., then ..., after that ...` | Kể theo trình tự |
+| 28 | `I've never + p.p.` | Tôi chưa từng... |
+| 29 | `It turned out (that) ...` | Hoá ra là... |
+| 30 | — | Chốt tuần |
+
+### Tuần 6 — Xử lý trục trặc & lịch sự
+| Ngày | Mẫu câu | Nghĩa |
+|---|---|---|
+| 31 | `Sorry, I didn't catch that.` | Xin lỗi, tôi chưa nghe kịp |
+| 32 | `There's a problem with + N` | Có vấn đề với... |
+| 33 | `Would it be possible to + V?` | Liệu có thể ... không? |
+| 34 | `I'd rather + V than + V` | Tôi thà ... còn hơn... |
+| 35 | `Actually, I think ...` | Nói khác ý một cách nhẹ nhàng |
+| 36 | — | Chốt tuần + tổng ôn track `daily` |
+
+### Tuần 7 — Giới thiệu bản thân (nghề nghiệp)
+| Ngày | Mẫu câu | Nghĩa |
+|---|---|---|
+| 37 | `I'm a + role, and I mainly + V` | Tôi là ..., chủ yếu làm... |
+| 38 | `My day-to-day involves + Ving` | Công việc hằng ngày gồm... |
+| 39 | `I'm responsible for + N/Ving` | Tôi phụ trách... |
+| 40 | `I've been working with + N for + time` | Tôi dùng ... được ... rồi |
+| 41 | `What I enjoy most is + Ving` | Điều tôi thích nhất là... |
+| 42 | — | Chốt tuần |
+
+### Tuần 8 — Kể dự án đã làm (khung STAR)
+| Ngày | Mẫu câu | Nghĩa |
+|---|---|---|
+| 43 | `We were facing + N` | Bối cảnh: chúng tôi gặp... |
+| 44 | `My task was to + V` | Nhiệm vụ của tôi là... |
+| 45 | `What I did was + V` | Việc tôi đã làm là... |
+| 46 | `As a result, we + V-ed` | Kết quả là... |
+| 47 | `The tricky part was + Ving` | Chỗ khó là... |
+| 48 | — | Chốt tuần |
+
+### Tuần 9 — Họp & bất đồng
+| Ngày | Mẫu câu | Nghĩa |
+|---|---|---|
+| 49 | `Just to make sure I understand, ...` | Xác nhận lại cho chắc |
+| 50 | `I see your point, but ...` | Hiểu ý bạn, nhưng... |
+| 51 | `Let me walk you through + N` | Để tôi đi qua từng bước... |
+| 52 | `I'd suggest we + V` | Tôi đề xuất mình... |
+| 53 | `Can we circle back to + N?` | Quay lại ... sau được không? |
+| 54 | — | Chốt tuần |
+
+### Tuần 10 — Giải thích sự cố (sát việc DevOps)
+| Ngày | Mẫu câu | Nghĩa |
+|---|---|---|
+| 55 | `We're seeing + N` | Chúng tôi đang thấy (triệu chứng)... |
+| 56 | `It started happening after ...` | Bắt đầu xảy ra sau khi... |
+| 57 | `The root cause turned out to be ...` | Nguyên nhân gốc hoá ra là... |
+| 58 | `To fix it, we + V-ed` | Để sửa, chúng tôi đã... |
+| 59 | `To prevent this, we're going to + V` | Để ngăn tái diễn, chúng tôi sẽ... |
+| 60 | — | Chốt tuần |
+
+### Tuần 11 — Phỏng vấn
+| Ngày | Mẫu câu | Nghĩa |
+|---|---|---|
+| 61 | `In my previous role, I + V-ed` | Ở công ty trước, tôi đã... |
+| 62 | `I tend to + V` | Tôi thường có xu hướng... (nói điểm mạnh/yếu) |
+| 63 | `I'm looking for a role where ...` | Tôi tìm vị trí mà... |
+| 64 | `Could you tell me more about + N?` | Hỏi ngược nhà tuyển dụng |
+| 65 | `What does success look like in this role?` | Câu hỏi ghi điểm cuối buổi |
+| 66 | — | Chốt tuần |
+
+### Tuần 12 — Remote & thương lượng
+| Ngày | Mẫu câu | Nghĩa |
+|---|---|---|
+| 67 | `I'm based in ..., which is + N hours ahead of ...` | Múi giờ |
+| 68 | `I'm flexible on ..., but I'd need ...` | Linh hoạt nhưng cần... |
+| 69 | `My expectation is around + N` | Mức mong đợi khoảng... |
+| 70 | `I'll follow up with + N by + time` | Tôi sẽ gửi ... trước... |
+| 71 | `Just to confirm, we agreed on ...` | Chốt lại thoả thuận |
+| 72 | — | Chốt khoá + đánh giá CEFR cuối |
+
+> **Soạn nội dung theo đợt.** Chỉ **tuần 1-2 (12 bài)** được soạn đầy đủ trong lần viết lại này. Các
+> tuần còn lại chỉ có khung (bảng trên). Lý do: sau 2 tuần dùng thật mới biết bài đang quá dễ hay quá
+> khó — soạn hết 72 bài ngay gần như chắc chắn phải soạn lại. Soạn tiếp khi người học tới tuần 2.
+
+---
+
+## Phần 6 — Hạ tầng (GIỮ NGUYÊN, không đụng)
+
+Toàn bộ phần này đang chạy trên **cura-dev** và không nằm trong phạm vi viết lại:
+
+| Thành phần | File | Ghi chú |
+|---|---|---|
+| Engine SM-2 | `src/srs/sm2.js` + test | Phần 1 spec này, không đổi một dòng |
+| Proxy Claude | `server/proxy.mjs` | Token chỉ ở env proxy (C6, C7 giữ nguyên) |
+| STT | service `whisper` (large-v3, GPU) | `docker-compose.yml` |
+| TTS | service `kokoro` (Kokoro-82M, GPU) | fallback Web Speech khi 503 |
+| Web + reverse proxy | `Dockerfile`, `deploy/nginx.conf` | cổng 8088 |
+
+**Lưu ý vận hành cura-dev:** máy này có tiền sử treo RCU / Docker hang tái phát và container mất DNS
+(đã vá bằng `dns: 8.8.8.8` trong compose). Khi app không gọi được Whisper/Kokoro, kiểm tra sức khoẻ
+host **trước** khi nghi ngờ code.
+
+---
+
+## Phần 7 — Giữ / đập / viết mới
+
+### 7.1. Giữ nguyên, không sửa
+```
+src/srs/sm2.js (+test)        src/srs/storage.js (+test)     src/srs/daily.js (+test)
+src/srs/speaking.js (+test)   src/srs/coachMemory.js (+test)
+src/srs/warmup.js (+test)     src/utils/voiceMatch.js (+test) src/utils/fluency.js (+test)
+src/utils/tts.js              src/ai/*.js (whisper, chat, assess, coach, scenario, ipa, tts...)
+server/*                      deploy/*                        Dockerfile  docker-compose.yml
+```
+
+### 7.2. Giữ NHƯNG thay vỏ giao diện + cách vào màn
+| Component | Vị trí mới |
+|---|---|
+| `VoiceChat.jsx` (roleplay) | Nhịp 5 phần mở rộng, nạp `lesson.scene` |
+| `VoiceChat.jsx` (chat) | Ngày chốt tuần, nhịp B |
+| `SpeakingAssess.jsx` | Ngày chốt tuần, nhịp A |
+| `WarmupTalk.jsx` | Tuỳ chọn, vào từ màn chờ (không nằm trong 15' lõi) |
+| `ProgressChart.jsx` | Cuối màn "Tôi nói được gì rồi" |
+| `Login.jsx`, `ErrorBoundary.jsx`, `TtsControls.jsx` | Giữ, chỉ đổi CSS |
+
+### 7.3. Đập bỏ
+```
+src/components/Dashboard.jsx        src/components/StudySession.jsx
+src/components/RatingBar.jsx        src/components/ProgressTopics.jsx
+src/components/TopicDetail.jsx      src/components/DataManager.jsx
+src/components/MiningPanel.jsx      src/components/MiniStory.jsx
+src/components/ContextBar.jsx       src/components/SpeakingProfile.jsx
+src/hooks/useStudy.js               src/hooks/useVocab.js
+src/srs/vocabStore.js (+test)       src/srs/cardTypes.js (+test)
+src/srs/session.js (+test)          src/data/vocab.js (+test)
+src/srs/stats.js (+test)            (streak chuyển sang srs/course.js — xem 4.2)
+src/styles.css
+vocab.js  vocab_batch2.js  vocab_batch3.js  vocab_batch4.js  vocab_batch5.js  vocab_batch6.js
+Mockup_Flashcard_SRS.html           jfk.wav
+```
+
+> `MiningPanel` + `ai/mine.js`: **giữ file, gỡ khỏi UI.** Nó là công cụ soạn nội dung cho chủ dự án,
+> không phải màn học. Sẽ dùng lại khi soạn tuần 3-12.
+
+### 7.4. Viết mới
+```
+src/data/course/index.js         gộp + validate 12 tuần
+src/data/course/week01.js        6 bài, soạn đầy đủ
+src/data/course/week02.js        6 bài, soạn đầy đủ
+src/data/course/outline.js       khung tuần 3-12 (chưa có nội dung)
+src/data/course/course.test.js   test ràng buộc L1-L5
+src/srs/items.js (+test)         bài -> review item cho SM-2
+src/srs/lesson.js (+test)        máy trạng thái 15'/10'
+src/srs/course.js (+test)        tiến độ khoá + streak + saidBest
+src/hooks/useLesson.js           nối lesson.js vào React
+src/components/Today.jsx         màn chờ: 1 nút "Bắt đầu"
+src/components/StepReview.jsx    nhịp 0
+src/components/StepListen.jsx    nhịp 1
+src/components/StepPattern.jsx   nhịp 2
+src/components/StepSpeak.jsx     nhịp 4 + 4b (dùng chung)
+src/components/StepWords.jsx     nhịp 3
+src/components/DayDone.jsx       màn đóng ngày
+src/components/Progress.jsx      "Tôi nói được gì rồi"
+src/styles.css                   viết lại từ đầu
+```
+
+---
+
+## Phần 8 — Lộ trình commit
+
+1 task ~ 1 commit, **< 100 LOC**. Sau mỗi task: chạy test liên quan → kiểm chứng → commit.
+Branch: `rewrite-1-percent`.
+
+| # | Task | Xong khi |
+|---|---|---|
+| R1 | Viết lại spec + CLAUDE.md (C2 -> C2′, bỏ ràng buộc thẻ) | File này + CLAUDE.md khớp nhau |
+| R2 | `data/course/week01.js` + `outline.js` + `course.test.js` | Test L1-L5 pass cho tuần 1 |
+| R3 | `srs/items.js` + test | Sinh đúng `pat::`/`word::`, không đụng SM-2 |
+| R4 | `srs/lesson.js` + test | `todayLesson`/`nextStep`/`completeStep` tất định với `now` cố định |
+| R5 | `srs/course.js` + test | streak chỉ đếm lõi; `saidBest` lưu đúng |
+| R6 | Gỡ màn cũ khỏi `App.jsx`, dựng khung điều hướng mới | Build sạch, vào được màn chờ |
+| R7 | `styles.css` mới + `Today.jsx` | Màn chờ 1 nút, chạy trên điện thoại |
+| R8 | `StepListen` + `StepPattern` | Nhịp 1-2 chạy, Kokoro đọc được |
+| R9 | `StepSpeak` (nhịp 4) | Nói -> Whisper -> chấm -> Kokoro đọc mẫu, LIVE |
+| R10 | `StepReview` (nhịp 0) | Ôn nhanh lấy đúng item đến hạn |
+| R11 | `DayDone` + streak | Đóng ngày, streak +1, `saidBest` hiện đúng |
+| R12 | `StepWords` + `drills2` + roleplay (mở rộng) | 10' mở rộng chạy trọn |
+| R13 | Ngày chốt tuần (CEFR + chat) | `day % 6 === 0` vào đúng 2 màn nói cũ |
+| R14 | `Progress.jsx` | Danh sách mẫu câu + câu người học đã nói |
+| R15 | Xoá file rác (7.3) + dọn key `phrasal-*` | Build sạch, không import mồ côi |
+| R16 | `data/course/week02.js` | Test L1-L5 pass cho tuần 2 |
+| R17 | Deploy cura-dev | `docker compose up -d --build`, vào được cổng 8088 |
+
+---
+
+## Phần 9 — Definition of Done
+
+**Tầng thuần (bắt buộc có test, chạy `npm test` xanh trước mỗi commit):**
+- `sm2.js` — test cũ vẫn pass nguyên vẹn (bằng chứng engine không bị đụng).
+- `items.js`, `lesson.js`, `course.js` — test tất định (truyền `now`), không mutate tham số.
+- `course.test.js` — ràng buộc L1-L5 trên toàn bộ nội dung đã soạn.
+
+**Tầng UI (kiểm chứng tay, không unit test):**
+- Mở app -> bấm **một** nút -> chạy hết 15' lõi mà **không phải chọn gì**.
+- Nhịp 4 nói được thật: mic -> Whisper -> chấm -> Kokoro đọc mẫu.
+- Xong lõi -> màn đóng ngày hiện đúng mẫu câu + câu mình vừa nói + streak +1.
+- Bỏ qua phần mở rộng: không có nhắc nhở nào, streak vẫn +1.
+- Nghỉ 3 ngày rồi mở lại: vào đúng bài kế tiếp (không mất bài), streak về 1.
+- Chạy được trên điện thoại qua HTTPS (mic cần secure context).
+
+**Không được vi phạm:**
+- Không token/secret lọt vào commit hay frontend.
+- Không dùng Claude để tính `q` hoặc lịch SM-2.
+- Không có ô gõ chữ thay cho nói ở nhịp 4 / 4b.
+- Không có màn nào bắt người học chọn chủ đề trước khi học.
