@@ -99,6 +99,7 @@ BƯỚC 5 — CODE (chỉ sau khi 1–4 xong).
   - `srs/items.js` — bài học → review item
   - `srs/lesson.js` — máy trạng thái nhịp 15'/10'
   - `srs/course.js` — tiến độ khoá, streak, `saidBest`
+  - `srs/tutor.js` — hồ sơ gia sư: attempt, gói phân tích, lỗi lặp, báo cáo tuần
   - `data/course/` — nội dung 12 tuần
 
 ## localStorage keys

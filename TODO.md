@@ -43,20 +43,20 @@
       Health check trong `scripts/deploy.sh` đã thêm retry: `docker compose up` trả về khi container
       vừa TẠO xong chứ chưa phục vụ được, bắn một phát là ăn 502 rồi báo hỏng oan.
 
-## Phần 10 — Gia sư có hồ sơ năng lực (spec §10) — CHƯA LÀM
+## Phần 10 — Gia sư có hồ sơ năng lực (spec §10)
 
 > Kế hoạch chi tiết: [`docs/plans/2026-09-22-gia-su-phan-tich.md`](docs/plans/2026-09-22-gia-su-phan-tich.md)
 > 13 task, mỗi task có test viết sẵn. Lý do tồn tại: hiện mỗi ngày người học nói 5–7 câu mà
 > KHÔNG câu nào được LLM nhìn thấy — `diffWords` so túi từ là thứ duy nhất chấm.
 
-- [ ] **T1–T4** `srs/tutor.js` + 25 test: kho, lọc gói, `topErrors`/`focusFor`/`drillsFor`/`hintFor`, `weeklyReport`
-- [ ] **T5–T6** proxy route `/tutor` + client `ai/tutor.js`
-- [ ] **T7–T8** thu thập attempt; đóng ngày gọi phân tích **chạy nền**
-- [ ] **T9** 2 câu sửa lỗi chèn đầu nhịp nói
-- [ ] **T10** nhịp ôn làm nổi mức gia sư gợi ý (C5′)
-- [ ] **T11** lái trò chuyện theo điểm yếu
-- [ ] **T12** báo cáo tuần ở ngày chốt tuần
-- [ ] **T13** cập nhật tài liệu + deploy + nghiệm thu tay
+- [x] **T1–T4** `srs/tutor.js` + 25 test: kho, lọc gói, `topErrors`/`focusFor`/`drillsFor`/`hintFor`, `weeklyReport`
+- [x] **T5–T6** proxy route `/tutor` + client `ai/tutor.js`
+- [x] **T7–T8** thu thập attempt; đóng ngày gọi phân tích **chạy nền**
+- [x] **T9** 2 câu sửa lỗi chèn đầu nhịp nói
+- [x] **T10** nhịp ôn làm nổi mức gia sư gợi ý (C5′)
+- [x] **T11** lái trò chuyện theo điểm yếu
+- [x] **T12** báo cáo tuần ở ngày chốt tuần
+- [x] **T13** cập nhật tài liệu + deploy + nghiệm thu tay
 
 ---
 
