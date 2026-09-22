@@ -46,7 +46,8 @@ export default function SpeakCheck({ target, prompt, footer, autoHint = false })
           )}
           {rec.phase === "thinking" && <p className="muted center pulse">Đang nghe bạn nói…</p>}
           {rec.phase === "recording" ? (
-            <button className="btn btn-rec" onClick={rec.stop}>■ Dừng — tôi nói xong rồi</button>
+            // Nhịp đập để người học thấy máy ĐANG nghe thật, không phải treo.
+            <button className="btn btn-rec rec-live" onClick={rec.stop}>■ Dừng — tôi nói xong rồi</button>
           ) : (
             rec.phase !== "thinking" && (
               <button className="btn btn-primary" onClick={rec.start}>🎙️ Nói câu này</button>

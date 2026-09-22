@@ -7,7 +7,9 @@ import { speak } from "../utils/tts.js";
 export default function StepPattern({ lesson, bar, onDone }) {
   return (
     <StepShell bar={bar} kicker="Mẫu câu hôm nay" title="">
-      <div className="card">
+      {/* Thẻ "nóng" — viền sáng + quầng: đây là 1% của ngày, phải nổi hơn mọi thứ khác trên màn. */}
+      <div className="card card-hot">
+        <div className="eyebrow" style={{ marginBottom: 10 }}>1% hôm nay</div>
         <div className="pattern">{lesson.pat}</div>
         <div className="pattern-vi">{lesson.patVi}</div>
       </div>

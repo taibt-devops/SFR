@@ -114,3 +114,23 @@ export function learnedPatterns(lessons = [], progress = {}) {
 export function completedCount(progress = {}) {
   return Object.values(progress).filter((e) => e?.core).length;
 }
+
+// n ngày gần nhất (CŨ → MỚI) cho dải streak trên màn chờ: [{ day, done, ext, today }].
+// Nhìn thấy khoảng trống của mình là động lực mạnh hơn một con số streak trần trụi.
+export function recentDays(progress = {}, n = 14, now = Date.now()) {
+  const days = new Map(); // dayStart -> { core, ext }
+  for (const e of Object.values(progress)) {
+    if (!e?.core || !e.doneAt) continue;
+    const k = dayStart(e.doneAt);
+    const prev = days.get(k);
+    days.set(k, { core: true, ext: !!e.ext || !!prev?.ext });
+  }
+  const today = dayStart(now);
+  const out = [];
+  for (let i = n - 1; i >= 0; i--) {
+    const d = today - i * DAY;
+    const hit = days.get(d);
+    out.push({ day: d, done: !!hit, ext: !!hit?.ext, today: d === today });
+  }
+  return out;
+}

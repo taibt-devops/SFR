@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 import { isAuthed } from "./ai/auth.js";
 import Login from "./components/Login.jsx";
 import { useLesson } from "./hooks/useLesson.js";
-import { completedCount } from "./srs/course.js";
+import { completedCount, learnedPatterns } from "./srs/course.js";
 import { latestLevel, loadSpeaking } from "./srs/speaking.js";
 
 import Today from "./components/Today.jsx";
@@ -147,6 +147,8 @@ function AppMain() {
       streak={L.streak}
       doneToday={L.doneToday}
       completed={completedCount(L.progress)}
+      days={L.days}
+      last={learnedPatterns(L.lessons, L.progress)[0] || null}
       onStart={L.start}
       onProgress={() => setView("progress")}
       onWarmup={() => setView("warmup")}

@@ -13,13 +13,22 @@ export default function Progress({ lessons, progress, streak, onBack }) {
 
   return (
     <div className="screen">
-      <h1>Tôi nói được gì rồi</h1>
+      <div className="hud">
+        <span><b>1%</b><i>/</i>NGÀY</span>
+        <span>TIẾN BỘ</span>
+      </div>
 
-      <div className="meta-row" style={{ justifyContent: "flex-start" }}>
-        <span className="words-count">
-          <b>{done}</b> / {TOTAL_DAYS} mẫu câu
-        </span>
-        <span>🔥 {streak} ngày</span>
+      <h1 className="t-hero-title">Tôi nói được gì rồi</h1>
+
+      <div className="stats">
+        <div className="stat">
+          <b>{done}</b>
+          <span>/ {TOTAL_DAYS} mẫu câu</span>
+        </div>
+        <div className={`stat stat-streak${streak >= 3 ? " is-hot" : ""}`}>
+          <b>{streak}</b>
+          <span>ngày liên tục</span>
+        </div>
       </div>
 
       {learned.length === 0 ? (

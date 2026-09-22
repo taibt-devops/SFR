@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
   loadCourse, saveCourse, purgeLegacy, streakFor, doneToday,
-  recordSaid, saidFor, learnedPatterns, completedCount,
+  recordSaid, saidFor, learnedPatterns, completedCount, recentDays,
   COURSE_KEY, RESET_FLAG, LEGACY_KEYS,
 } from "./course.js";
 
@@ -161,5 +161,35 @@ describe("learnedPatterns — bằng chứng tiến bộ", () => {
 
   it("completedCount đếm cả ngày chốt tuần", () => {
     expect(completedCount({ 1: done(NOW), 6: done(NOW), 2: { core: false } })).toBe(2);
+  });
+});
+
+describe("recentDays — dải 14 ngày trên màn chờ", () => {
+  it("đúng độ dài, cũ → mới, ô cuối là hôm nay", () => {
+    const r = recentDays({}, 14, NOW);
+    expect(r).toHaveLength(14);
+    expect(r.at(-1).today).toBe(true);
+    expect(r.every((d) => d.done === false)).toBe(true);
+    expect(r[0].day).toBeLessThan(r.at(-1).day);
+  });
+
+  it("đánh dấu đúng ngày đã học, chừa trống ngày bỏ", () => {
+    const p = { 1: done(at(3)), 2: done(at(1)), 3: done(NOW) };
+    const r = recentDays(p, 5, NOW);
+    expect(r.map((d) => d.done)).toEqual([false, true, false, true, true]);
+  });
+
+  it("ô có phần mở rộng được đánh dấu riêng", () => {
+    const p = { 1: { ...done(NOW), ext: true } };
+    expect(recentDays(p, 3, NOW).at(-1)).toMatchObject({ done: true, ext: true });
+  });
+
+  it("hai bài cùng ngày, một bài có ext → ô đó vẫn tính là có ext", () => {
+    const p = { 1: done(NOW), 2: { ...done(NOW + 1000), ext: true } };
+    expect(recentDays(p, 2, NOW).at(-1).ext).toBe(true);
+  });
+
+  it("bài chưa xong lõi không hiện trên dải", () => {
+    expect(recentDays({ 1: { core: false, doneAt: NOW } }, 3, NOW).some((d) => d.done)).toBe(false);
   });
 });
