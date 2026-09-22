@@ -1,6 +1,8 @@
 // Tuần 2 — Nói về bản thân (track "daily"). Đây cũng là nền cho tuần 7-11 (phỏng vấn):
 // giới thiệu nghề, kể thâm niên, nói sở thích, kể thói quen, và từ chối cho lịch sự.
 // Ràng buộc L1–L5 test ở course.test.js. `drills` lõi KHÔNG được dùng từ trong `words` (L2).
+//
+// Ngân sách 2026-09-22: ex 4 câu (nhịp 1 nghe hết 4), drills 5 câu (nhịp 4 nói 5). Xem week01.js.
 
 export const week02 = [
   {
@@ -14,11 +16,14 @@ export const week02 = [
       { en: "I work as a DevOps engineer.", vi: "Tôi làm kỹ sư DevOps." },
       { en: "I work at a software company.", vi: "Tôi làm ở một công ty phần mềm." },
       { en: "I work with cloud systems every day.", vi: "Ngày nào tôi cũng làm với hệ thống cloud." },
+      { en: "I work from home on Fridays.", vi: "Thứ sáu tôi làm ở nhà." },
     ],
     drills: [
       { vi: "Tôi làm giáo viên.", en: "I work as a teacher." },
       { vi: "Tôi làm ở một ngân hàng.", en: "I work at a bank." },
       { vi: "Tôi làm với một nhóm nhỏ.", en: "I work with a small team." },
+      { vi: "Tôi làm cho một công ty Nhật.", en: "I work for a Japanese company." },
+      { vi: "Tôi làm sáu tiếng một ngày.", en: "I work six hours a day." },
     ],
     words: [
       { w: "remotely", ipa: "/rɪˈməʊtli/", m: "(adv) từ xa", en: "I work remotely most of the time.", vi: "Tôi làm từ xa là chính." },
@@ -46,11 +51,14 @@ export const week02 = [
       { en: "I've been working here for three years.", vi: "Tôi làm ở đây được ba năm rồi." },
       { en: "I've been learning English for a while.", vi: "Tôi học tiếng Anh một thời gian rồi." },
       { en: "I've been waiting for twenty minutes.", vi: "Tôi đợi hai mươi phút rồi." },
+      { en: "I've been thinking about it.", vi: "Tôi đang nghĩ về chuyện đó." },
     ],
     drills: [
       { vi: "Tôi sống ở đây được năm năm rồi.", en: "I've been living here for five years." },
       { vi: "Tôi tập thể dục được ba tuần rồi.", en: "I've been exercising for three weeks." },
       { vi: "Tôi học lái xe được hai tháng rồi.", en: "I've been learning to drive for two months." },
+      { vi: "Tôi làm việc này được sáu tháng rồi.", en: "I've been doing this job for six months." },
+      { vi: "Tôi đọc cuốn sách này được một tuần rồi.", en: "I've been reading this book for a week." },
     ],
     words: [
       { w: "on and off", ipa: "/ɒn ənd ɒf/", m: "(phr) lúc có lúc không", en: "I've been studying on and off for years.", vi: "Tôi học lúc có lúc không mấy năm rồi." },
@@ -78,11 +86,14 @@ export const week02 = [
       { en: "I'm into photography.", vi: "Tôi mê chụp ảnh." },
       { en: "I'm into running these days.", vi: "Dạo này tôi mê chạy bộ." },
       { en: "I'm into cooking at the weekend.", vi: "Cuối tuần tôi mê nấu ăn." },
+      { en: "I'm into learning new things.", vi: "Tôi mê học cái mới." },
     ],
     drills: [
       { vi: "Tôi mê nhạc.", en: "I'm into music." },
       { vi: "Tôi mê đọc sách.", en: "I'm into reading." },
       { vi: "Tôi mê đi bộ đường dài.", en: "I'm into hiking." },
+      { vi: "Tôi mê bơi.", en: "I'm into swimming." },
+      { vi: "Tôi mê đi du lịch.", en: "I'm into travelling." },
     ],
     words: [
       { w: "board games", ipa: "/bɔːd ɡeɪmz/", m: "(n) trò chơi bàn cờ", en: "I'm into board games.", vi: "Tôi mê board game." },
@@ -110,11 +121,14 @@ export const week02 = [
       { en: "I usually get up at six.", vi: "Tôi thường dậy lúc sáu giờ." },
       { en: "I usually work from home on Fridays.", vi: "Thứ sáu tôi thường làm ở nhà." },
       { en: "I usually skip breakfast.", vi: "Tôi thường bỏ bữa sáng." },
+      { en: "I usually finish around six.", vi: "Tôi thường xong việc tầm sáu giờ." },
     ],
     drills: [
       { vi: "Tôi thường đi ngủ muộn.", en: "I usually go to bed late." },
       { vi: "Buổi sáng tôi thường uống cà phê.", en: "I usually drink coffee in the morning." },
       { vi: "Cuối tuần tôi thường ở nhà.", en: "I usually stay home at the weekend." },
+      { vi: "Tôi thường nấu bữa tối.", en: "I usually cook dinner." },
+      { vi: "Tôi thường đi bộ tới chỗ làm.", en: "I usually walk to the office." },
     ],
     words: [
       { w: "commute", ipa: "/kəˈmjuːt/", m: "(v) đi lại giữa nhà và chỗ làm", en: "I usually commute by motorbike.", vi: "Tôi thường đi làm bằng xe máy." },
@@ -142,11 +156,14 @@ export const week02 = [
       { en: "I'm not really sure.", vi: "Tôi không chắc lắm." },
       { en: "I'm not really hungry.", vi: "Tôi không đói lắm." },
       { en: "I'm not really good at drawing.", vi: "Tôi vẽ không giỏi lắm." },
+      { en: "I'm not really into sports.", vi: "Tôi không mê thể thao lắm." },
     ],
     drills: [
       { vi: "Tôi không mệt lắm.", en: "I'm not really tired." },
       { vi: "Hôm nay tôi không rảnh lắm.", en: "I'm not really free today." },
       { vi: "Tôi không thích cái đó lắm.", en: "I'm not really a fan of that." },
+      { vi: "Tôi nấu ăn không giỏi lắm.", en: "I'm not really good at cooking." },
+      { vi: "Tôi không chắc về chuyện đó lắm.", en: "I'm not really sure about that." },
     ],
     words: [
       { w: "comfortable", ipa: "/ˈkʌmftəbl/", m: "(adj) thoải mái", en: "I'm not really comfortable with that.", vi: "Tôi không thoải mái với chuyện đó lắm." },

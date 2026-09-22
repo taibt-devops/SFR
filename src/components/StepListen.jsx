@@ -6,7 +6,7 @@ import StepShell from "./StepShell.jsx";
 import { speak } from "../utils/tts.js";
 import { good, miss, tick } from "../utils/sfx.js";
 
-const N = 2; // 1 phút — chỉ 2 câu, không ăn vào ngân sách của nhịp nói
+const N = 4; // nghe 4 câu (2026-09-22: trước là 2, buổi học đầu khoá hụt so với 15 phút)
 
 // Xoay vòng đáp án theo chỉ số câu hỏi → tất định (không nhảy loạn mỗi lần render).
 function optionsFor(lesson, qi) {

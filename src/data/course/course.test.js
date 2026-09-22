@@ -50,8 +50,8 @@ describe("L2 — drills lõi KHÔNG dùng từ của phần mở rộng", () => 
 
 describe("L3 — ngân sách 15'/10'", () => {
   it.each(teaching.map((l) => [l.day, l]))("ngày %i", (_day, l) => {
-    expect(l.ex.length).toBeGreaterThanOrEqual(3);
-    expect(l.drills.length).toBe(3);
+    expect(l.ex.length).toBeGreaterThanOrEqual(4);
+    expect(l.drills.length).toBe(5);
     expect(l.words.length).toBeLessThanOrEqual(6);
     expect((l.drills2 || []).length).toBeLessThanOrEqual(2);
   });

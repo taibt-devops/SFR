@@ -3,6 +3,10 @@
 // `patKey` = mảnh chữ BẮT BUỘC xuất hiện nguyên văn trong mọi câu `ex/drills/words[].en/drills2`.
 // Nó biến ràng buộc L4 ("từ vựng phải bám mẫu câu") từ lời khuyên thành thứ test kiểm được.
 // `drills` (lõi 15') KHÔNG được chứa từ nào trong `words` — lõi phải chạy độc lập (L2).
+//
+// Ngân sách 2026-09-22: ex 4 câu (nhịp 1 nghe hết 4), drills 5 câu (nhịp 4 nói 5).
+// Trước đó là 3/3 nên mấy ngày đầu khoá chỉ nói 3 câu rồi hết buổi — hụt hẳn so với 15 phút,
+// vì nhịp 0 (ôn) chưa có gì để ôn. Xem spec §3.1.
 
 export const week01 = [
   {
@@ -16,11 +20,14 @@ export const week01 = [
       { en: "I'd like a coffee, please.", vi: "Cho tôi một cà phê." },
       { en: "I'd like to check in, please.", vi: "Tôi muốn nhận phòng." },
       { en: "I'd like the one by the window.", vi: "Tôi muốn cái cạnh cửa sổ." },
+      { en: "I'd like to pay by card.", vi: "Tôi muốn trả bằng thẻ." },
     ],
     drills: [
       { vi: "Cho tôi một ly trà.", en: "I'd like a tea." },
       { vi: "Tôi muốn đặt bàn.", en: "I'd like to book a table." },
       { vi: "Tôi muốn xem thực đơn.", en: "I'd like to see the menu." },
+      { vi: "Tôi muốn ngồi ngoài trời.", en: "I'd like to sit outside." },
+      { vi: "Cho tôi thêm một cái ghế.", en: "I'd like one more chair." },
     ],
     words: [
       { w: "refill", ipa: "/ˈriːfɪl/", m: "(n) lần rót thêm", en: "I'd like a refill, please.", vi: "Cho tôi rót thêm với." },
@@ -48,11 +55,14 @@ export const week01 = [
       { en: "Could you help me, please?", vi: "Bạn giúp tôi được không?" },
       { en: "Could you say that again?", vi: "Bạn nói lại được không?" },
       { en: "Could you wait a moment?", vi: "Bạn đợi một chút được không?" },
+      { en: "Could you write it down?", vi: "Bạn viết ra giúp tôi được không?" },
     ],
     drills: [
       { vi: "Bạn mở cửa giúp tôi được không?", en: "Could you open the door?" },
       { vi: "Bạn nói chậm lại được không?", en: "Could you speak more slowly?" },
       { vi: "Bạn cho tôi xem cái đó được không?", en: "Could you show me that one?" },
+      { vi: "Bạn gọi taxi giúp tôi được không?", en: "Could you call a taxi for me?" },
+      { vi: "Bạn giữ chỗ này giúp tôi được không?", en: "Could you save this seat for me?" },
     ],
     words: [
       { w: "spell", ipa: "/spel/", m: "(v) đánh vần", en: "Could you spell that for me?", vi: "Bạn đánh vần giúp tôi được không?" },
@@ -80,11 +90,14 @@ export const week01 = [
       { en: "I'm looking for the train station.", vi: "Tôi đang tìm nhà ga." },
       { en: "I'm looking for a cheaper option.", vi: "Tôi đang tìm lựa chọn rẻ hơn." },
       { en: "I'm looking for my luggage.", vi: "Tôi đang tìm hành lý của mình." },
+      { en: "I'm looking for a place to sit.", vi: "Tôi đang tìm chỗ ngồi." },
     ],
     drills: [
       { vi: "Tôi đang tìm nhà vệ sinh.", en: "I'm looking for the toilet." },
       { vi: "Tôi đang tìm một quán cà phê.", en: "I'm looking for a coffee shop." },
       { vi: "Tôi đang tìm khách sạn của tôi.", en: "I'm looking for my hotel." },
+      { vi: "Tôi đang tìm bến xe buýt.", en: "I'm looking for the bus stop." },
+      { vi: "Tôi đang tìm một nhà hàng gần đây.", en: "I'm looking for a restaurant near here." },
     ],
     words: [
       { w: "pharmacy", ipa: "/ˈfɑːməsi/", m: "(n) hiệu thuốc", en: "I'm looking for a pharmacy.", vi: "Tôi đang tìm hiệu thuốc." },
@@ -112,11 +125,14 @@ export const week01 = [
       { en: "Do you have a table for two?", vi: "Có bàn cho hai người không?" },
       { en: "Do you have this in black?", vi: "Cái này có màu đen không?" },
       { en: "Do you have any recommendations?", vi: "Bạn có gợi ý gì không?" },
+      { en: "Do you have anything cheaper?", vi: "Có cái nào rẻ hơn không?" },
     ],
     drills: [
       { vi: "Có wifi không?", en: "Do you have wifi?" },
       { vi: "Bạn có thực đơn tiếng Anh không?", en: "Do you have an English menu?" },
       { vi: "Còn phòng trống không?", en: "Do you have a free room?" },
+      { vi: "Có bàn ngoài trời không?", en: "Do you have a table outside?" },
+      { vi: "Bạn có túi không?", en: "Do you have a bag?" },
     ],
     words: [
       { w: "charger", ipa: "/ˈtʃɑːdʒə/", m: "(n) cục sạc", en: "Do you have a charger I can borrow?", vi: "Bạn có sạc cho mượn không?" },
@@ -144,11 +160,14 @@ export const week01 = [
       { en: "How much is this?", vi: "Cái này bao nhiêu?" },
       { en: "How much is a ticket to the city?", vi: "Vé vào trung tâm bao nhiêu?" },
       { en: "How much are these together?", vi: "Mấy cái này tổng bao nhiêu?" },
+      { en: "How much do I owe you?", vi: "Tôi phải trả bao nhiêu?" },
     ],
     drills: [
       { vi: "Một ly cà phê bao nhiêu?", en: "How much is a coffee?" },
       { vi: "Phòng một đêm bao nhiêu?", en: "How much is a room for one night?" },
       { vi: "Mấy cái này bao nhiêu?", en: "How much are these?" },
+      { vi: "Cái áo này bao nhiêu?", en: "How much is this shirt?" },
+      { vi: "Hai vé bao nhiêu?", en: "How much are two tickets?" },
     ],
     words: [
       { w: "deposit", ipa: "/dɪˈpɒzɪt/", m: "(n) tiền cọc", en: "How much is the deposit?", vi: "Tiền cọc bao nhiêu?" },

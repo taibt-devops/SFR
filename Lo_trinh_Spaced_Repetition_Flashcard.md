@@ -29,7 +29,7 @@ Mở ra → nó bảo hôm nay học gì → làm theo → xong.
 
 1. **Ma sát bằng không.** Mở app là học được ngay. Không dropdown, không toggle, không chọn chủ đề
    trước khi bắt đầu. Mọi lựa chọn đều do chương trình quyết sẵn theo ngày.
-2. **Ngày tệ nhất vẫn tiến được.** Luôn tồn tại một phiên bản 15 phút hoàn thành được lúc mệt nhất.
+2. **Ngày tệ nhất vẫn tiến được.** Luôn tồn tại một phiên bản ~15 phút hoàn thành được lúc mệt nhất.
 3. **Nói bằng mồm là bắt buộc.** Không có ô gõ chữ thay cho nói. Gõ chữ là chỗ người học trốn.
 4. **Tiến bộ phải kể lại được.** Cuối ngày người học nói được "hôm nay tôi học `I'd rather ... than ...`",
    không phải "tôi ôn 20 thẻ".
@@ -56,7 +56,8 @@ Chọn mẫu câu làm đơn vị, không chọn từ vựng, vì ba lý do:
 
 - Một người dùng duy nhất (chủ dự án): kỹ sư DevOps người Việt, đọc/viết kỹ thuật ổn, **yếu từ vựng
   và cấu trúc câu khi nói**.
-- Quỹ thời gian thật: 20–30 phút/ngày → chia **15 phút bắt buộc + 10 phút tuỳ chọn**.
+- Quỹ thời gian thật: 20–30 phút/ngày → chia **~15–18 phút bắt buộc + 10 phút tuỳ chọn**.
+  (Ban đầu là đúng 15'; nâng lên sau phản hồi 2026-09-22 rằng một ngày quá ít — xem §3.1.)
 - Hai mục tiêu 3–6 tháng: (a) giao tiếp đời thường & du lịch, (b) phỏng vấn & làm remote nước ngoài.
 - App cá nhân, chạy all-local trên cura-dev. Không đa người dùng, không đăng ký, không đồng bộ đám mây.
 
@@ -279,7 +280,7 @@ thành thứ *suy ra từ bài* để nạp vào SM-2.
 |---|---|---|
 | L1 | `day` duy nhất, liên tục 1..72; `week = ceil(day / 6)` | Lộ trình tuyến tính, không lỗ hổng |
 | L2 | `drills` (lõi) **không được** chứa từ nào trong `words` của chính bài đó | Lõi phải chạy độc lập với phần mở rộng (nguyên tắc 0.2.2) |
-| L3 | `ex.length >= 3`, `drills.length === 3`, `words.length <= 6`, `drills2.length <= 2` | Giữ đúng ngân sách 15'/10' |
+| L3 | `ex.length >= 4`, `drills.length === 5`, `words.length <= 6`, `drills2.length <= 2` | Giữ đúng ngân sách lõi/mở rộng |
 | L4 | Mọi câu (`ex`, `drills`, `words[].en`, `drills2`) phải chứa nguyên văn `patKey` | Từ vựng luôn có chỗ bám (0.3) |
 | L5 | Ngày `day % 6 === 0` có hình dạng rút gọn `{ day, week, track, title, review: true }` — KHÔNG có `pat`. Mọi ngày khác bắt buộc có `pat`. | Nhịp tuần (3.4) |
 
@@ -337,7 +338,7 @@ nên không migrate gì hết. Khi khởi động, nếu chưa có cờ `srf-res
 
 ## Phần 3 — Buổi học
 
-### 3.1. Lõi — 15 phút, bắt buộc
+### 3.1. Lõi — 15–18 phút, bắt buộc
 
 Chạy một mạch, mỗi nhịp một màn full-screen, trên đầu là thanh 4 chấm tiến trình. Không có menu,
 không nút quay lại chọn chủ đề.
@@ -349,9 +350,9 @@ không nút quay lại chọn chủ đề.
 | # | Nhịp | Phút | Nội dung | Nguồn dữ liệu |
 |---|---|---|---|---|
 | 0 | **Ôn nhanh** | 4' | 5-8 item đến hạn. Người học **không thấy chữ "SRS"** — chỉ thấy "ôn nhanh". | `buildSession(items, ..., { maxReviews: 8, newLimit: 0 })` |
-| 1 | **Nghe 2 câu** | 1' | Nghe `ex[0]`, `ex[1]` qua Kokoro, chọn nghĩa tiếng Việt. **Chưa lộ mẫu câu.** | `lesson.ex` |
+| 1 | **Nghe 4 câu** | 2' | Nghe 4 câu đầu của `ex` qua Kokoro, chọn nghĩa tiếng Việt. **Chưa lộ mẫu câu.** | `lesson.ex` |
 | 2 | **Lộ mẫu** | 3' | Hiện `pat` + `patVi` + `note` + cả 3 `ex`. Nghe lại được từng câu. | `lesson.pat/note/ex` |
-| 4 | **Nói 3 câu** | 7' | Hiện `drills[i].vi` → người học **nói** → Whisper → so với `drills[i].en` → Kokoro đọc mẫu. | `lesson.drills` |
+| 4 | **Nói 5 câu** | 9' | Hiện `drills[i].vi` → người học **nói** → Whisper → so với `drills[i].en` → Kokoro đọc mẫu. | `lesson.drills` |
 
 **Vì sao nhịp 1 đứng trước nhịp 2:** vào bài bằng tai rồi mới biết luật, không phải học luật rồi mới
 nghe. Thứ tự này khiến cấu trúc dính vào phản xạ thay vì nằm trong sổ tay. Nhịp 1 cố ý chỉ 1 phút để
