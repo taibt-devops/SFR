@@ -844,3 +844,9 @@ h1, h2 { margin: 0; line-height: 1.2; font-family: var(--font-display); }
   font-size: 13px;
   color: var(--ember);
 }
+
+/* Chọn chủ đề ở màn brief — chip bấm được, không phải dropdown. */
+.topic-pick { display: flex; flex-wrap: wrap; gap: 7px; }
+.topic-pick .goal-chip { cursor: pointer; font-size: 13px; }
+.topic-pick .goal-chip:hover { border-color: var(--line-hot); color: var(--text); }
+.topic-pick .goal-chip.on:hover { color: var(--lime-ink); }

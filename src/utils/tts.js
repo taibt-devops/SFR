@@ -122,6 +122,19 @@ if (typeof window !== "undefined") {
   );
 }
 
+// Mồi <audio> bằng một cú play() im lặng TRONG cú chạm của người dùng.
+// Cần cho câu MỞ LỜI: nó phát sau khi await Claude xong, lúc đó đã rời khỏi cú chạm nên trình duyệt
+// có quyền chặn. Mồi trước thì element coi như "đã được người dùng cho phép".
+export function primeAudio() {
+  try {
+    const p = getPlayer();
+    p.src = SILENCE;
+    return p.play().catch(() => {});
+  } catch {
+    return Promise.resolve();
+  }
+}
+
 async function fetchKokoro(text, voice, speed) {
   const key = "https://tts.local/" + encodeURIComponent(voice) + "/" + speed + "/" + encodeURIComponent(text);
   let cache = null;

@@ -14,7 +14,7 @@ import { transcribe } from "../ai/whisper.js";
 import { genScenario } from "../ai/scenario.js";
 import { pickScenario } from "../data/scenarios.js";
 import { matchSpoken, diffWords } from "../utils/voiceMatch.js";
-import { speak } from "../utils/tts.js";
+import { speak, primeAudio } from "../utils/tts.js";
 import { loadSpeaking, speakingProfile } from "../srs/speaking.js";
 import { loadCoachNotes, saveCoachNotes, addCoachNote, priorFocusText } from "../srs/coachMemory.js";
 import { loadDaily, saveDaily, bumpSpeak } from "../srs/daily.js";
@@ -135,6 +135,10 @@ export function useCall({ dueWords = [], level = "A2", topic = "", roleplay = fa
 
   // ── Mở lời (gia sư nói trước) ──
   const begin = useCallback(() => {
+    // Mồi audio TRONG cú chạm: câu mở lời phát sau khi await Claude xong, lúc đó đã rời khỏi cú
+    // chạm nên trình duyệt có quyền chặn im lặng. Đây là lý do câu đầu có thể không đọc mà câu
+    // sau lại đọc (lượt sau phát ngay sau khi vừa bấm mic).
+    primeAudio();
     setPhase("thinking");
     setError("");
     const recall = [focus, priorFocusText(loadCoachNotes())].filter(Boolean).join(" · ");

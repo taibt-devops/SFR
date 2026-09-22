@@ -1,8 +1,9 @@
 // Màn brief — thứ duy nhất đứng giữa bạn và cuộc gọi. Chỉ hiện cái cần biết TRƯỚC khi mở miệng,
 // rồi biến mất hẳn. Trước đây 7 khối chrome này nằm đè lên màn hội thoại suốt cả buổi.
 import TtsControls from "./TtsControls.jsx";
+import { TALK_TOPICS } from "../data/talkTopics.js";
 
-export default function CallBrief({ roleplay, scn, scnLoading, patterns, busy, onSwap, onStart, onBack }) {
+export default function CallBrief({ roleplay, scn, scnLoading, patterns, chosen, onPickTopic, busy, onSwap, onStart, onBack }) {
   const waitingScn = roleplay && (scnLoading || !scn);
 
   return (
@@ -33,16 +34,35 @@ export default function CallBrief({ roleplay, scn, scnLoading, patterns, busy, o
         </>
       ) : (
         <>
-          <div className="eyebrow">Gia sư sẽ ép bạn dùng</div>
-          <h1 className="t-hero-title">{patterns.length} mẫu câu đã học</h1>
+          <div className="eyebrow">Nói về</div>
+          <h1 className="t-hero-title">{chosen || "Theo bài đã học"}</h1>
+
+          {/* Chọn chủ đề — phần này NGOÀI streak nên được phép chọn (xem chú thích trong Call.jsx). */}
+          <div className="topic-pick">
+            <button
+              className={`goal-chip ${chosen ? "" : "on"}`}
+              onClick={() => onPickTopic(null)}
+            >Theo bài đã học</button>
+            {TALK_TOPICS.map((t) => (
+              <button
+                key={t}
+                className={`goal-chip ${chosen === t ? "on" : ""}`}
+                onClick={() => onPickTopic(t)}
+              >{t}</button>
+            ))}
+          </div>
+
           {/* Thay cho nhãn "Đang luyện: Đời thường & du lịch" cũ — nhãn đó giống hệt nhau suốt 6
               tuần nên chẳng nói lên điều gì. Đây mới là thứ bạn sắp bị ép dùng. */}
           {patterns.length > 0 ? (
-            <div className="card">
-              {patterns.map((p) => (
-                <div className="brief-pat" key={p}>{p}</div>
-              ))}
-            </div>
+            <>
+              <div className="step-kicker">Gia sư sẽ ép bạn dùng</div>
+              <div className="card">
+                {patterns.map((p) => (
+                  <div className="brief-pat" key={p}>{p}</div>
+                ))}
+              </div>
+            </>
           ) : (
             <p className="muted">
               Chưa học mẫu câu nào — cứ nói tự do, gia sư sẽ bắt chuyện theo trình độ của bạn.

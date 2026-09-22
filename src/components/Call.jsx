@@ -1,5 +1,6 @@
 // Điều phối "cuộc gọi": brief → gọi → tổng kết. Mỏng, không chứa logic (nằm ở hooks/useCall.js).
 // Thay cho VoiceChat.jsx cũ (466 dòng ôm cả logic lẫn 3 màn).
+import { useState } from "react";
 import { useCall } from "../hooks/useCall.js";
 import CallBrief from "./CallBrief.jsx";
 import CallScreen from "./CallScreen.jsx";
@@ -7,7 +8,11 @@ import CallSummary from "./CallSummary.jsx";
 import AddWordModal from "./AddWordModal.jsx";
 
 export default function Call({ dueWords = [], level = "A2", topic = "", roleplay = false, onAddWord, onBack }) {
-  const c = useCall({ dueWords, level, topic, roleplay, onAddWord });
+  // Trò chuyện tự do: người học được CHỌN nói về cái gì. Không phá C9 — C9 cấm bắt chọn trước
+  // BÀI HỌC hằng ngày, còn đây là phần ngoài streak, chọn chủ đề chính là lý do nó tồn tại.
+  // null = "theo bài đã học" (gia sư tự lái quanh các mẫu câu).
+  const [chosen, setChosen] = useState(null);
+  const c = useCall({ dueWords, level, topic: roleplay ? topic : chosen || topic, roleplay, onAddWord });
 
   if (c.summary) {
     return (
@@ -30,6 +35,8 @@ export default function Call({ dueWords = [], level = "A2", topic = "", roleplay
         scn={c.scn}
         scnLoading={c.scnLoading}
         patterns={dueWords}
+        chosen={chosen}
+        onPickTopic={setChosen}
         busy={c.busy}
         onSwap={c.swapScn}
         onStart={c.begin}
