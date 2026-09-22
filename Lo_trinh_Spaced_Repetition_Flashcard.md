@@ -623,6 +623,10 @@ host **trước** khi nghi ngờ code.
 ## Phần 7 — Giữ / đập / viết mới
 
 ### 7.1. Giữ nguyên, không sửa
+
+> **Một ngoại lệ đã dùng:** `srs/daily.js` được thêm từ khoá `export` cho hàm `dayStart()` (R5).
+> Không đổi hành vi, test cũ vẫn pass. Cần thiết vì CLAUDE.md cấm viết lại cách tính ranh giới ngày ở
+> chỗ khác, mà `course.js` phải tính streak theo ngày. Ngoài `export` này, không đụng gì thêm.
 ```
 src/srs/sm2.js (+test)        src/srs/storage.js (+test)     src/srs/daily.js (+test)
 src/srs/speaking.js (+test)   src/srs/coachMemory.js (+test)

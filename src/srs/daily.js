@@ -5,7 +5,7 @@ export const DAILY_KEY = "phrasal-daily-v1";
 const KEEP_DAYS = 90; // đủ cho biểu đồ 14–30 ngày, không phình localStorage
 
 // Mốc 00:00 (giờ địa phương) → gom "cùng ngày" (giống stats.js).
-function dayStart(now) {
+export function dayStart(now) {
   const d = new Date(now);
   d.setHours(0, 0, 0, 0);
   return d.getTime();
