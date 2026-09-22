@@ -644,14 +644,20 @@ server/*                      deploy/*                        Dockerfile  docker
 | `WarmupTalk.jsx` | Tuỳ chọn, vào từ màn chờ (không nằm trong 15' lõi) |
 | `ProgressChart.jsx` | Cuối màn "Tôi nói được gì rồi" |
 | `Login.jsx`, `ErrorBoundary.jsx`, `TtsControls.jsx` | Giữ, chỉ đổi CSS |
+| `ContextBar.jsx` | **Giữ** — `VoiceChat` và `SpeakingAssess` đang dùng (ban đầu xếp nhầm vào 7.3) |
+| `hooks/useShadow.js`, `data/scenarios.js` | Giữ — `VoiceChat` dùng |
+
+> **`legacy.css`:** các màn ở bảng trên vẫn dùng class của giao diện cũ, nên `styles.css` cũ được giữ
+> lại thành `src/legacy.css` và nạp **trước** `styles.css`. Bảng màu mới ở `:root` đè lên nên chúng
+> ăn theo tông mới mà không phải viết lại từng màn. Nợ kỹ thuật có chủ ý: khi nào retheme xong từng
+> màn nói thì xoá `legacy.css`.
 
 ### 7.3. Đập bỏ
 ```
 src/components/Dashboard.jsx        src/components/StudySession.jsx
 src/components/RatingBar.jsx        src/components/ProgressTopics.jsx
 src/components/TopicDetail.jsx      src/components/DataManager.jsx
-src/components/MiningPanel.jsx      src/components/MiniStory.jsx
-src/components/ContextBar.jsx       src/components/SpeakingProfile.jsx
+src/components/MiniStory.jsx        src/components/SpeakingProfile.jsx
 src/hooks/useStudy.js               src/hooks/useVocab.js
 src/srs/vocabStore.js (+test)       src/srs/cardTypes.js (+test)
 src/srs/session.js (+test)          src/data/vocab.js (+test)
@@ -661,8 +667,12 @@ vocab.js  vocab_batch2.js  vocab_batch3.js  vocab_batch4.js  vocab_batch5.js  vo
 Mockup_Flashcard_SRS.html           jfk.wav
 ```
 
-> `MiningPanel` + `ai/mine.js`: **giữ file, gỡ khỏi UI.** Nó là công cụ soạn nội dung cho chủ dự án,
-> không phải màn học. Sẽ dùng lại khi soạn tuần 3-12.
+> **Giữ file nhưng KHÔNG còn màn nào gọi tới** (dead code có chủ ý, đừng tưởng là sót):
+> - `MiningPanel.jsx` + `ai/mine.js` — công cụ soạn nội dung cho chủ dự án, dùng lại khi soạn tuần 3-12.
+> - `ai/patterns.js` — sinh mẫu câu theo chủ đề qua Claude. Bản mới có `pat` nằm sẵn trong nội dung nên
+>   không cần nữa; giữ vì 7.1 đã chốt không đụng `ai/*`.
+>
+> `src/styles.css` bị thay nội dung chứ không xoá — bản cũ nằm ở `legacy.css` (xem 7.2).
 
 ### 7.4. Viết mới
 ```
