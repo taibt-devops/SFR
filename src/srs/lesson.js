@@ -8,7 +8,7 @@
 // phần mở rộng). Tên bước ở đây mới là thứ tự chạy thật.
 export const CORE_STEPS = ["review", "listen", "pattern", "speak"]; // nhịp 0,1,2,4
 export const EXT_STEPS = ["words", "speak2", "roleplay"]; // nhịp 3,4b,5
-export const WEEK_STEPS = ["review", "assess", "chat"]; // ngày chốt tuần (§3.4)
+export const WEEK_STEPS = ["report", "review", "assess", "chat"]; // ngày chốt tuần (§3.4, §10.6b)
 
 export function isWeekClose(lesson) {
   return !!lesson?.review;

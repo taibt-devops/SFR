@@ -7,7 +7,7 @@ import Login from "./components/Login.jsx";
 import { useLesson } from "./hooks/useLesson.js";
 import { completedCount, learnedPatterns } from "./srs/course.js";
 import { latestLevel, loadSpeaking } from "./srs/speaking.js";
-import { drillsFor, focusFor, topErrors } from "./srs/tutor.js";
+import { drillsFor, focusFor, topErrors, weeklyReport } from "./srs/tutor.js";
 
 import Today from "./components/Today.jsx";
 import StepReview from "./components/StepReview.jsx";
@@ -19,6 +19,7 @@ import DayDone from "./components/DayDone.jsx";
 import Progress from "./components/Progress.jsx";
 import Call from "./components/Call.jsx";
 import SpeakingAssess from "./components/SpeakingAssess.jsx";
+import WeekReport from "./components/WeekReport.jsx";
 import WarmupTalk from "./components/WarmupTalk.jsx";
 
 const TRACK_VI = { daily: "Đời thường & du lịch", work: "Công việc & phỏng vấn" };
@@ -115,6 +116,16 @@ function AppMain() {
     const done = () => L.complete(L.step);
 
     switch (L.step) {
+      // ── Ngày chốt tuần, bước đầu tiên (spec §3.4, §10.6b) ──
+      case "report":
+        return (
+          <WeekReport
+            lesson={lesson}
+            bar={L.bar}
+            report={weeklyReport(L.tutor, lesson.week)}
+            onDone={done}
+          />
+        );
       case "review":
         return (
           <StepReview
