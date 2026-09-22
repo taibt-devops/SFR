@@ -70,7 +70,7 @@ export default function Today({
   }
 
   return (
-    <div className="screen">
+    <div className="screen screen-home">
       <div className="hud">
         <span><b>1%</b><i>/</i>NGÀY</span>
         <span>

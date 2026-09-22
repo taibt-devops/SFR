@@ -160,6 +160,9 @@ html, body, #root { height: 100%; }
 
 body {
   margin: 0;
+  /* Quầng sáng .screen::before rộng cố định nên trên máy hẹp nó thò ra hai bên và đẻ ra thanh cuộn
+     ngang (đo được 60px). Nó chỉ là trang trí, cắt đi là đúng. */
+  overflow-x: hidden;
   background: var(--ink);
   color: var(--text);
   font: 400 16px/1.55 var(--font-body);
@@ -199,7 +202,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
   position: absolute;
   top: -180px;
   left: 50%;
-  width: 480px;
+  width: min(480px, 100%);
   height: 380px;
   transform: translateX(-50%);
   background: radial-gradient(closest-side, rgba(200, 250, 60, 0.1), transparent 72%);
@@ -207,6 +210,30 @@ button { font: inherit; color: inherit; cursor: pointer; }
 }
 
 .screen-mid { justify-content: center; text-align: center; }
+
+/* Màn chờ: căn giữa cả khối thay vì để .spacer nuốt hết chỗ thừa. Trên máy cao (1280px) khoảng
+   trống giữa dải 14 ngày và nút Bắt đầu từng lên tới 700px — nhìn như màn bị hỏng. */
+.screen-home .spacer { flex: 0 0 22px; min-height: 22px; }
+
+/* Máy CAO: căn giữa khối nội dung, ghim HUD lên đỉnh để thanh trên không trôi xuống theo.
+   Ngưỡng 720px là cố ý — máy thấp hơn (360x640) thì nội dung vừa khít, thêm padding-top là tràn
+   xuống và đẻ ra thanh cuộn dọc, đẩy nút Bắt đầu xuống dưới mép màn. */
+/* Máy THẤP (iPhone SE, Android nhỏ): nội dung màn chờ cao hơn màn hình ~10px nên sinh cuộn dọc,
+   nút Bắt đầu bị đẩy khỏi tầm nhìn. Thu gọn khoảng cách vừa đủ để vừa khít, không cắt nội dung. */
+@media (max-height: 700px) {
+  .screen { padding-top: 14px; padding-bottom: 18px; gap: 12px; }
+  .screen-home .spacer { flex: 0 0 6px; min-height: 6px; }
+  .ring { width: 88px; height: 88px; }
+  .stat { padding: 10px 13px; }
+  .stat b { font-size: 26px; }
+  .strip-cell { height: 22px; }
+  .cta-hero { padding: 16px; }
+}
+
+@media (min-height: 720px) {
+  .screen-home { justify-content: center; padding-top: 68px; }
+  .screen-home .hud { position: absolute; top: 22px; left: var(--gutter); right: var(--gutter); }
+}
 
 .spacer { flex: 1; min-height: 8px; }
 
@@ -375,7 +402,8 @@ h1, h2 { margin: 0; line-height: 1.2; font-family: var(--font-display); }
   background: none;
   border: 0;
   color: var(--muted);
-  padding: 9px;
+  min-height: 44px;
+  padding: 12px 10px;
   font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.02em;
@@ -681,8 +709,12 @@ h1, h2 { margin: 0; line-height: 1.2; font-family: var(--font-display); }
 .hud-mute {
   background: none;
   border: 0;
-  padding: 0 0 0 10px;
-  font-size: 13px;
+  /* Vùng chạm >= 44px nhưng bù margin âm để không đẩy layout — trước đây chỉ cao 13px. */
+  padding: 12px;
+  margin: -12px -12px -12px -2px;
+  min-width: 44px;
+  min-height: 44px;
+  font-size: 15px;
   line-height: 1;
   opacity: 0.55;
 }
@@ -847,6 +879,14 @@ h1, h2 { margin: 0; line-height: 1.2; font-family: var(--font-display); }
 
 /* Chọn chủ đề ở màn brief — chip bấm được, không phải dropdown. */
 .topic-pick { display: flex; flex-wrap: wrap; gap: 7px; }
-.topic-pick .goal-chip { cursor: pointer; font-size: 13px; }
+/* Chip chủ đề là vùng CHẠM nên phải đủ 44px, khác với chip hiển thị ở màn gọi. */
+.topic-pick .goal-chip {
+  cursor: pointer;
+  font-size: 13px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 14px;
+}
 .topic-pick .goal-chip:hover { border-color: var(--line-hot); color: var(--text); }
 .topic-pick .goal-chip.on:hover { color: var(--lime-ink); }
