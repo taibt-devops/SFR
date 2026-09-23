@@ -228,11 +228,12 @@ function AppMain({ L }) {
   return (
     <Today
       lesson={L.pending}
-      streak={L.streak}
       doneToday={L.doneToday}
       completed={completedCount(L.progress)}
-      days={L.days}
+      week={L.week}
+      weekCount={L.weekCount}
       last={learnedPatterns(L.lessons, L.progress)[0] || null}
+      lastDone={L.lastDone}
       onStart={L.start}
       onProgress={() => setView("progress")}
       onWarmup={() => setView("warmup")}

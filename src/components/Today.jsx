@@ -1,74 +1,125 @@
-// Màn chờ — thứ đầu tiên thấy khi mở app. Đúng MỘT hành động chính.
-// Không chọn chủ đề, không chọn trình độ, không chọn chế độ (C9): chương trình đã quyết sẵn bài
-// của hôm nay, việc của người học chỉ là bấm bắt đầu.
+// Màn chờ — thứ đầu tiên thấy khi mở app. Đúng MỘT hành động chính (C9).
 //
-// Màn này có HAI hình dạng, vì ngày đầu và ngày thứ ba cần hai thứ khác hẳn nhau:
+// Hai hình dạng, vì trước và sau khi học xong cần hai thứ khác hẳn nhau:
 //
-//  • Chưa học gì  → VẠCH XUẤT PHÁT. Bản đầu hiện vòng tiến độ rỗng + "0 ngày liên tục" +
-//    "0 mẫu câu" + 14 ô xám: một bức tường số 0, đúng vào lúc người học cần động lực nhất.
-//    Thay bằng lời hứa cụ thể 15 phút tới sẽ làm gì — người mới cũng chưa biết điều đó.
-//  • Đã có tiến độ → BẢNG THÀNH TÍCH. Vòng tiến độ, chuỗi ngày, dải 14 ngày, mẫu câu gần nhất.
-//    Lúc này các con số mới có nghĩa, và nhìn thấy chúng chính là động lực.
+//  • CHƯA HỌC  → lời mời. "Hôm nay chỉ cần 5 phút" + tên bài + một nút gradient duy nhất.
+//  • ĐÃ XONG   → phần thưởng. Ngọn núi + "Xong 1% hôm nay" + "Hẹn mai nhé". KHÔNG có nút to nào:
+//    kết thúc phải dứt khoát, mời học tiếp ngay lúc vừa xong là biến phần thưởng thành món nợ.
+//    "Học trước bài sau" tụt xuống một dòng chữ ở cuối, đủ cho ngày khoẻ tự tìm tới.
+//
+// Chỉ số chính là TỔNG SỐ NGÀY (ngọn núi) — nó không bao giờ thấp đi. Dải tuần đếm N/4 ngày trong
+// tuần, KHÔNG phải chuỗi liên tiếp: nghỉ thứ Tư không xoá gì cả, nên màn này không cần một chữ nào
+// về "mất chuỗi" hay "đừng bỏ cuộc".
 import { useState } from "react";
-import Ring from "./Ring.jsx";
+import Mountain from "./Mountain.jsx";
+import { IcoVolume, IcoVolumeOff, IcoPlay, IcoMasks, IcoChat, IcoArrow, IcoCheck } from "./Icon.jsx";
 import { isMuted, setMuted, tick } from "../utils/sfx.js";
 import { useCountUp } from "../hooks/useCountUp.js";
+import { speak } from "../utils/tts.js";
 import { TOTAL_DAYS } from "../data/course/outline.js";
 
-function Strip({ days }) {
-  return (
-    <div className="strip" aria-label="14 ngày gần nhất">
-      {days.map((d) => (
-        <span
-          key={d.day}
-          className={`strip-cell${d.done ? " on" : ""}${d.ext ? " ext" : ""}${d.today ? " today" : ""}`}
-        />
-      ))}
-    </div>
-  );
+const BAI_MOI_CHU_DE = 6;        // 6 bài một chủ đề
+export const MUC_TIEU_TUAN = 4;  // mục tiêu mềm: 4 ngày/tuần là đủ tốt
+
+function viTriTrongChuDe(day) {
+  return ((Number(day) - 1) % BAI_MOI_CHU_DE) + 1;
 }
 
-function FreeTalk({ onRoleplay, onChat, onWarmup }) {
+// ── Header: đang ở đâu trong chủ đề + thanh tiến độ mảnh ──
+function Header({ lesson, mute, onToggleMute }) {
+  const pos = viTriTrongChuDe(lesson.day);
   return (
-    <div className="free-talk">
-      <div className="step-kicker">Nói tự do · không tính streak</div>
-      <div className="btn-row btn-trio">
-        <button className="btn" onClick={onRoleplay}>🎭 Đóng vai</button>
-        <button className="btn" onClick={onChat}>💬 Trò chuyện</button>
-        <button className="btn" onClick={onWarmup}>🎤 Khởi động</button>
+    <header className="hd">
+      <div className="hd-row">
+        <span className="hd-label">
+          Chủ đề {lesson.week} <i>·</i> {pos}/{BAI_MOI_CHU_DE}
+        </span>
+        <button
+          className="hd-mute"
+          onClick={onToggleMute}
+          aria-pressed={!mute}
+          aria-label={mute ? "Bật âm thanh" : "Tắt âm thanh"}
+        >
+          {mute ? <IcoVolumeOff size={18} /> : <IcoVolume size={18} />}
+        </button>
       </div>
-    </div>
+      <div className="hd-bar" role="presentation">
+        <i style={{ width: `${(pos / BAI_MOI_CHU_DE) * 100}%` }} />
+      </div>
+    </header>
   );
 }
 
-// Lời hứa cụ thể cho 15 phút tới — người mới chưa biết sắp phải làm gì.
-function Plan({ review }) {
-  // Ngày chốt tuần giờ có thêm báo cáo tiến bộ trước khi ôn (§10.6b, Phần 10 Task 12).
-  const steps = review
-    ? ["Xem báo cáo tiến bộ tuần", "Ôn lại mẫu câu cả tuần", "Chấm trình độ nói", "Trò chuyện tự do"]
-    : ["Nghe 4 câu, đoán nghĩa", "Lộ mẫu câu của hôm nay", "Nói 5 câu bằng mồm"];
+// ── Dải tuần: 7 ô có nhãn, hôm nay viền sáng ──
+// Hôm nay đánh dấu bằng VIỀN chứ không đổi kích thước ô — đổi kích thước làm cả dải nhảy layout.
+function Week({ days, count }) {
+  const dat = count >= MUC_TIEU_TUAN;
   return (
-    <div className="card">
-      <div className="eyebrow">15 phút tới</div>
-      <ol className="plan-list">
-        {steps.map((s, i) => (
-          <li key={s}><b>{i + 1}</b>{s}</li>
+    <section className="wk">
+      <div className="wk-row" role="list" aria-label="Tuần này">
+        {days.map((d) => (
+          <div
+            key={d.at}
+            role="listitem"
+            className={`wk-day${d.done ? " on" : ""}${d.today ? " now" : ""}${d.future ? " next" : ""}`}
+          >
+            <span className="wk-dot" />
+            <span className="wk-lbl">{d.label}</span>
+          </div>
         ))}
-      </ol>
-    </div>
+      </div>
+      <p className={`wk-sum${dat ? " ok" : ""}`}>
+        {dat
+          ? <>Đủ {MUC_TIEU_TUAN} ngày tuần này{count > MUC_TIEU_TUAN ? ` (${count})` : ""}</>
+          : <>{count}/{MUC_TIEU_TUAN} tuần này</>}
+      </p>
+    </section>
+  );
+}
+
+// ── Card mẫu câu gần nhất ──
+// `example` do course.js dựng và LUÔN thuộc đúng bài của `pat`. Trước đây màn này ghép mẫu câu của
+// hôm nay với câu của hôm qua, vì câu sửa lỗi do gia sư sinh ra cũng bị ghi làm "câu nói được".
+function PatternCard({ last, count, onProgress }) {
+  if (!last) return null;
+  return (
+    <section className="pc">
+      <h2 className="pc-head">Bạn nói được {count} mẫu câu</h2>
+      <p className="pc-pat">{last.pat}</p>
+      {last.example && (
+        <div className="pc-ex">
+          <span>{last.example}</span>
+          <button className="ic-btn" onClick={() => speak(last.example)} aria-label={"Nghe: " + last.example}>
+            <IcoPlay size={16} />
+          </button>
+        </div>
+      )}
+      <button className="lnk" onClick={onProgress}>
+        Xem tất cả <IcoArrow size={15} />
+      </button>
+    </section>
+  );
+}
+
+function LuyenThem({ onRoleplay, onChat }) {
+  return (
+    <section className="lt">
+      <h2 className="lt-head">Luyện thêm <span>(tuỳ ý)</span></h2>
+      <div className="lt-row">
+        <button className="btn2" onClick={onRoleplay}><IcoMasks size={18} /> Đóng vai</button>
+        <button className="btn2" onClick={onChat}><IcoChat size={18} /> Trò chuyện</button>
+      </div>
+    </section>
   );
 }
 
 export default function Today({
-  lesson, streak, doneToday, completed, days, last,
+  lesson, doneToday, completed, week, weekCount, last, lastDone,
   onStart, onProgress, onWarmup, onRoleplay, onChat,
 }) {
-  const talk = { onRoleplay, onChat, onWarmup };
   const [mute, setMute] = useState(isMuted);
-  const nStreak = useCountUp(streak, { delay: 260 });
-  const nDone = useCountUp(completed, { delay: 320 });
+  const nNgay = useCountUp(completed, { delay: 300 });
 
-  // Tắt/bật âm — để ở HUD, nhỏ thôi. Học ở văn phòng thì phải tắt được ngay, đừng bắt đi tìm.
   const toggleMute = () => {
     const next = !mute;
     setMuted(next);
@@ -76,117 +127,69 @@ export default function Today({
     if (!next) tick();
   };
 
-  // Hết phần đã soạn — nói thật thay vì hiện màn trống khó hiểu.
+  // Hết phần đã soạn — nói thật thay vì hiện một màn trống khó hiểu.
   if (!lesson) {
     return (
       <div className="screen screen-mid">
-        <div className="done-mark">✓</div>
-        <h1 className="t-hero-title">Hết phần đã soạn</h1>
-        <p className="muted">
-          {completed}/{TOTAL_DAYS} mẫu câu. Các tuần sau chưa có nội dung — soạn tiếp rồi quay lại.
-        </p>
+        <Mountain days={completed} total={TOTAL_DAYS} />
+        <h1 className="h-title">Bạn đã đi hết {completed} ngày</h1>
+        <p className="h-sub">Các chủ đề sau chưa có nội dung — soạn tiếp rồi quay lại.</p>
         <div className="spacer" />
-        <FreeTalk {...talk} />
-        <button className="btn" onClick={onProgress}>Xem tôi nói được gì rồi</button>
+        <LuyenThem onRoleplay={onRoleplay} onChat={onChat} />
+        <button className="lnk" onClick={onProgress}>Xem tất cả mẫu câu <IcoArrow size={15} /></button>
       </div>
     );
   }
 
-  const fresh = completed === 0;
+  const wk = <Week days={week} count={weekCount} />;
+  const pc = <PatternCard last={last} count={completed} onProgress={onProgress} />;
 
-  const hud = (
-    <div className="hud">
-      <span><b>1%</b><i>/</i>NGÀY</span>
-      <span>
-        TUẦN <b>{lesson.week}</b><i>/</i>{Math.ceil(TOTAL_DAYS / 6)}
-        <button className="hud-mute" onClick={toggleMute} title={mute ? "Bật âm" : "Tắt âm"}>
-          {mute ? "🔇" : "🔊"}
-        </button>
-      </span>
-    </div>
-  );
-
-  const cta = (
-    <button
-      className="btn btn-primary cta-hero reveal"
-      style={{ "--d": "250ms" }}
-      onClick={() => { tick(); onStart(); }}
-    >
-      {doneToday ? "Học tiếp bài sau" : "Bắt đầu"}
-      <span>{doneToday ? "✓ 1% hôm nay đã xong" : "15 phút · bắt buộc"}</span>
-    </button>
-  );
-
-  // ── Vạch xuất phát: chưa có gì để khoe, nên hứa thay vì đếm ──
-  if (fresh) {
+  // ── ĐÃ XONG: phần thưởng, không mời gọi ──
+  if (doneToday) {
     return (
       <div className="screen screen-home">
-        {hud}
+        <Header lesson={lesson} mute={mute} onToggleMute={toggleMute} />
 
-        <div className="reveal" style={{ "--d": "40ms" }}>
-          <div className="eyebrow">Ngày đầu tiên</div>
-          <h1 className="t-hero-title start-title">{lesson.title}</h1>
-          <p className="t-hero-sub">
-            Mỗi ngày đúng một mẫu câu. Sau {TOTAL_DAYS} ngày là {TOTAL_DAYS} cách nói bạn chưa có hôm nay.
+        <section className="hero hero-done">
+          <Mountain days={completed} total={TOTAL_DAYS} celebrate />
+          <p className="done-tag"><IcoCheck size={16} /> Xong 1% hôm nay</p>
+          <p className="done-sub">
+            Núi của bạn: <b>{nNgay}</b> ngày <i>·</i> Hẹn mai nhé!
           </p>
-        </div>
+        </section>
 
-        <div className="reveal" style={{ "--d": "140ms" }}>
-          <Plan review={lesson.review} />
-        </div>
+        {wk}
+        {pc}
+        <LuyenThem onRoleplay={onRoleplay} onChat={onChat} />
 
-        <div className="spacer" />
-        {cta}
-        <div className="reveal" style={{ "--d": "310ms" }}>
-          <FreeTalk {...talk} />
-        </div>
+        <button className="lnk lnk-next" onClick={() => { tick(); onStart(); }}>
+          Học trước: Bài {lesson.day} — {lesson.title} <IcoArrow size={15} />
+        </button>
       </div>
     );
   }
 
-  // ── Bảng thành tích ──
+  // ── CHƯA HỌC: một lời mời, một nút ──
   return (
     <div className="screen screen-home">
-      {hud}
+      <Header lesson={lesson} mute={mute} onToggleMute={toggleMute} />
 
-      <div className="t-hero reveal" style={{ "--d": "40ms" }}>
-        <Ring value={completed} total={TOTAL_DAYS} label={lesson.day} sub={`/ ${TOTAL_DAYS}`} />
-        <div className="t-hero-txt">
-          <div className="eyebrow">{lesson.review ? "Chốt tuần" : "Bài hôm nay"}</div>
-          <h1 className="t-hero-title">{lesson.title}</h1>
-        </div>
-      </div>
+      <section className="hero">
+        <p className="hero-kicker">Hôm nay chỉ cần 5 phút</p>
+        <h1 className="hero-title">
+          Bài {lesson.day} <i>·</i> {lesson.title}
+        </h1>
+        <button className="cta" onClick={() => { tick(); onStart(); }}>
+          Bắt đầu 1% hôm nay
+        </button>
+        <button className="lnk lnk-warm" onClick={onWarmup}>
+          Khởi động giọng một phút trước <IcoArrow size={15} />
+        </button>
+      </section>
 
-      <div className="stats reveal" style={{ "--d": "120ms" }}>
-        <div className={`stat stat-streak${streak >= 3 ? " is-hot" : ""}`}>
-          <b>{nStreak}</b>
-          <span>ngày liên tục</span>
-        </div>
-        <div className="stat">
-          <b>{nDone}</b>
-          <span>mẫu câu đã nắm</span>
-        </div>
-      </div>
-
-      <div className="reveal" style={{ "--d": "190ms" }}>
-        <Strip days={days} />
-      </div>
-
-      {/* Bằng chứng mình từng nói được — mạnh hơn mọi con số. */}
-      {last && (
-        <div className="t-last reveal" style={{ "--d": "230ms" }}>
-          <div className="step-kicker">Gần nhất bạn nắm được</div>
-          <div className="t-last-pat">{last.pat}</div>
-          {last.said && <div className="t-last-said">“{last.said}”</div>}
-        </div>
-      )}
-
-      <div className="spacer" />
-      {cta}
-      <div className="reveal" style={{ "--d": "310ms" }}>
-        <FreeTalk {...talk} />
-      </div>
-      <button className="btn-link" onClick={onProgress}>Tôi nói được gì rồi →</button>
+      {wk}
+      {pc}
+      <LuyenThem onRoleplay={onRoleplay} onChat={onChat} />
     </div>
   );
 }

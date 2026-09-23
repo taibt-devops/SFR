@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import {
   loadCourse, saveCourse, purgeLegacy, streakFor, doneToday,
   recordSaid, saidFor, learnedPatterns, completedCount, recentDays,
+  weekDays, weekCount, sentencesOf, WEEK_LABELS,
   COURSE_KEY, RESET_FLAG, LEGACY_KEYS,
 } from "./course.js";
 
@@ -108,31 +109,76 @@ describe("streakFor — C12: chỉ đếm ngày hoàn thành LÕI", () => {
 });
 
 describe("recordSaid — giữ câu khớp cao nhất", () => {
+  // Bài mẫu: mọi câu ghi được PHẢI nằm trong drills/drills2 của chính bài này.
+  const BAI = {
+    day: 1,
+    drills: [{ vi: "Cho tôi một trà.", en: "I'd like a tea." }, { vi: "x", en: "cau tam duoc" }],
+    drills2: [{ vi: "y", en: "cau tot hon" }],
+  };
+
   it("ghi câu đầu tiên", () => {
-    const p = recordSaid({}, 1, "I'd like a tea.", 0.8);
+    const p = recordSaid({}, BAI, "I'd like a tea.", 0.8);
     expect(saidFor(p, 1)).toBe("I'd like a tea.");
   });
 
   it("điểm cao hơn thì thay, thấp hơn thì giữ nguyên", () => {
-    let p = recordSaid({}, 1, "cau tam duoc", 0.6);
-    p = recordSaid(p, 1, "cau tot hon", 0.9);
+    let p = recordSaid({}, BAI, "cau tam duoc", 0.6);
+    p = recordSaid(p, BAI, "cau tot hon", 0.9);
     expect(saidFor(p, 1)).toBe("cau tot hon");
-    p = recordSaid(p, 1, "cau te", 0.2);
+    p = recordSaid(p, BAI, "cau tam duoc", 0.2);
     expect(saidFor(p, 1)).toBe("cau tot hon");
   });
 
   it("chuỗi rỗng bị bỏ qua, KHÔNG mutate progress", () => {
     const p0 = { 1: done(NOW) };
-    expect(recordSaid(p0, 1, "   ")).toBe(p0);
-    const p1 = recordSaid(p0, 1, "x", 1);
+    expect(recordSaid(p0, BAI, "   ")).toBe(p0);
+    const p1 = recordSaid(p0, BAI, "I'd like a tea.", 1);
     expect(p0[1].saidBest).toBeUndefined();
     expect(p1).not.toBe(p0);
   });
 
   it("giữ nguyên các trường sẵn có của ngày đó", () => {
-    const p = recordSaid({ 1: done(NOW) }, 1, "x", 1);
+    const p = recordSaid({ 1: done(NOW) }, BAI, "I'd like a tea.", 1);
     expect(p[1].core).toBe(true);
     expect(p[1].doneAt).toBe(NOW);
+  });
+
+  // ── Bug thật, thấy trên máy người dùng ──
+  // Từ Phần 10, nhịp nói chèn 2 câu "sửa lỗi hôm qua" do gia sư sinh ra. Chúng thuộc MẪU CÂU CỦA
+  // NGÀY KHÁC. Trước khi có chốt này, nói tốt một câu như vậy làm màn chờ ghép mẫu câu hôm nay với
+  // câu của hôm qua: pat "Could you + V ...?" đi cùng said "I'd like to book a table."
+  it("câu KHÔNG thuộc bài (câu sửa lỗi của gia sư) → KHÔNG được ghi", () => {
+    const homNay = { day: 2, drills: [{ vi: "Bạn giúp tôi được không?", en: "Could you help me?" }] };
+    const p = recordSaid({ 2: done(NOW) }, homNay, "I'd like to book a table.", 0.99);
+    expect(saidFor(p, 2)).toBeNull();
+    expect(p).toEqual({ 2: done(NOW) });
+  });
+
+  it("câu sửa lỗi điểm cao KHÔNG ghi đè câu đúng của bài", () => {
+    const homNay = { day: 2, drills: [{ vi: "x", en: "Could you help me?" }] };
+    let p = recordSaid({}, homNay, "Could you help me?", 0.85);
+    p = recordSaid(p, homNay, "I'd like to book a table.", 1);
+    expect(saidFor(p, 2)).toBe("Could you help me?");
+  });
+
+  it("so khớp bỏ qua hoa thường và khoảng trắng thừa", () => {
+    const p = recordSaid({}, BAI, "  i'd LIKE a   tea.  ", 1);
+    expect(saidFor(p, 1)).toBe("i'd LIKE a   tea.".trim());
+  });
+
+  it("không có lesson hoặc bài không có drill → bỏ qua", () => {
+    expect(recordSaid({}, null, "x", 1)).toEqual({});
+    expect(recordSaid({}, { day: 6, review: true }, "x", 1)).toEqual({});
+  });
+});
+
+describe("sentencesOf", () => {
+  it("gộp drills và drills2", () => {
+    expect(sentencesOf({ drills: [{ en: "a" }], drills2: [{ en: "b" }] })).toEqual(["a", "b"]);
+  });
+  it("bài rỗng/null an toàn", () => {
+    expect(sentencesOf(null)).toEqual([]);
+    expect(sentencesOf({ review: true })).toEqual([]);
   });
 });
 
@@ -149,9 +195,19 @@ describe("learnedPatterns — bằng chứng tiến bộ", () => {
   });
 
   it("kèm câu người học đã nói", () => {
+    const bai1 = { day: 1, drills: [{ vi: "x", en: "I'd like a tea." }] };
     let p = { 1: done(NOW) };
-    p = recordSaid(p, 1, "I'd like a tea.", 1);
+    p = recordSaid(p, bai1, "I'd like a tea.", 1);
     expect(learnedPatterns(lessons, p)[0].said).toBe("I'd like a tea.");
+  });
+
+  it("example = câu mình nói được; chưa nói được thì lấy drill đầu của ĐÚNG bài đó", () => {
+    const ls = [{ day: 1, week: 1, pat: "P1", patVi: "V1", drills: [{ vi: "x", en: "Drill one." }] }];
+    const chuaNoi = learnedPatterns(ls, { 1: done(NOW) })[0];
+    expect(chuaNoi.example).toBe("Drill one.");
+
+    const p = recordSaid({ 1: done(NOW) }, ls[0], "Drill one.", 1);
+    expect(learnedPatterns(ls, p)[0].example).toBe("Drill one.");
   });
 
   it("ngày chốt tuần không có mẫu câu nên không vào danh sách", () => {
@@ -192,4 +248,49 @@ describe("recentDays — dải 14 ngày trên màn chờ", () => {
   it("bài chưa xong lõi không hiện trên dải", () => {
     expect(recentDays({ 1: { core: false, doneAt: NOW } }, 3, NOW).some((d) => d.done)).toBe(false);
   });
+});
+
+describe("weekDays / weekCount — dải 7 ô T2…CN", () => {
+  // 2026-09-23 là thứ Tư. Dùng giờ trưa để không dính biên ngày.
+  const THU4 = new Date(2026, 8, 23, 12, 0, 0).getTime();
+  const D = 86400000;
+
+  it("luôn 7 ô, nhãn T2 → CN", () => {
+    const w = weekDays({}, THU4);
+    expect(w).toHaveLength(7);
+    expect(w.map((x) => x.label)).toEqual(WEEK_LABELS);
+  });
+
+  it("đánh dấu đúng ô hôm nay", () => {
+    const w = weekDays({}, THU4);
+    expect(w.filter((x) => x.today)).toHaveLength(1);
+    expect(w.find((x) => x.today).label).toBe("T4");
+  });
+
+  it("ngày sau hôm nay được đánh dấu future", () => {
+    const w = weekDays({}, THU4);
+    expect(w.filter((x) => x.future).map((x) => x.label)).toEqual(["T5", "T6", "T7", "CN"]);
+  });
+
+  it("NGHỈ GIỮA TUẦN không xoá gì — học T2, nghỉ T3, học T4 vẫn là 2", () => {
+    const p = { 1: done(THU4 - 2 * D), 2: done(THU4) };
+    const w = weekDays(p, THU4);
+    expect(w.map((x) => x.done)).toEqual([true, false, true, false, false, false, false]);
+    expect(weekCount(p, THU4)).toBe(2);
+  });
+
+  it("ngày của tuần TRƯỚC không lọt vào tuần này", () => {
+    const p = { 1: done(THU4 - 5 * D) }; // thứ Sáu tuần trước
+    expect(weekCount(p, THU4)).toBe(0);
+    expect(weekDays(p, THU4).every((x) => !x.done)).toBe(true);
+  });
+
+  it("chủ nhật vẫn thuộc tuần đang xét, không nhảy sang tuần sau", () => {
+    const CN = new Date(2026, 8, 27, 12, 0, 0).getTime();
+    const w = weekDays({}, CN);
+    expect(w.find((x) => x.today).label).toBe("CN");
+    expect(w.filter((x) => x.future)).toHaveLength(0);
+  });
+
+  it("chưa học gì → 0", () => expect(weekCount({}, THU4)).toBe(0));
 });

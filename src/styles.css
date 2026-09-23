@@ -136,7 +136,9 @@
   --red: #ff5f56;
   --ok: #6ee787;
 
-  --font-display: "Bricolage", system-ui, sans-serif;
+  /* Heading dùng Be Vietnam Pro 700–800: font vẽ RIÊNG cho dấu tiếng Việt, nên chữ có dấu
+     không bị chen chúc như grotesque latin. Bricolage vẫn tự host, chỉ thôi làm font tiêu đề. */
+  --font-display: "BeVietnam", system-ui, sans-serif;
   --font-body: "BeVietnam", system-ui, sans-serif;
 
   --radius: 18px;
@@ -979,16 +981,20 @@ h1, h2 { margin: 0; line-height: 1.2; font-family: var(--font-display); }
   width: 54px; height: 54px;
   display: grid; place-items: center;
   border: none; border-radius: 50%;
-  background: var(--grad);
-  color: var(--lime-ink);
-  font-size: 23px; line-height: 1;
+  /* KHÔNG gradient: gradient để dành riêng cho CTA chính. FAB là tra Việt→Anh — khác hẳn
+     "Trò chuyện" (nói chuyện với gia sư), nên nó phải trông khác, không chỉ khác chỗ đứng. */
+  background: var(--surface);
+  border: 1px solid rgba(200, 250, 60, 0.45);
+  color: var(--lime);
+  line-height: 1;
   cursor: pointer;
-  box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.9);
   transition: transform 0.16s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s;
 }
 .fab:hover {
   transform: translateY(-2px);
-  box-shadow: 0 16px 34px -10px rgba(0, 0, 0, 0.9), 0 0 0 7px rgba(200, 250, 60, 0.1);
+  border-color: var(--lime);
+  box-shadow: 0 16px 34px -10px rgba(0, 0, 0, 0.9), 0 0 0 7px rgba(200, 250, 60, 0.08);
 }
 .fab:active { transform: scale(0.92); }
 
@@ -1264,3 +1270,211 @@ h1, h2 { margin: 0; line-height: 1.2; font-family: var(--font-display); }
 .ask-skel i:nth-child(3) { width: 96%; }
 @keyframes skel { from { background-position: 180% 0; } to { background-position: -40% 0; } }
 @media (prefers-reduced-motion: reduce) { .ask-skel i { animation: none; } }
+
+/* ── Màn chờ (viết lại) ───────────────────────────────────────
+   Thang khoảng cách 4/8. Chỉ MỘT cấp nhãn dùng chữ hoa + giãn chữ (.hd-label, .pc-head, .lt-head);
+   mọi chỗ khác viết thường như câu bình thường.
+   Chỉ nút CTA chính dùng gradient. */
+
+.screen-home {
+  gap: 0;
+  /* Chừa chỗ cho nút hỏi đáp nổi (54px) + lề + vùng an toàn của máy có thanh gesture. */
+  padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+}
+.screen-home > * + * { margin-top: 24px; }
+
+/* ── Header ── */
+.hd { display: flex; flex-direction: column; gap: 8px; }
+.hd-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.hd-label {
+  font-size: 12px; font-weight: 600;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--text2);           /* #b9c2cb trên nền #08090a — tương phản ~11:1 */
+}
+.hd-label i { color: var(--muted); font-style: normal; margin: 0 2px; }
+
+.hd-mute {
+  flex: none;
+  width: 36px; height: 36px;
+  display: grid; place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+/* aria-pressed mang cả trạng thái lẫn kiểu dáng — đọc màn hình và mắt thấy cùng một thứ. */
+.hd-mute[aria-pressed="true"] { color: var(--lime); border-color: rgba(200, 250, 60, 0.35); }
+.hd-mute:hover { color: var(--text); }
+
+.hd-bar { height: 3px; border-radius: 99px; background: var(--line); overflow: hidden; }
+.hd-bar i { display: block; height: 100%; border-radius: 99px; background: var(--lime); }
+
+/* ── Hero ── */
+.hero { display: flex; flex-direction: column; gap: 12px; }
+.hero-kicker { color: var(--text2); font-size: 15px; margin: 0; }
+.hero-title {
+  font-family: var(--font-display);
+  font-size: clamp(26px, 8vw, 34px);
+  font-weight: 800;
+  line-height: 1.22;              /* dưới 1.2 là cắt chân dấu tiếng Việt */
+  margin: 0;
+}
+.hero-title i { color: var(--muted); font-style: normal; font-weight: 400; }
+
+/* Nút chính — thứ DUY NHẤT trong app dùng gradient. */
+.cta {
+  width: 100%;
+  min-height: 56px;
+  margin-top: 4px;
+  border: none; border-radius: 16px;
+  background: var(--grad);
+  color: var(--lime-ink);
+  font: inherit; font-size: 17px; font-weight: 700;
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  transition: transform 0.12s;
+}
+.cta:active { transform: scale(0.985); }
+
+/* ── Hero khi đã xong ── */
+.hero-done { align-items: center; text-align: center; gap: 8px; }
+.done-tag {
+  display: inline-flex; align-items: center; gap: 6px;
+  color: var(--lime); font-weight: 700; font-size: 15px;
+  margin: 4px 0 0;
+}
+.done-sub { color: var(--text2); font-size: 15px; margin: 0; }
+.done-sub b { color: var(--text); font-size: 17px; }
+.done-sub i { color: var(--muted); font-style: normal; margin: 0 4px; }
+
+/* ── Ngọn núi ── */
+.nui { display: block; overflow: visible; }
+.nui-dat { stroke: var(--line-hot); stroke-width: 1; }
+.nui-than { fill: var(--surface-2); stroke: var(--line-hot); stroke-width: 1.5; stroke-linejoin: round; }
+.nui-vach line { stroke: var(--line-hot); stroke-width: 1; opacity: 0.75; }
+.nui-chop { fill: var(--lime); opacity: 0.9; }
+/* Chuyển động CHỈ ở khoảnh khắc hoàn thành — mọi màn khác đứng yên. */
+.nui.is-celebrate .nui-chop { animation: chop-len 0.7s cubic-bezier(0.2, 0.9, 0.25, 1); }
+@keyframes chop-len { from { transform: translateY(6px); opacity: 0.2; } }
+@media (prefers-reduced-motion: reduce) { .nui.is-celebrate .nui-chop { animation: none; } }
+
+/* ── Dải tuần ── */
+.wk { display: flex; flex-direction: column; gap: 8px; }
+.wk-row { display: flex; gap: 4px; }
+.wk-day {
+  flex: 1 1 0; min-width: 0;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 8px 0;
+  border: 1px solid transparent;   /* giữ sẵn chỗ để lúc viền lên layout không nhảy */
+  border-radius: 12px;
+}
+.wk-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--line-hot);
+}
+.wk-day.on .wk-dot { background: var(--lime); }
+.wk-day.next .wk-dot { background: none; border: 1px solid var(--line); }
+.wk-lbl { font-size: 11px; letter-spacing: 0.04em; color: var(--muted); }
+.wk-day.on .wk-lbl { color: var(--text2); }
+/* Hôm nay: viền + quầng, KHÔNG đổi kích thước — đổi kích thước làm cả dải xô lệch. */
+.wk-day.now {
+  border-color: rgba(200, 250, 60, 0.45);
+  box-shadow: 0 0 0 3px rgba(200, 250, 60, 0.08);
+}
+.wk-day.now .wk-lbl { color: var(--lime); font-weight: 600; }
+
+.wk-sum { font-size: 14px; color: var(--text2); margin: 0; }
+.wk-sum.ok { color: var(--lime); }
+
+/* ── Card mẫu câu ── */
+.pc {
+  display: flex; flex-direction: column; gap: 8px;
+  background: var(--ink-2);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 16px;
+}
+.pc-head {
+  font-size: 12px; font-weight: 600;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--muted);
+  margin: 0;
+}
+.pc-pat {
+  font-family: var(--font-display);
+  font-size: 20px; font-weight: 700; line-height: 1.3;
+  margin: 0;
+}
+.pc-ex {
+  display: flex; align-items: center; gap: 8px;
+  color: var(--text2); font-size: 15px;
+}
+.pc-ex span { flex: 1; min-width: 0; }
+
+.ic-btn {
+  flex: none;
+  width: 34px; height: 34px;
+  display: grid; place-items: center;
+  border: 1px solid var(--line-hot);
+  border-radius: 50%;
+  background: none;
+  color: var(--text2);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.ic-btn:hover { color: var(--lime); border-color: var(--lime); }
+
+/* ── Luyện thêm ── */
+.lt { display: flex; flex-direction: column; gap: 8px; }
+.lt-head {
+  font-size: 12px; font-weight: 600;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--muted);
+  margin: 0;
+}
+.lt-head span { text-transform: none; letter-spacing: 0; font-weight: 400; }
+.lt-row { display: flex; gap: 8px; }
+.btn2 {
+  flex: 1;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 48px;
+  font: inherit; font-size: 15px;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--line-hot);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.btn2:hover { border-color: rgba(200, 250, 60, 0.4); background: var(--surface-2); }
+
+/* ── Dòng chữ dẫn đi ── */
+.lnk {
+  display: inline-flex; align-items: center; gap: 6px;
+  align-self: flex-start;
+  font: inherit; font-size: 14px;
+  color: var(--text2);            /* ~11:1 trên nền tối, vượt AA */
+  background: none; border: none;
+  padding: 8px 0;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.lnk:hover { color: var(--lime); }
+.lnk-next { margin-top: 8px; }
+.lnk-warm { margin-top: -4px; }
+
+.h-title {
+  font-family: var(--font-display);
+  font-size: 28px; font-weight: 800; line-height: 1.22;
+  margin: 12px 0 0;
+}
+.h-sub { color: var(--text2); margin: 0; }
+
+/* Màn hẹp: dải tuần và hai nút luyện thêm là chỗ dễ vỡ nhất. */
+@media (max-width: 370px) {
+  .wk-row { gap: 2px; }
+  .wk-lbl { font-size: 10px; }
+  .btn2 { font-size: 14px; gap: 6px; }
+}

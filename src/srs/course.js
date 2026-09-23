@@ -80,11 +80,33 @@ export function streakFor(progress, now) {
   return n;
 }
 
+// Mọi câu tiếng Anh THUỘC VỀ một bài: drill của nhịp nói + drill khó của phần mở rộng.
+export function sentencesOf(lesson) {
+  return [...(lesson?.drills || []), ...(lesson?.drills2 || [])]
+    .map((d) => d?.en)
+    .filter(Boolean);
+}
+
+function normCau(s) {
+  return String(s || "").trim().toLowerCase().replace(/\s+/g, " ");
+}
+
 // Ghi câu người học nói đúng — giữ câu khớp CAO NHẤT trong ngày làm bằng chứng tiến bộ (§4.1).
 // Trả progress MỚI; điểm thấp hơn thì bỏ qua để không ghi đè câu tốt bằng câu tệ.
-export function recordSaid(progress, day, text, score = 1) {
+//
+// BẮT BUỘC nhận cả `lesson` chứ không chỉ `day`, để chặn ngay tại đây việc ghi một câu KHÔNG
+// thuộc bài đó. Từ Phần 10, nhịp nói có 2 câu đầu là "sửa lỗi hôm qua" do gia sư sinh ra — chúng
+// thuộc MẪU CÂU CỦA NGÀY KHÁC. Trước khi có chốt này, nói tốt một câu như vậy sẽ khiến màn chờ
+// hiện mẫu câu hôm nay ghép với câu của hôm qua (bug thật, thấy trên máy người dùng):
+//   pat "Could you + V ...?"  +  said "I'd like to book a table."
+// Đặt chốt ở tầng dữ liệu thay vì một câu `if` trong StepSpeak: caller nào cũng bị chặn, kể cả
+// caller viết sau này.
+export function recordSaid(progress, lesson, text, score = 1) {
   const t = String(text || "").trim();
-  if (!t) return progress;
+  const day = lesson?.day;
+  if (!t || !day) return progress;
+  const own = sentencesOf(lesson).map(normCau);
+  if (!own.includes(normCau(t))) return progress; // câu của bài khác → bỏ, thà trống còn hơn sai
   const prev = progress?.[day] || { steps: {} };
   if (prev.saidBest && (prev.saidScore ?? 0) >= score) return progress;
   return { ...progress, [day]: { ...prev, saidBest: t, saidScore: score } };
@@ -104,6 +126,9 @@ export function learnedPatterns(lessons = [], progress = {}) {
       pat: l.pat,
       patVi: l.patVi,
       said: saidFor(progress, l.day),
+      // Câu ví dụ để hiện cùng mẫu: ưu tiên câu CHÍNH BẠN nói được; chưa có thì lấy drill đầu
+      // của bài. Cả hai đều thuộc đúng bài này nên không bao giờ lệch mẫu.
+      example: saidFor(progress, l.day) || l.drills?.[0]?.en || null,
       doneAt: progress[l.day].doneAt || null,
       ext: !!progress[l.day].ext,
     }))
@@ -113,6 +138,26 @@ export function learnedPatterns(lessons = [], progress = {}) {
 // Số ngày đã hoàn thành lõi — dùng cho "12 / 72 mẫu câu".
 export function completedCount(progress = {}) {
   return Object.values(progress).filter((e) => e?.core).length;
+}
+
+// ── Tuần này (dải 7 ô T2…CN) ───────────────────────────────
+// ĐẾM SỐ NGÀY HỌC TRONG TUẦN, không phải chuỗi liên tiếp. Nghỉ thứ Tư rồi học lại thứ Năm thì
+// vẫn là 3/7 — không có gì bị xoá. Đây là điểm khác cốt lõi với streak: nó không bao giờ trừng
+// phạt một ngày nghỉ, nên không cần bất kỳ câu chữ nào về "mất chuỗi".
+export const WEEK_LABELS = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
+
+export function weekDays(progress = {}, now = Date.now()) {
+  const days = doneDays(progress);
+  const today = dayStart(now);
+  const thu = (new Date(today).getDay() + 6) % 7; // 0 = thứ Hai
+  return WEEK_LABELS.map((label, i) => {
+    const d = dayStart(today - (thu - i) * DAY);
+    return { label, at: d, done: days.has(d), today: d === today, future: d > today };
+  });
+}
+
+export function weekCount(progress = {}, now = Date.now()) {
+  return weekDays(progress, now).filter((d) => d.done).length;
 }
 
 // n ngày gần nhất (CŨ → MỚI) cho dải streak trên màn chờ: [{ day, done, ext, today }].

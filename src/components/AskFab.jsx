@@ -5,6 +5,7 @@ import AskSheet from "./AskSheet.jsx";
 import { askEnglish } from "../ai/ask.js";
 import { useRecorder } from "../hooks/useRecorder.js";
 import { isAsrJunk } from "../utils/viAsr.js";
+import { IcoTranslate } from "./Icon.jsx";
 import { addAsk, loadAsk, recentAsks, sanitizeAnswer, saveAsk } from "../srs/ask.js";
 
 // Người học không cần biết "proxy lỗi 500" nghĩa là gì — họ cần biết NÊN LÀM GÌ tiếp.
@@ -112,7 +113,7 @@ export default function AskFab({ onAddWord, onAttempt }) {
 
   if (!open) {
     return (
-      <button className="fab" aria-label="Hỏi câu này tiếng Anh nói sao" onClick={() => setOpen(true)}>💬</button>
+      <button className="fab" aria-label="Hỏi câu này tiếng Anh nói sao" onClick={() => setOpen(true)}><IcoTranslate size={22} /></button>
     );
   }
 
