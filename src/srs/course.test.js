@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import {
   loadCourse, saveCourse, purgeLegacy, streakFor, doneToday,
   recordSaid, saidFor, learnedPatterns, completedCount, recentDays,
-  weekDays, weekCount, sentencesOf, learnedWords, countLearnedWords, WEEK_LABELS,
+  weekDays, weekCount, sentencesOf, saidOf, learnedWords, countLearnedWords, WEEK_LABELS,
   COURSE_KEY, RESET_FLAG, LEGACY_KEYS,
 } from "./course.js";
 
@@ -183,9 +183,11 @@ describe("sentencesOf", () => {
 });
 
 describe("learnedPatterns — bằng chứng tiến bộ", () => {
+  // Bài PHẢI có drills: `saidOf` đối chiếu câu đã lưu với drill của chính bài đó, nên một fixture
+  // không drill sẽ luôn trả null và che mất thứ đang cần kiểm.
   const lessons = [
-    { day: 1, week: 1, pat: "P1", patVi: "V1" },
-    { day: 2, week: 1, pat: "P2", patVi: "V2" },
+    { day: 1, week: 1, pat: "P1", patVi: "V1", drills: [{ vi: "x", en: "I'd like a tea." }] },
+    { day: 2, week: 1, pat: "P2", patVi: "V2", drills: [{ vi: "y", en: "Could you help me?" }] },
     { day: 6, week: 1, review: true },
   ];
 
@@ -195,9 +197,8 @@ describe("learnedPatterns — bằng chứng tiến bộ", () => {
   });
 
   it("kèm câu người học đã nói", () => {
-    const bai1 = { day: 1, drills: [{ vi: "x", en: "I'd like a tea." }] };
     let p = { 1: done(NOW) };
-    p = recordSaid(p, bai1, "I'd like a tea.", 1);
+    p = recordSaid(p, lessons[0], "I'd like a tea.", 1);
     expect(learnedPatterns(lessons, p)[0].said).toBe("I'd like a tea.");
   });
 
@@ -353,5 +354,35 @@ describe("learnedWords — từ vựng đã học", () => {
   it("từ tự thêm luôn nằm trong hàng đợi ôn", () => {
     const p = { 1: xong(NOW, true), 2: xong(NOW, true) };
     expect(countLearnedWords(lessons, p, { 2: [{ w: "x" }] })).toBe(3);
+  });
+});
+
+describe("saidOf — dọn dữ liệu sai đã lỡ lưu từ bản cũ", () => {
+  const bai2 = { day: 2, pat: "Could you + V ...?", drills: [{ vi: "x", en: "Could you help me?" }] };
+
+  it("câu ĐÚNG bài thì trả về bình thường", () => {
+    const p = { 2: { core: true, saidBest: "Could you help me?" } };
+    expect(saidOf(p, bai2)).toBe("Could you help me?");
+  });
+
+  // Đây chính là thứ người dùng vẫn thấy sau khi tôi chặn đường ghi: chặn ghi KHÔNG dọn được
+  // câu đã lưu từ trước. Máy chạy bản cũ vẫn còn "I'd like to book a table." ở bài 2.
+  it("câu của bài KHÁC còn sót lại từ bản cũ → bỏ, không hiện", () => {
+    const p = { 2: { core: true, saidBest: "I'd like to book a table." } };
+    expect(saidOf(p, bai2)).toBeNull();
+  });
+
+  it("learnedPatterns không bao giờ ghép mẫu câu với câu của bài khác", () => {
+    const lessons = [bai2];
+    const p = { 2: { core: true, doneAt: NOW, saidBest: "I'd like to book a table." } };
+    const r = learnedPatterns(lessons, p)[0];
+    expect(r.said).toBeNull();
+    expect(r.example).toBe("Could you help me?"); // rơi về drill của chính bài đó
+  });
+
+  it("chưa nói gì / bài không có drill → null, không ném lỗi", () => {
+    expect(saidOf({}, bai2)).toBeNull();
+    expect(saidOf({ 6: { saidBest: "x" } }, { day: 6, review: true })).toBeNull();
+    expect(saidOf(null, null)).toBeNull();
   });
 });

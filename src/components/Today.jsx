@@ -20,18 +20,17 @@ import { TOTAL_DAYS } from "../data/course/outline.js";
 const BAI_MOI_CHU_DE = 6;        // 6 bài một chủ đề
 export const MUC_TIEU_TUAN = 4;  // mục tiêu mềm: 4 ngày/tuần là đủ tốt
 
-function viTriTrongChuDe(day) {
-  return ((Number(day) - 1) % BAI_MOI_CHU_DE) + 1;
-}
-
 // ── Header: đang ở đâu trong chủ đề + thanh tiến độ mảnh ──
-function Header({ lesson, mute, onToggleMute }) {
-  const pos = viTriTrongChuDe(lesson.day);
+// Đọc từ `completed` (số bài ĐÃ XONG), KHÔNG từ `lesson.day` (số bài SẮP HỌC). Trước đây header
+// lấy số bài sắp học nên nó luôn nhiều hơn thực tế đúng 1: xong 2 bài mà thanh hiện 3/6. Giờ
+// header, thanh tiến độ và dòng "Học trước: Bài N" cùng bắt nguồn từ một con số.
+function Header({ lesson, completed, mute, onToggleMute }) {
+  const xongTrongChuDe = Math.max(0, Math.min(BAI_MOI_CHU_DE, completed - (lesson.week - 1) * BAI_MOI_CHU_DE));
   return (
     <header className="hd">
       <div className="hd-row">
         <span className="hd-label">
-          Chủ đề {lesson.week} <i>·</i> {pos}/{BAI_MOI_CHU_DE}
+          Chủ đề {lesson.week} <i>·</i> {xongTrongChuDe}/{BAI_MOI_CHU_DE}
         </span>
         <button
           className="hd-mute"
@@ -43,7 +42,7 @@ function Header({ lesson, mute, onToggleMute }) {
         </button>
       </div>
       <div className="hd-bar" role="presentation">
-        <i style={{ width: `${(pos / BAI_MOI_CHU_DE) * 100}%` }} />
+        <i style={{ width: `${(xongTrongChuDe / BAI_MOI_CHU_DE) * 100}%` }} />
       </div>
     </header>
   );
@@ -51,27 +50,34 @@ function Header({ lesson, mute, onToggleMute }) {
 
 // ── Dải tuần: 7 ô có nhãn, hôm nay viền sáng ──
 // Hôm nay đánh dấu bằng VIỀN chứ không đổi kích thước ô — đổi kích thước làm cả dải nhảy layout.
+// BA trạng thái tách bạch, vì chúng có ý nghĩa khác hẳn nhau:
+//   đã học        → chấm lime đặc
+//   đã qua, bỏ lỡ → chấm rỗng mờ (KHÔNG tô đỏ, không cảnh báo: bỏ một ngày không mất gì)
+//   tương lai     → viền nhạt, chưa tới lượt
+// Bản trước "đã qua chưa học" và "tương lai" trông gần giống nhau nên dải tuần không kể được
+// chuyện gì. Hôm nay có khung sáng bao quanh, dùng viền chứ không đổi cỡ ô — đổi cỡ làm cả dải
+// nhảy mỗi ngày.
 function Week({ days, count }) {
   const dat = count >= MUC_TIEU_TUAN;
+  const trangThai = (d) => (d.done ? "on" : d.future ? "next" : "past");
   return (
     <section className="wk">
-      <div className="wk-row" role="list" aria-label="Tuần này">
+      <p className={`wk-head${dat ? " ok" : ""}`}>
+        Tuần này <b>{count}/{MUC_TIEU_TUAN}</b>
+        {dat && " · đủ rồi"}
+      </p>
+      <div className="wk-row" role="list" aria-label={`Tuần này ${count} trên ${MUC_TIEU_TUAN} ngày`}>
         {days.map((d) => (
           <div
             key={d.at}
             role="listitem"
-            className={`wk-day${d.done ? " on" : ""}${d.today ? " now" : ""}${d.future ? " next" : ""}`}
+            className={`wk-day is-${trangThai(d)}${d.today ? " now" : ""}`}
           >
             <span className="wk-dot" />
             <span className="wk-lbl">{d.label}</span>
           </div>
         ))}
       </div>
-      <p className={`wk-sum${dat ? " ok" : ""}`}>
-        {dat
-          ? <>Đủ {MUC_TIEU_TUAN} ngày tuần này{count > MUC_TIEU_TUAN ? ` (${count})` : ""}</>
-          : <>{count}/{MUC_TIEU_TUAN} tuần này</>}
-      </p>
     </section>
   );
 }
@@ -156,7 +162,7 @@ export default function Today({
   if (doneToday) {
     return (
       <div className="screen screen-home">
-        <Header lesson={lesson} mute={mute} onToggleMute={toggleMute} />
+        <Header lesson={lesson} completed={completed} mute={mute} onToggleMute={toggleMute} />
 
         <section className="hero hero-done">
           <Mountain days={completed} total={TOTAL_DAYS} celebrate />
@@ -173,8 +179,10 @@ export default function Today({
         {pc}
         <LuyenThem onRoleplay={onRoleplay} onChat={onChat} />
 
+        {/* `completed + 1` chứ không phải `lesson.day`: hai số này phải luôn bằng nhau, nhưng đọc
+            từ cùng một nguồn thì chúng KHÔNG THỂ lệch. */}
         <button className="lnk lnk-next" onClick={() => { tick(); onStart(); }}>
-          Học trước: Bài {lesson.day} — {lesson.title} <IcoArrow size={15} />
+          Học trước: Bài {completed + 1} — {lesson.title} <IcoArrow size={15} />
         </button>
       </div>
     );
@@ -183,7 +191,7 @@ export default function Today({
   // ── CHƯA HỌC: một lời mời, một nút ──
   return (
     <div className="screen screen-home">
-      <Header lesson={lesson} mute={mute} onToggleMute={toggleMute} />
+      <Header lesson={lesson} completed={completed} mute={mute} onToggleMute={toggleMute} />
 
       <section className="hero">
         <p className="hero-kicker">Hôm nay chỉ cần 5 phút</p>

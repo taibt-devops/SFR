@@ -1350,18 +1350,28 @@ h1, h2 { margin: 0; line-height: 1.2; font-family: var(--font-display); }
 
 /* ── Ngọn núi ── */
 .nui { display: block; }
-.nui-mo { fill: none; stroke: var(--line-hot); stroke-width: 1.25; stroke-linejoin: round; opacity: 0.85; }
-.nui-than { fill: var(--surface-2); }
-.nui-vach line { stroke: var(--line-hot); stroke-width: 1; opacity: 0.6; }
-.nui-muc { stroke: var(--lime); stroke-width: 2; }
 .nui-dat { stroke: var(--line); stroke-width: 1; }
+/* Hai sắc xen kẽ để ĐẾM ĐƯỢC BẰNG MẮT là mình đã xếp bao nhiêu lớp. Một màu phẳng thì 5 ngày và
+   25 ngày nhìn y hệt nhau, chỉ khác chiều cao. */
+.nui-lop { stroke: none; }
+.nui-lop.a { fill: rgba(200, 250, 60, 0.42); }
+.nui-lop.b { fill: rgba(78, 240, 192, 0.34); }
+/* Lớp hôm nay sáng hẳn: đây là phần bạn vừa đặt lên. */
+.nui-lop.nay { fill: var(--lime); }
+.nui.is-celebrate .nui-lop.nay { filter: drop-shadow(0 0 7px rgba(200, 250, 60, 0.75)); }
 /* Chuyển động CHỈ ở khoảnh khắc hoàn thành — mọi màn khác đứng yên. */
-.nui.is-celebrate .nui-muc { animation: muc-len 0.8s cubic-bezier(0.2, 0.9, 0.25, 1); }
-@keyframes muc-len { from { transform: translateY(10px); } }
-@media (prefers-reduced-motion: reduce) { .nui.is-celebrate .nui-muc { animation: none; } }
+.nui.is-celebrate .nui-than { animation: nui-moc 0.75s cubic-bezier(0.2, 0.9, 0.25, 1); }
+@keyframes nui-moc { from { transform: translateY(9px) scaleY(0.88); transform-origin: 50% 100%; } }
+@media (prefers-reduced-motion: reduce) {
+  .nui.is-celebrate .nui-than { animation: none; }
+}
 
 /* ── Dải tuần ── */
 .wk { display: flex; flex-direction: column; gap: 8px; }
+.wk-head { font-size: 14px; color: var(--text2); margin: 0; }
+.wk-head b { color: var(--text); font-weight: 700; }
+.wk-head.ok, .wk-head.ok b { color: var(--lime); }
+
 .wk-row { display: flex; gap: 4px; }
 .wk-day {
   flex: 1 1 0; min-width: 0;
@@ -1370,23 +1380,21 @@ h1, h2 { margin: 0; line-height: 1.2; font-family: var(--font-display); }
   border: 1px solid transparent;   /* giữ sẵn chỗ để lúc viền lên layout không nhảy */
   border-radius: 12px;
 }
-.wk-dot {
-  width: 10px; height: 10px; border-radius: 50%;
-  background: var(--line-hot);
-}
-.wk-day.on .wk-dot { background: var(--lime); }
-.wk-day.next .wk-dot { background: none; border: 1px solid var(--line); }
+.wk-dot { width: 10px; height: 10px; border-radius: 50%; box-sizing: border-box; }
+/* Đã học */
+.wk-day.is-on .wk-dot { background: var(--lime); }
+/* Đã qua mà không học — chấm RỖNG mờ. Không đỏ, không cảnh báo: bỏ một ngày không mất gì cả. */
+.wk-day.is-past .wk-dot { background: none; border: 2px solid var(--line-hot); opacity: 0.75; }
+/* Chưa tới lượt — viền nhạt nhất. */
+.wk-day.is-next .wk-dot { background: none; border: 1px solid var(--line); }
+
 .wk-lbl { font-size: 11px; letter-spacing: 0.04em; color: var(--muted); }
-.wk-day.on .wk-lbl { color: var(--text2); }
-/* Hôm nay: viền + quầng, KHÔNG đổi kích thước — đổi kích thước làm cả dải xô lệch. */
+.wk-day.is-on .wk-lbl { color: var(--text2); }
 .wk-day.now {
   border-color: rgba(200, 250, 60, 0.45);
   box-shadow: 0 0 0 3px rgba(200, 250, 60, 0.08);
 }
 .wk-day.now .wk-lbl { color: var(--lime); font-weight: 600; }
-
-.wk-sum { font-size: 14px; color: var(--text2); margin: 0; }
-.wk-sum.ok { color: var(--lime); }
 
 /* ── Card mẫu câu ── */
 .pc {
@@ -1462,7 +1470,8 @@ h1, h2 { margin: 0; line-height: 1.2; font-family: var(--font-display); }
   transition: color 0.15s;
 }
 .lnk:hover { color: var(--lime); }
-.lnk-next { margin-top: 8px; }
+/* Chừa chỗ cho nút nổi (54px + lề 16px): tên bài dài sẽ xuống dòng thay vì chui xuống dưới FAB. */
+.lnk-next { margin-top: 8px; padding-right: 78px; text-align: left; justify-content: flex-start; }
 .lnk-warm { margin-top: -4px; }
 
 .h-title {

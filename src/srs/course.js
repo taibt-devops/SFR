@@ -116,6 +116,18 @@ export function saidFor(progress, day) {
   return progress?.[day]?.saidBest || null;
 }
 
+// Câu nói được của một ngày, ĐÃ KIỂM thuộc đúng bài đó.
+//
+// `recordSaid` đã chặn đường GHI, nhưng chặn ghi không dọn được thứ đã ghi: máy nào chạy bản cũ
+// thì trong localStorage vẫn còn câu sai, và màn chờ vẫn hiện mẫu câu hôm nay ghép với câu hôm
+// qua. Không thể đi migrate máy của từng người, nên kiểm luôn lúc ĐỌC — dữ liệu cũ tự lành ngay
+// lần mở app kế tiếp, và không cần nhớ chạy một bước dọn dẹp nào.
+export function saidOf(progress, lesson) {
+  const t = progress?.[lesson?.day]?.saidBest;
+  if (!t) return null;
+  return sentencesOf(lesson).map(normCau).includes(normCau(t)) ? t : null;
+}
+
 // Danh sách mẫu câu đã nắm cho màn "Tôi nói được gì rồi" — MỚI NHẤT LÊN ĐẦU (§4.3).
 export function learnedPatterns(lessons = [], progress = {}) {
   return lessons
@@ -125,10 +137,10 @@ export function learnedPatterns(lessons = [], progress = {}) {
       week: l.week,
       pat: l.pat,
       patVi: l.patVi,
-      said: saidFor(progress, l.day),
-      // Câu ví dụ để hiện cùng mẫu: ưu tiên câu CHÍNH BẠN nói được; chưa có thì lấy drill đầu
-      // của bài. Cả hai đều thuộc đúng bài này nên không bao giờ lệch mẫu.
-      example: saidFor(progress, l.day) || l.drills?.[0]?.en || null,
+      said: saidOf(progress, l),
+      // Câu ví dụ hiện cùng mẫu: ưu tiên câu CHÍNH BẠN nói được; chưa có thì lấy drill đầu của bài.
+      // Cả hai đều đi qua `saidOf` nên luôn thuộc đúng bài này.
+      example: saidOf(progress, l) || l.drills?.[0]?.en || null,
       doneAt: progress[l.day].doneAt || null,
       ext: !!progress[l.day].ext,
     }))
