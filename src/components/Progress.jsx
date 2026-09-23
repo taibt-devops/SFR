@@ -90,7 +90,8 @@ function WordList({ words }) {
               </div>
             )}
             {w.en && <div className="vocab-ex">{w.en}</div>}
-            <div className="learned-meta">{w.mine ? "Bạn tự thêm" : `Bài ${w.day}`} · ngày {w.day}</div>
+            {/* Với từ của bài thì "Bài 1" và "ngày 1" là CÙNG một con số — in cả hai chỉ tổ nhiễu. */}
+            <div className="learned-meta">{w.mine ? `Bạn tự thêm · ngày ${w.day}` : `Bài ${w.day}`}</div>
           </div>
         ))}
       </div>
