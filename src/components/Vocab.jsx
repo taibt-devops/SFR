@@ -22,7 +22,9 @@ function mucThuoc(w, state) {
 
 const LOC = [
   { ma: "all", nhan: "Tất cả" },
-  { ma: "on", nhan: "Đang ôn" },
+  // Nhóm này gồm cả "Mới" và "Đã thuộc", nên KHÔNG gọi là "đang ôn" — nhãn đó đã dùng cho
+  // riêng một mức thuộc, gọi trùng thì bộ lọc "Đang ôn" lại chứa dòng ghi "Đã thuộc".
+  { ma: "on", nhan: "Trong lịch ôn" },
   { ma: "cho", nhan: "Chưa luyện" },
   { ma: "mine", nhan: "Tôi tự thêm" },
 ];
@@ -59,7 +61,7 @@ export default function Vocab({ words, getState, onBack }) {
       </header>
 
       <h1 className="h-title" style={{ marginTop: 4 }}>
-        {dem.all} từ {dem.all > 0 && <span className="h-sub-inline">· {dem.on} đang ôn</span>}
+        {dem.all} từ {dem.all > 0 && <span className="h-sub-inline">· {dem.on} trong lịch ôn</span>}
       </h1>
 
       {dsach.length === 0 ? (
