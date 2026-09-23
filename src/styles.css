@@ -998,9 +998,9 @@ h1, h2 { margin: 0; line-height: 1.2; font-family: var(--font-display); }
   background: rgba(3, 5, 7, 0.76);
   backdrop-filter: blur(4px);
   display: flex; align-items: flex-end; justify-content: center;
-  animation: fade-in 0.2s ease;
+  /* KHÔNG mờ dần cả lớp này: tấm trượt nằm BÊN TRONG nó, nên nếu animation không chạy thì cả
+     tấm vô hình — tệ hơn hẳn hai chỗ kia. Chuyển động vào đã do sheet-up lo. */
 }
-@keyframes fade-in { from { opacity: 0; } }
 
 .sheet-card {
   width: 100%; max-width: 520px;
