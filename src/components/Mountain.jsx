@@ -17,8 +17,14 @@ const CAO_MIN = 30;    // ngày đầu tiên vẫn phải là một quả đồi
 const CAO_MAX = 112;   // trần cứng: 365 ngày cũng không được phá vỡ bố cục
 const DOC = 1.15;      // độ dốc — nửa chân núi = cao × DOC
 const DAY_NAY = 8;     // độ dày TỐI THIỂU của lớp hôm nay
+// Chân trời của chiều cao: MỘT NĂM, không phải độ dài khoá học.
+// Lấy mốc 72 ngày làm trần thì học xong khoá là núi ngừng cao — ngày 100 và ngày 365 trông y hệt
+// ngày 72, chỉ khác mật độ vạch. Thấy được điều đó nhờ trang `?debug=nui`; với một app nói "núi
+// của bạn không bao giờ thấp đi" thì việc nó NGỪNG LỚN phá hỏng đúng lời hứa ấy.
+const CHAN_TROI = 365;
 
 export default function Mountain({ days = 0, total = 72, celebrate = false }) {
+  void total; // giữ prop cho chỗ gọi cũ; chiều cao nay đo theo CHAN_TROI, không theo độ dài khoá
   const n = Math.max(0, Math.floor(days));
   if (n === 0) {
     return (
@@ -31,7 +37,7 @@ export default function Mountain({ days = 0, total = 72, celebrate = false }) {
 
   // Căn bậc hai: những ngày ĐẦU cho thấy thay đổi rõ nhất. Tăng tuyến tính thì 30 ngày đầu gần
   // như không nhúc nhích — đúng giai đoạn người học cần thấy mình đang đi lên.
-  const cao = Math.min(CAO_MAX, CAO_MIN + (CAO_MAX - CAO_MIN) * Math.sqrt(Math.min(1, n / total)));
+  const cao = Math.min(CAO_MAX, CAO_MIN + (CAO_MAX - CAO_MIN) * Math.sqrt(Math.min(1, n / CHAN_TROI)));
   // Khung CO THEO núi thay vì cao cố định, nếu không thì ngày thứ 2 là một quả đồi trôi giữa
   // khoảng trống — nhìn như lỗi hiển thị.
   const H = Math.ceil(cao) + LE;
