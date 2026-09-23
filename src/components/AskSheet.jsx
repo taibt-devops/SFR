@@ -8,14 +8,19 @@ import { useState } from "react";
 import SpeakCheck from "./SpeakCheck.jsx";
 import { speak } from "../utils/tts.js";
 
-function Line({ en, ipa, big }) {
+// Mồi cho lần đầu mở, khi chưa có lịch sử. Không có nó thì tấm trượt chỉ là một ô trống lửng lơ —
+// người mới không biết nên gõ ở "tầm" nào (một từ? cả đoạn?). Ba câu này trả lời điều đó mà không
+// cần một dòng hướng dẫn nào.
+const MOI = ["cho tôi xin hoá đơn", "cái này bao nhiêu tiền", "tôi đi lối nào ạ"];
+
+function Cau({ en, ipa, nho }) {
   return (
-    <div>
-      <p className={big ? "ask-en" : ""} style={big ? undefined : { margin: 0, fontSize: 17 }}>
-        {en}{" "}
-        <button className="btn-link" onClick={() => speak(en)} aria-label={"Nghe: " + en}>🔊</button>
-      </p>
-      {ipa && <p className="ask-ipa">{ipa}</p>}
+    <div className="ask-row">
+      <div>
+        <p className={nho ? "ask-en-sm" : "ask-en"}>{en}</p>
+        {ipa && <p className="ask-ipa">{ipa}</p>}
+      </div>
+      <button className="icon-btn" onClick={() => speak(en)} aria-label={"Nghe: " + en}>🔊</button>
     </div>
   );
 }
@@ -25,40 +30,61 @@ export default function AskSheet({
 }) {
   const [speaking, setSpeaking] = useState(false);
   const ok = !!q.trim();
+  // Chỉ mời gợi ý khi thật sự chưa có gì để hiện — đã có lịch sử thì lịch sử hữu ích hơn.
+  const goiY = !busy && !err && !answer && recents.length === 0;
 
   return (
     <div className="sheet-back" onClick={onClose}>
       <div className="sheet-card" onClick={(e) => e.stopPropagation()}>
-        <div className="eyebrow">Câu này tiếng Anh nói sao?</div>
+        <div className="sheet-grip" />
 
-        <div className="inp-row">
+        <div className="sheet-head">
+          <p className="sheet-title">Câu này tiếng Anh nói sao?</p>
+          <button className="icon-btn" onClick={onClose} aria-label="Đóng">✕</button>
+        </div>
+
+        <div className="ask-field">
           <input
-            className="inp"
             autoFocus
             placeholder="gõ câu tiếng Việt…"
             value={q}
             onChange={(e) => onQ(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && ok && !busy && onSubmit()}
           />
-          <button className="btn btn-sm" disabled={!ok || busy} onClick={onSubmit}>
+          <button className="ask-send" disabled={!ok || busy} onClick={onSubmit} aria-label="Hỏi">
             {busy ? "…" : "→"}
           </button>
         </div>
 
-        {busy && <p className="muted center pulse">Đang tìm cách nói tự nhiên nhất…</p>}
+        {busy && (
+          <div className="ask-skel" aria-label="Đang tìm cách nói tự nhiên nhất">
+            <i /><i /><i />
+          </div>
+        )}
 
         {err && (
           <div className="err">
             {err}
-            <div style={{ marginTop: 8 }}>
+            <div style={{ marginTop: 10 }}>
               <button className="btn btn-sm" onClick={onSubmit}>Thử lại</button>
             </div>
           </div>
         )}
 
+        {goiY && (
+          <>
+            <p className="ask-label">Thử hỏi</p>
+            <div className="chips">
+              {MOI.map((m) => (
+                <button key={m} className="chip chip-seed" onClick={() => onPick({ vi: m, a: null })}>{m}</button>
+              ))}
+            </div>
+          </>
+        )}
+
         {!busy && !err && !answer && recents.length > 0 && (
           <>
-            <p className="muted small" style={{ margin: "4px 0 0" }}>Đã hỏi gần đây</p>
+            <p className="ask-label">Đã hỏi gần đây</p>
             <div className="chips">
               {recents.map((r) => (
                 <button key={r.at} className="chip" onClick={() => onPick(r)} title={r.vi}>{r.vi}</button>
@@ -69,16 +95,16 @@ export default function AskSheet({
 
         {answer && !busy && (
           <>
-            <div className="card">
-              <Line en={answer.en} ipa={answer.ipa} big />
-              {answer.use && <p className="muted small" style={{ marginBottom: 0 }}>{answer.use}</p>}
-              {answer.say && <p className="small" style={{ color: "var(--ember)", margin: "6px 0 0" }}>🗣️ {answer.say}</p>}
+            <div className="ask-card">
+              <Cau en={answer.en} ipa={answer.ipa} />
+              {answer.use && <p className="ask-use">{answer.use}</p>}
+              {answer.say && <p className="ask-say">{answer.say}</p>}
               {answer.alt && (
                 <div className="ask-alt">
-                  <p className="muted small" style={{ margin: "0 0 4px" }}>
+                  <span className="ask-alt-tag">
                     Nói khác{answer.alt.note ? ` · ${answer.alt.note}` : ""}
-                  </p>
-                  <Line en={answer.alt.en} ipa={answer.alt.ipa} />
+                  </span>
+                  <Cau en={answer.alt.en} ipa={answer.alt.ipa} nho />
                 </div>
               )}
             </div>
@@ -92,10 +118,10 @@ export default function AskSheet({
                 prompt={<p className="muted small center">Nói lại câu trên.</p>}
               />
             ) : (
-              <div className="btn-row">
-                <button className="btn btn-primary" onClick={() => setSpeaking(true)}>🎙️ Nói thử</button>
-                <button className="btn" disabled={saved} onClick={onSave}>
-                  {saved ? "✓ Đã lưu" : "⭐ Lưu vào ôn tập"}
+              <div className="ask-acts">
+                <button className="ask-act ask-act-go" onClick={() => setSpeaking(true)}>🎙️ Nói thử</button>
+                <button className="ask-act ask-act-save" disabled={saved} onClick={onSave}>
+                  {saved ? "✓ Đã lưu" : "⭐ Lưu vào ôn"}
                 </button>
               </div>
             )}
@@ -107,8 +133,6 @@ export default function AskSheet({
             )}
           </>
         )}
-
-        <button className="btn" onClick={onClose}>Đóng</button>
       </div>
     </div>
   );

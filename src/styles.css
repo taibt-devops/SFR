@@ -969,69 +969,236 @@ h1, h2 { margin: 0; line-height: 1.2; font-family: var(--font-display); }
 }
 
 /* ── Hỏi đáp Việt→Anh (Phần 11) ───────────────────────────── */
+
+/* Nút nổi: quầng sáng nở ra khi rê chuột — thấy được mà không cướp sự chú ý khỏi bài học. */
 .fab {
   position: fixed;
   right: 16px;
   bottom: calc(16px + env(safe-area-inset-bottom, 0px));
   z-index: 60;
-  width: 52px;
-  height: 52px;
-  border: none;
-  border-radius: 50%;
+  width: 54px; height: 54px;
+  display: grid; place-items: center;
+  border: none; border-radius: 50%;
   background: var(--grad);
   color: var(--lime-ink);
-  font-size: 22px;
-  line-height: 1;
+  font-size: 23px; line-height: 1;
   cursor: pointer;
-  box-shadow: 0 10px 28px -8px rgba(0, 0, 0, 0.85);
+  box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.9);
+  transition: transform 0.16s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s;
 }
-.fab:active { transform: scale(0.94); }
+.fab:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 34px -10px rgba(0, 0, 0, 0.9), 0 0 0 7px rgba(200, 250, 60, 0.1);
+}
+.fab:active { transform: scale(0.92); }
 
-/* Tấm trượt: dính đáy trên điện thoại (ngón cái với tới), canh giữa trên màn rộng. */
+/* ── Tấm trượt ── */
 .sheet-back {
   position: fixed; inset: 0; z-index: 80;
-  background: rgba(4, 6, 8, 0.72);
-  backdrop-filter: blur(3px);
+  background: rgba(3, 5, 7, 0.76);
+  backdrop-filter: blur(4px);
   display: flex; align-items: flex-end; justify-content: center;
-  padding: 0;
+  animation: fade-in 0.2s ease;
 }
+@keyframes fade-in { from { opacity: 0; } }
+
 .sheet-card {
   width: 100%; max-width: 520px;
-  max-height: 88vh;
-  overflow-y: auto;
-  display: flex; flex-direction: column; gap: 10px;
-  background: var(--surface);
+  max-height: 90vh; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 12px;
+  /* Dải sáng mờ ở mép trên: tấm trượt "phát sáng" chỗ nó cắt vào màn, thay cho một đường viền phẳng. */
+  background:
+    radial-gradient(120% 60px at 50% 0, rgba(200, 250, 60, 0.09), transparent 70%),
+    var(--surface);
   border: 1px solid var(--line-hot);
-  border-radius: var(--radius) var(--radius) 0 0;
-  padding: 18px var(--gutter) calc(20px + env(safe-area-inset-bottom, 0px));
+  border-bottom: none;
+  border-radius: 22px 22px 0 0;
+  padding: 10px var(--gutter) calc(18px + env(safe-area-inset-bottom, 0px));
+  box-shadow: 0 -20px 60px -20px rgba(0, 0, 0, 0.9);
+  animation: sheet-up 0.3s cubic-bezier(0.2, 0.9, 0.25, 1);
 }
+@keyframes sheet-up { from { transform: translateY(30px); opacity: 0; } }
 @media (min-width: 560px) {
   .sheet-back { align-items: center; padding: 18px; }
-  .sheet-card { border-radius: var(--radius); }
+  .sheet-card { border: 1px solid var(--line-hot); border-radius: 22px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sheet-card, .sheet-back, .fab { animation: none; transition: none; }
 }
 
-.ask-en {
+/* Thanh vuốt: dấu hiệu quy ước cho biết đây là tấm trượt từ đáy, không phải hộp thoại giữa màn. */
+.sheet-grip {
+  width: 38px; height: 4px; flex: none;
+  margin: 2px auto 4px;
+  border-radius: 99px;
+  background: var(--line-hot);
+}
+
+.sheet-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.sheet-title {
   font-family: var(--font-display);
-  /* 1.25 chứ không 1.1: dấu tiếng Việt ở dòng dưới bị cắt mất chân ở 1.1 (đã dính một lần). */
-  font-size: 24px; line-height: 1.25;
+  font-size: 19px; font-weight: 700; line-height: 1.25;
   margin: 0;
 }
-.ask-ipa { color: var(--mint); font-size: 15px; margin: 4px 0 0; }
-.ask-alt {
-  border-top: 1px solid var(--line);
-  padding-top: 10px; margin-top: 2px;
-}
 
-.chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.chip {
-  font: inherit; font-size: 13px;
+/* Nút tròn nhỏ cho ✕ và 🔊 — 40px, vẫn đủ vùng chạm. */
+.icon-btn {
+  flex: none;
+  width: 40px; height: 40px;
+  display: grid; place-items: center;
+  font: inherit; font-size: 15px;
   color: var(--text2);
   background: var(--ink-2);
   border: 1px solid var(--line);
-  border-radius: 999px;
-  padding: 7px 12px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, transform 0.12s;
+}
+.icon-btn:hover { color: var(--text); border-color: var(--line-hot); }
+.icon-btn:active { transform: scale(0.9); }
+
+/* ── Ô hỏi ── */
+/* Quầng sáng khi focus thay cho viền 1px gắt: mềm hơn mà vẫn thấy rõ đang gõ ở đâu. */
+.ask-field {
+  display: flex; gap: 10px; align-items: center;
+  background: var(--ink-2);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 6px 6px 6px 16px;
+  transition: border-color 0.18s, box-shadow 0.18s;
+}
+.ask-field:focus-within {
+  border-color: rgba(200, 250, 60, 0.55);
+  box-shadow: 0 0 0 4px rgba(200, 250, 60, 0.1);
+}
+.ask-field input {
+  flex: 1; min-width: 0;
+  font: inherit;
+  font-size: 16px;   /* dưới 16px thì Safari iOS tự phóng to trang lúc focus */
+  color: var(--text);
+  background: none; border: none; outline: none;
+  padding: 12px 0;
+}
+.ask-field input::placeholder { color: var(--muted); }
+
+/* Nút gửi: hành động CHÍNH của màn này nên nó phải là thứ sáng nhất. Bản trước nó tối thui,
+   trông như đang bị khoá ngay cả khi bấm được. */
+.ask-send {
+  flex: none;
+  width: 46px; height: 46px;
+  display: grid; place-items: center;
+  border: none; border-radius: 13px;
+  background: var(--grad);
+  color: var(--lime-ink);
+  font-size: 19px; line-height: 1;
+  cursor: pointer;
+  transition: opacity 0.18s, transform 0.12s;
+}
+.ask-send:active:not(:disabled) { transform: scale(0.93); }
+.ask-send:disabled {
+  opacity: 0.35; cursor: default;
+  background: var(--line); color: var(--muted);
+}
+
+/* ── Gợi ý & lịch sử ── */
+.chips { display: flex; flex-wrap: wrap; gap: 7px; }
+.chip {
+  font: inherit; font-size: 13.5px;
+  color: var(--text2);
+  background: var(--ink-2);
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  padding: 9px 14px;
   cursor: pointer;
   max-width: 100%;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
 }
-.chip:hover { border-color: var(--line-hot); color: var(--text); }
+.chip:hover { color: var(--text); border-color: var(--line-hot); background: var(--surface-2); }
+/* Gợi ý mồi lúc chưa hỏi gì bao giờ — viền chanh mờ để phân biệt với lịch sử. */
+.chip-seed { border-color: rgba(200, 250, 60, 0.28); color: var(--text); }
+.chip-seed:hover { background: var(--lime-dim); border-color: rgba(200, 250, 60, 0.5); }
+
+.ask-label {
+  font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--muted);
+  margin: 2px 0 0;
+}
+
+/* ── Kết quả ── */
+.ask-card {
+  background: var(--ink-2);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex; flex-direction: column; gap: 10px;
+  animation: pop-in 0.26s cubic-bezier(0.2, 0.9, 0.25, 1);
+}
+@keyframes pop-in { from { transform: translateY(8px); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .ask-card { animation: none; } }
+
+.ask-row { display: flex; align-items: flex-start; gap: 10px; }
+.ask-row > div { flex: 1; min-width: 0; }
+.ask-en {
+  font-family: var(--font-display);
+  /* 1.25 chứ không 1.1: dấu tiếng Việt ở dòng dưới bị cắt mất chân ở 1.1 (đã dính một lần). */
+  font-size: 23px; font-weight: 700; line-height: 1.25;
+  margin: 0;
+}
+.ask-en-sm { font-size: 17px; font-weight: 600; line-height: 1.35; margin: 0; }
+.ask-ipa { color: var(--mint); font-size: 14.5px; margin: 5px 0 0; }
+.ask-use { color: var(--text2); font-size: 14.5px; margin: 0; }
+/* Mẹo phát âm hiếm khi xuất hiện, nên khi có thì phải nổi bật — vạch than bên trái. */
+.ask-say {
+  color: var(--ember); font-size: 14px; line-height: 1.5;
+  border-left: 2px solid var(--ember);
+  padding-left: 10px;
+  margin: 0;
+}
+.ask-alt { border-top: 1px dashed var(--line); padding-top: 12px; }
+.ask-alt-tag {
+  display: block;
+  font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 6px;
+}
+
+/* ── Hàng hành động ── */
+.ask-acts { display: flex; gap: 9px; }
+.ask-act {
+  flex: 1;
+  font: inherit; font-size: 15px; font-weight: 600;
+  min-height: 50px;
+  display: grid; place-items: center;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: transform 0.12s, border-color 0.15s, background 0.15s;
+}
+.ask-act:active:not(:disabled) { transform: scale(0.97); }
+.ask-act-go { border: none; background: var(--grad); color: var(--lime-ink); }
+.ask-act-save {
+  background: var(--surface-2);
+  border: 1px solid var(--line-hot);
+  color: var(--text);
+}
+.ask-act-save:hover:not(:disabled) { border-color: rgba(200, 250, 60, 0.45); }
+.ask-act-save:disabled {
+  background: var(--lime-dim);
+  border-color: rgba(200, 250, 60, 0.35);
+  color: var(--lime);
+  cursor: default;
+}
+
+/* Khung xương lúc chờ: nhịp chạy cho thấy máy đang làm việc, thay vì một dòng chữ đứng im. */
+.ask-skel { display: flex; flex-direction: column; gap: 10px; padding: 6px 2px; }
+.ask-skel i {
+  display: block; height: 13px; border-radius: 7px;
+  background: linear-gradient(90deg, var(--ink-2), var(--surface-2), var(--ink-2));
+  background-size: 220% 100%;
+  animation: skel 1.1s ease-in-out infinite;
+}
+.ask-skel i:nth-child(1) { height: 26px; width: 82%; }
+.ask-skel i:nth-child(2) { width: 54%; }
+.ask-skel i:nth-child(3) { width: 96%; }
+@keyframes skel { from { background-position: 180% 0; } to { background-position: -40% 0; } }
+@media (prefers-reduced-motion: reduce) { .ask-skel i { animation: none; } }

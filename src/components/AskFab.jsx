@@ -32,9 +32,9 @@ export default function AskFab({ onAddWord, onAttempt }) {
     setQ(""); setAnswer(null); setAskedVi(""); setErr(""); setSaved(false); setBusy(false);
   };
 
-  const submit = useCallback(() => {
-    const vi = q.trim();
+  const run = useCallback((vi) => {
     if (!vi) return;
+    setQ(vi);
     setBusy(true); setErr(""); setAnswer(null); setSaved(false);
     askEnglish(vi)
       .then((raw) => {
@@ -46,12 +46,16 @@ export default function AskFab({ onAddWord, onAttempt }) {
       })
       .catch((e) => setErr(loiTiengViet(e)))
       .finally(() => setBusy(false));
-  }, [q]);
-
-  // Mở lại câu cũ: câu trả lời đã nằm sẵn trong kho nên KHÔNG gọi mạng.
-  const pick = useCallback((r) => {
-    setQ(r.vi); setAnswer(r.a); setAskedVi(r.vi); setErr(""); setSaved(false);
   }, []);
+
+  const submit = useCallback(() => run(q.trim()), [run, q]);
+
+  // Bấm một ô gợi ý. Có sẵn câu trả lời trong kho (lịch sử) → hiện luôn, KHÔNG gọi mạng.
+  // Không có (gợi ý mồi lúc chưa hỏi gì) → hỏi luôn, đỡ bắt người ta bấm thêm một nhát nữa.
+  const pick = useCallback((r) => {
+    if (!r?.a) return run(r?.vi || "");
+    setQ(r.vi); setAnswer(r.a); setAskedVi(r.vi); setErr(""); setSaved(false);
+  }, [run]);
 
   // Lưu vào từ vựng của NGÀY đang học: câu tiếng Anh làm "từ", câu tiếng Việt làm nghĩa.
   // myWordItems dựng variants [{ vi, en }] nên lúc ôn sẽ hỏi ĐÚNG CHIỀU Việt→Anh.
