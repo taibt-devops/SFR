@@ -13,6 +13,22 @@ import { speak } from "../utils/tts.js";
 // cần một dòng hướng dẫn nào.
 const MOI = ["cho tôi xin hoá đơn", "cái này bao nhiêu tiền", "tôi đi lối nào ạ"];
 
+// Mũi tên và dấu ✕ vẽ bằng SVG chứ không dùng ký tự "→" / "✕": ký tự phụ thuộc vào font, nét
+// mảnh teo và lệch tâm trong nút 46px. SVG cho nét dày đều và canh giữa chuẩn ở mọi máy.
+// Các biểu tượng NỘI DUNG (🔊 🎙️ ⭐) vẫn để emoji cho đồng bộ với phần còn lại của app.
+const IcoSend = () => (
+  <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor"
+       strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M4 12h14M12 5l7 7-7 7" />
+  </svg>
+);
+const IcoClose = () => (
+  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+       strokeWidth="2.6" strokeLinecap="round" aria-hidden="true">
+    <path d="M6 6l12 12M18 6L6 18" />
+  </svg>
+);
+
 function Cau({ en, ipa, nho }) {
   return (
     <div className="ask-row">
@@ -40,7 +56,7 @@ export default function AskSheet({
 
         <div className="sheet-head">
           <p className="sheet-title">Câu này tiếng Anh nói sao?</p>
-          <button className="icon-btn" onClick={onClose} aria-label="Đóng">✕</button>
+          <button className="icon-btn" onClick={onClose} aria-label="Đóng"><IcoClose /></button>
         </div>
 
         <div className="ask-field">
@@ -51,8 +67,13 @@ export default function AskSheet({
             onChange={(e) => onQ(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && ok && !busy && onSubmit()}
           />
-          <button className="ask-send" disabled={!ok || busy} onClick={onSubmit} aria-label="Hỏi">
-            {busy ? "…" : "→"}
+          <button
+            className={busy ? "ask-send is-busy" : "ask-send"}
+            disabled={!ok || busy}
+            onClick={onSubmit}
+            aria-label="Hỏi"
+          >
+            {busy ? <span className="spin" /> : <IcoSend />}
           </button>
         </div>
 

@@ -983,7 +983,7 @@ h1, h2 { margin: 0; line-height: 1.2; font-family: var(--font-display); }
   color: var(--lime-ink);
   font-size: 23px; line-height: 1;
   cursor: pointer;
-  box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.9);
+  box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.4);
   transition: transform 0.16s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s;
 }
 .fab:hover {
@@ -1093,15 +1093,38 @@ h1, h2 { margin: 0; line-height: 1.2; font-family: var(--font-display); }
   border: none; border-radius: 13px;
   background: var(--grad);
   color: var(--lime-ink);
-  font-size: 19px; line-height: 1;
+  opacity: 1;               /* khai báo thẳng, đừng để trạng thái bật phụ thuộc vào một transition */
+  line-height: 1;
   cursor: pointer;
-  transition: opacity 0.18s, transform 0.12s;
+  /* Vệt sáng 1px mép trên: nút có độ dày thay vì một mảng màu phẳng dán lên nền. */
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  transition: background 0.18s, color 0.18s, transform 0.12s;
 }
 .ask-send:active:not(:disabled) { transform: scale(0.93); }
+/* Chưa gõ gì: MỘT cách làm dịu duy nhất. Bản trước chồng opacity 0.35 + nền xám + chữ xám
+   nên nút trông như lỗi vẽ chứ không như một nút đang đợi. */
 .ask-send:disabled {
-  opacity: 0.35; cursor: default;
-  background: var(--line); color: var(--muted);
+  cursor: default;
+  background: var(--surface-2);
+  color: var(--muted);
+  box-shadow: none;
 }
+/* Đang gửi thì nút VẪN sáng — nó đang làm việc, không phải đang bị khoá. Phải đặt SAU
+   quy tắc :disabled vì hai bên cùng độ ưu tiên. */
+.ask-send.is-busy:disabled {
+  background: var(--grad);
+  color: var(--lime-ink);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+.spin {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  border: 2.5px solid currentColor;
+  border-top-color: transparent;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
 
 /* ── Gợi ý & lịch sử ── */
 .chips { display: flex; flex-wrap: wrap; gap: 7px; }
@@ -1179,7 +1202,12 @@ h1, h2 { margin: 0; line-height: 1.2; font-family: var(--font-display); }
   transition: transform 0.12s, border-color 0.15s, background 0.15s;
 }
 .ask-act:active:not(:disabled) { transform: scale(0.97); }
-.ask-act-go { border: none; background: var(--grad); color: var(--lime-ink); }
+.ask-act-go {
+  border: none;
+  background: var(--grad);
+  color: var(--lime-ink);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
 .ask-act-save {
   background: var(--surface-2);
   border: 1px solid var(--line-hot);
