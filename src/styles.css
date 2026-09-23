@@ -1641,3 +1641,14 @@ button.btn, button.btn2, button.cta, button.ask-act, .btn-link, .lnk {
   margin: 0;
 }
 .warn svg { margin-top: 3px; }
+
+/* Nhịp nói — dòng phụ dưới kết quả chấm, chỉ hiện khi có chuyện để nói. */
+.nhip-noi {
+  font-size: 13.5px; line-height: 1.5;
+  color: var(--text2);
+  border-top: 1px dashed var(--line);
+  margin: 10px 0 0; padding-top: 8px;
+}
+.nhip-noi b { color: var(--ember); font-weight: 600; }
+.nhip-noi i { color: var(--muted); font-style: normal; }
+.nhip-wpm { color: var(--muted); }

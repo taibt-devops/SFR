@@ -409,7 +409,14 @@ async function handleTutor(body) {
   const { level = "A2", pattern = "", attempts = [], recentErrors = [] } = body;
   const lines = attempts
     .slice(0, 40)
-    .map((a, i) => `#${i + 1} | loại=${a.kind || "drill"} | đích: "${a.target}" | nghe được: "${a.heard}" | khớp ${Math.round((a.score || 0) * 100)}%`)
+    .map((a, i) => {
+      // Dấu vết âm thanh: từ nào bộ giải mã Whisper chật vật nhất (xem utils/speech.js).
+      // Đây KHÔNG phải điểm phát âm — prompt bên dưới nói rõ để Claude đừng kết luận quá tay.
+      const am = Array.isArray(a.am) && a.am.length
+        ? ` | máy nghe chật vật: ${a.am.map((x) => `${x.w} ${x.p}%`).join(", ")}`
+        : "";
+      return `#${i + 1} | loại=${a.kind || "drill"} | đích: "${a.target}" | nghe được: "${a.heard}" | khớp ${Math.round((a.score || 0) * 100)}%${am}`;
+    })
     .join("\n");
   const recent = recentErrors.map((e) => `${e.tag} (${e.count} lần)`).join(", ");
 
@@ -433,6 +440,12 @@ async function handleTutor(body) {
       "Thiếu hẳn một từ chức năng bắt buộc (a/an/the, is/are, to) ở nhiều câu KHÔNG phải lỗi nghe. " +
       "Một mình một câu thiếu 'a' thì CÓ THỂ do Whisper nuốt từ — cứ để yên, đừng ghi vào errors. " +
       "focus được phép nhắc trước một điều cần chú ý ngay cả khi chưa đủ bằng chứng để ghi thành lỗi. " +
+      // Có thêm dấu vết âm thanh thì phải nói luôn cách đọc nó, không thì Claude sẽ coi con số
+      // phần trăm là điểm phát âm và phán "bạn đọc sai từ X" — điều dữ liệu này KHÔNG chứng minh được.
+      '"máy nghe chật vật" là độ tin cậy của bộ giải mã, KHÔNG phải điểm phát âm: từ hiếm vẫn có thể ' +
+      "điểm thấp dù đọc chuẩn. Dùng nó làm GỢI Ý cho focus (ví dụ nhắc để ý âm cuối), TUYỆT ĐỐI không " +
+      "ghi thành lỗi ngữ pháp và không khẳng định người học phát âm sai một từ cụ thể. " +
+      "Chỉ khi CÙNG một từ chật vật ở NHIỀU câu thì mới đáng nhắc trong focus. " +
       'CHỈ trả JSON: {"errors":[{"tag":"..","vi":"..","evidence":"..","fix":".."}],"strengths":[".."],' +
       '"focus":"..","drills":[{"vi":"..","en":".."}],"hints":[{"n":1,"q":2,"why":".."}]}. ' +
       "tag CHỌN NGUYÊN VĂN từ: " +

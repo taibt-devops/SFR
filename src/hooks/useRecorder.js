@@ -1,7 +1,7 @@
 // Ghi âm → Whisper → transcript. Gom một chỗ vì cả nhịp 0, 4, 3 đều cần (trước đây mỗi màn tự chép
 // lại đoạn MediaRecorder này). Không có đường gõ chữ thay thế — đó là chủ ý (C10).
 import { useCallback, useEffect, useRef, useState } from "react";
-import { transcribe } from "../ai/whisper.js";
+import { transcribeDetail } from "../ai/whisper.js";
 import { loadDaily, saveDaily, bumpSpeak } from "../srs/daily.js";
 
 const MAX_SECONDS = 30; // câu drill ngắn; tự dừng để không ghi âm vô tận nếu quên bấm
@@ -80,9 +80,11 @@ export function useRecorder(onResult, { lang = "en", prompt = "", countSpeak = t
           return { url: URL.createObjectURL(blob), seconds, kbps: seconds ? Math.round((blob.size * 8) / (seconds * 1000)) : 0 };
         });
         try {
-          const text = await transcribe(blob, { lang, prompt });
+          // Lấy bản CHI TIẾT: cùng một lượt gọi, cùng độ trễ, nhưng kèm mốc thời gian và độ tin
+          // cậy từng từ. Trước đây ta vứt hết phần đó đi.
+          const chiTiet = await transcribeDetail(blob, { lang, prompt });
           setPhase("idle");
-          onResult?.(text, seconds);
+          onResult?.(chiTiet.text, seconds, chiTiet);
         } catch (e) {
           setError("Không nghe được: " + String(e.message || e));
           setPhase("error");

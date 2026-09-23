@@ -14,15 +14,18 @@ const TIMEOUT_MS = 25_000;
 // để đọc câu hỏi tiếng Việt. Model large-v3 là đa ngữ nên chỉ cần đổi tham số, không đổi container.
 // Đã đo trên cùng một audio: language=en trả "Cho Toi Zin Ho Don", language=vi trả "Cho tôi dân hồ
 // đoàn." — tham số có tác dụng thật, độ trễ không đổi (~375ms).
-export async function transcribe(blob, { lang = "en", prompt = "" } = {}) {
+// Gọi Whisper, trả CẢ chi tiết: từng từ có mốc thời gian + độ tin cậy của bộ giải mã.
+//
+// CẢNH BÁO về `p`: đó là độ tin cậy của BỘ GIẢI MÃ, KHÔNG phải điểm phát âm. Whisper đoán từ bằng
+// cả âm thanh lẫn ngữ cảnh, nên một từ dễ đoán vẫn được điểm cao dù đọc sai, và một từ hiếm vẫn có
+// thể điểm thấp dù đọc chuẩn. Dùng nó như TÍN HIỆU ("chỗ này máy nghe không chắc"), đừng bao giờ
+// hiển thị nó như PHÁN QUYẾT ("bạn phát âm sai từ này").
+export async function transcribeDetail(blob, { lang = "en", prompt = "" } = {}) {
   const fd = new FormData();
   fd.append("audio_file", blob, "speech.webm");
-  // vad_filter: cắt các đoạn không có tiếng nói trước khi giải mã. Với câu ngắn (mọi thứ trong app
-  // này đều ngắn) nó vừa nhanh hơn vừa giảm hẳn kiểu Whisper "bịa" chữ ra từ khoảng lặng.
-  // initial_prompt: mồi ngữ cảnh cho bộ giải mã. Với tiếng Việt đây là nút vặn có tác dụng nhất —
-  // không có nó, model hay trả chữ KHÔNG DẤU hoặc lẫn sang chính tả tiếng Anh.
+  // output=json + word_timestamps: cùng một lượt gọi, cùng độ trễ — chỉ là trước đây ta vứt đi.
   const url = WURL + (WURL.includes("?") ? "&" : "?") +
-    "encode=true&task=transcribe&vad_filter=true&output=txt" +
+    "encode=true&task=transcribe&vad_filter=true&word_timestamps=true&output=json" +
     "&language=" + encodeURIComponent(lang) +
     (prompt ? "&initial_prompt=" + encodeURIComponent(prompt) : "");
 
@@ -40,5 +43,30 @@ export async function transcribe(blob, { lang = "en", prompt = "" } = {}) {
     clearTimeout(timer);
   }
   if (!r.ok) throw new Error("whisper lỗi " + r.status);
-  return (await r.text()).trim();
+
+  const j = await r.json();
+  const segs = Array.isArray(j.segments) ? j.segments : [];
+  const words = [];
+  for (const sg of segs) {
+    for (const w of sg.words || []) {
+      const t = String(w.word || "").trim();
+      if (t) words.push({ w: t, start: w.start, end: w.end, p: w.probability ?? w.score ?? null });
+    }
+  }
+  // avg_logprob theo TỪNG SEGMENT; lấy trung bình có trọng số theo độ dài để khỏi lệch vì câu ngắn.
+  let tong = 0, dai = 0;
+  for (const sg of segs) {
+    const d = Math.max(0.01, (sg.end || 0) - (sg.start || 0));
+    if (typeof sg.avg_logprob === "number") { tong += sg.avg_logprob * d; dai += d; }
+  }
+  return {
+    text: String(j.text || "").trim(),
+    words,
+    avgLogprob: dai ? tong / dai : null,
+  };
+}
+
+// Hợp đồng CŨ giữ nguyên — sáu nơi đang gọi chỉ cần chữ, không cần đụng tới.
+export async function transcribe(blob, opts) {
+  return (await transcribeDetail(blob, opts)).text;
 }
