@@ -200,7 +200,31 @@ Anh. Xem JSON có đúng khuôn và `say` có bỏ trống khi không có bẫy 
 
 - **Không lịch sử vô hạn / không tìm kiếm trong lịch sử.** 20 câu gần nhất đủ; muốn nhớ lâu thì
   bấm ⭐, đó mới là đường đúng.
-- **Không hỏi đáp bằng giọng nói** (nói tiếng Việt để hỏi). Whisper đang chạy model tiếng Anh; thêm
-  nhận tiếng Việt là một cuộc phiêu lưu riêng.
+- ~~**Không hỏi đáp bằng giọng nói.**~~ **ĐÃ LÀM (2026-09-23).** Lý do gác ban đầu — "Whisper đang
+  chạy model tiếng Anh" — hoá ra **sai**: container chạy `large-v3`, vốn là model đa ngữ. Chỉ có
+  tham số `language=en` cắm cứng trong URL khiến nó chỉ nghe tiếng Anh. Đo trên cùng một audio:
+  `language=en` trả `Cho Toi Zin Ho Don`, `language=vi` trả `Cho tôi dân hồ đoàn.` — cùng ~375ms.
+  Xem §9.
 - **Không giải thích ngữ pháp dài.** `use` tối đa 2 câu. Muốn đào sâu thì đã có nhịp trò chuyện
   với gia sư.
+
+## 9. Nhập bằng giọng nói (bổ sung 2026-09-23)
+
+Nút mic nằm cạnh nút gửi. Nói tiếng Việt → Whisper (`language=vi`) → **điền vào ô**.
+
+Hai giới hạn có chủ ý:
+
+**Chỉ điền, KHÔNG tự gửi.** Độ chính xác của Whisper với tiếng Việt chưa được kiểm bằng giọng người
+thật. Tự gửi một câu nghe nhầm là vừa tốn một lượt gọi Claude vừa trả lời một câu không ai hỏi.
+Điền ra để mắt soát trước; mũi tên sáng lên ngay cạnh.
+
+**KHÔNG cộng vào "phút nói mỗi ngày"** (`countSpeak: false`). Nói tiếng Việt để tra một câu không
+phải luyện nói tiếng Anh. Cộng vào đó là tự thổi phồng đúng cái số liệu đáng lẽ phải trung thực
+nhất. Đã kiểm bằng đối chứng: nói ở nhịp luyện nói ghi `spk: 2` giây vào `phrasal-daily-v1`, nói
+vào ô hỏi đáp để nguyên `null`.
+
+**Ngoại lệ ghi vào danh sách "không đụng"**: `src/ai/whisper.js` nhận thêm tham số `lang` (mặc định
+`"en"`, mọi nơi gọi cũ không đổi hành vi). `src/hooks/useRecorder.js` nhận thêm `{ lang, countSpeak }`.
+
+**Chưa kiểm:** độ chính xác thật khi người Việt nói vào mic. Tôi không có mic, và audio thử nghiệm
+là giọng đọc tiếng Anh phát âm chữ Việt nên không phải phép thử công bằng.

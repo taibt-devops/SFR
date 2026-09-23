@@ -1073,3 +1073,16 @@ tra mạng · quá 20s → máy chủ không trả lời. Chuỗi kỹ thuật l
 
 **Chưa kiểm:** nút 🎙️ trong tấm trượt — headless không có mic. Chuỗi Whisper đã dùng chung với 4
 nhịp kia nên rủi ro thấp, nhưng chưa ai nói thật vào đó.
+
+## 11.8 Nhập bằng giọng nói (bổ sung 2026-09-23)
+
+Nút mic cạnh nút gửi: nói tiếng Việt → Whisper `language=vi` → điền vào ô, **không tự gửi**.
+
+Ban đầu mục này bị gác với lý do "Whisper đang chạy model tiếng Anh". Lý do đó **sai**: container
+chạy `large-v3` vốn đa ngữ; chỉ có `language=en` cắm cứng trong URL. Đổi một tham số là xong, không
+cần thêm model nào.
+
+`countSpeak: false` — nói tiếng Việt để tra KHÔNG cộng vào "phút nói mỗi ngày". Đã kiểm đối chứng:
+nhịp luyện nói ghi `spk: 2` vào `phrasal-daily-v1`, ô hỏi đáp để nguyên `null`.
+
+Chi tiết + phần chưa kiểm: [`docs/superpowers/specs/2026-09-23-hoi-dap-viet-anh-design.md`](docs/superpowers/specs/2026-09-23-hoi-dap-viet-anh-design.md) §9.

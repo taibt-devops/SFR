@@ -69,8 +69,12 @@
 - [x] **A8** gắn FAB mọi màn qua tầng `AppShell`
 - [x] **A9** nghiệm thu trình duyệt — FAB mọi màn, lưu đúng chiều, chip 0 request, 3 nhánh lỗi
 - [x] **A10** tài liệu + merge
-- [ ] **CHƯA verify nút 🎙️ trong tấm trượt** — headless không có mic. Dùng chung `SpeakCheck` với
-      4 nhịp kia nên rủi ro thấp, nhưng chưa ai nói thật vào đó.
+- [x] **A11** nhập câu hỏi bằng giọng nói (Whisper `language=vi`) — chỉ điền vào ô, không tự gửi;
+      không cộng vào "phút nói mỗi ngày" (đã kiểm đối chứng)
+- [ ] **CHƯA verify bằng mic thật** — headless không có mic. Hai chỗ cần bạn thử:
+      (1) nút 🎙️ trong tấm trượt (dùng chung `SpeakCheck` với 4 nhịp kia nên rủi ro thấp);
+      (2) **độ chính xác của Whisper khi nghe tiếng Việt** — chưa ai nói thật vào đó, audio thử
+      nghiệm là giọng tiếng Anh đọc chữ Việt nên không phải phép thử công bằng.
 
 ---
 
