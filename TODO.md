@@ -58,6 +58,20 @@
 - [x] **T12** báo cáo tuần ở ngày chốt tuần
 - [x] **T13** cập nhật tài liệu + deploy + nghiệm thu tay
 
+## Phần 11 — Hỏi đáp Việt→Anh (spec §11)
+
+> Thiết kế: [`docs/superpowers/specs/2026-09-23-hoi-dap-viet-anh-design.md`](docs/superpowers/specs/2026-09-23-hoi-dap-viet-anh-design.md)
+> Kế hoạch: [`docs/superpowers/plans/2026-09-23-hoi-dap-viet-anh.md`](docs/superpowers/plans/2026-09-23-hoi-dap-viet-anh.md)
+
+- [x] **A1–A2** `srs/ask.js` + 24 test (kho 20 câu, `sanitizeAnswer`)
+- [x] **A3–A4** route proxy `/ask` + client `ai/ask.js` (timeout 20s)
+- [x] **A5–A7** CSS + `AskSheet` (thuần vẽ) + `AskFab` (mạng/kho)
+- [x] **A8** gắn FAB mọi màn qua tầng `AppShell`
+- [x] **A9** nghiệm thu trình duyệt — FAB mọi màn, lưu đúng chiều, chip 0 request, 3 nhánh lỗi
+- [x] **A10** tài liệu + merge
+- [ ] **CHƯA verify nút 🎙️ trong tấm trượt** — headless không có mic. Dùng chung `SpeakCheck` với
+      4 nhịp kia nên rủi ro thấp, nhưng chưa ai nói thật vào đó.
+
 ---
 
 ## Giữ nguyên — KHÔNG đụng (spec §7.1)

@@ -60,6 +60,12 @@ BƯỚC 5 — CODE (chỉ sau khi 1–4 xong).
 | **C11** | **Không mất bài.** Bài gắn với *tiến độ*, không gắn ngày trên lịch. Nghỉ 5 ngày → quay lại vẫn vào bài kế tiếp. Chỉ **streak** gắn lịch. | §3.3 |
 | **C12** | **Streak chỉ đếm phần lõi (15').** Bỏ phần mở rộng: không nhắc, không cảnh báo, không mất streak. Không streak-freeze, không push notification. | §4.2 |
 
+> **Ngoại lệ có điều kiện của C10 (Phần 11 — hỏi đáp).** `AskSheet` có ô nhập chữ, nhưng ô đó nhận
+> **tiếng Việt** để ĐẶT CÂU HỎI, không phải tiếng Anh để thay cho việc nói — cùng lý do
+> `AddWordModal` được phép có ô chữ. Ranh giới này được giữ bằng CẤU TRÚC chứ không bằng lời khuyên:
+> không tồn tại đường nào từ ô nhập ghi ra một attempt; attempt chỉ sinh từ `SpeakCheck`.
+> Thêm bất kỳ đường tắt nào từ chữ gõ sang attempt là vi phạm C10.
+
 ## Product context
 
 - **Đối tượng**: một người duy nhất (chủ dự án) — kỹ sư DevOps người Việt, đọc/viết kỹ thuật ổn, yếu
@@ -100,6 +106,7 @@ BƯỚC 5 — CODE (chỉ sau khi 1–4 xong).
   - `srs/lesson.js` — máy trạng thái nhịp 15'/10'
   - `srs/course.js` — tiến độ khoá, streak, `saidBest`
   - `srs/tutor.js` — hồ sơ gia sư: attempt, gói phân tích, lỗi lặp, báo cáo tuần
+  - `srs/ask.js` — hỏi đáp Việt→Anh: kho 20 câu gần nhất + `sanitizeAnswer` (spec §11)
   - `data/course/` — nội dung 12 tuần
 
 ## localStorage keys
@@ -110,6 +117,7 @@ BƯỚC 5 — CODE (chỉ sau khi 1–4 xong).
 | `srf-reset-v1` | cờ dọn dữ liệu cũ, chạy 1 lần |
 | `srf-mywords-v1` | `srs/myWords.js` — từ người học tự thêm (spec §2.5) |
 | `srf-tutor-v1` | `srs/tutor.js` — hồ sơ năng lực + phân tích cuối buổi (spec §10) |
+| `srf-ask-v1` | `srs/ask.js` — 20 câu hỏi Việt→Anh gần nhất, kèm câu trả lời (spec §11) |
 | `phrasal-srs-v1` | `srs/storage.js` — **giữ nguyên tên key** |
 | `phrasal-speaking-v1` · `phrasal-coach-v1` · `phrasal-daily-v1` · `phrasal-warmup-v1` | các module nói, **giữ nguyên** |
 
