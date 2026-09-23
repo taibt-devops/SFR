@@ -1017,7 +1017,10 @@ h1, h2 { margin: 0; line-height: 1.2; font-family: var(--font-display); }
   box-shadow: 0 -20px 60px -20px rgba(0, 0, 0, 0.9);
   animation: sheet-up 0.3s cubic-bezier(0.2, 0.9, 0.25, 1);
 }
-@keyframes sheet-up { from { transform: translateY(30px); opacity: 0; } }
+/* CHỈ dịch chuyển, KHÔNG mờ từ 0: animation mang nội dung mà bắt đầu ở opacity 0 thì khi nó
+   không chạy (tab khôi phục từ bfcache, trình duyệt lạ, tiện ích chặn) người dùng nhìn thấy
+   một tấm trắng trơn. Chuyển động vẫn đọc ra "trượt lên" mà không có cửa nào dẫn tới vô hình. */
+@keyframes sheet-up { from { transform: translateY(30px); } }
 @media (min-width: 560px) {
   .sheet-back { align-items: center; padding: 18px; }
   .sheet-card { border: 1px solid var(--line-hot); border-radius: 22px; }
@@ -1134,7 +1137,8 @@ h1, h2 { margin: 0; line-height: 1.2; font-family: var(--font-display); }
   display: flex; flex-direction: column; gap: 10px;
   animation: pop-in 0.26s cubic-bezier(0.2, 0.9, 0.25, 1);
 }
-@keyframes pop-in { from { transform: translateY(8px); opacity: 0; } }
+/* Cùng lý do với sheet-up: không bao giờ để nội dung bắt đầu ở opacity 0. */
+@keyframes pop-in { from { transform: translateY(8px); } }
 @media (prefers-reduced-motion: reduce) { .ask-card { animation: none; } }
 
 .ask-row { display: flex; align-items: flex-start; gap: 10px; }
