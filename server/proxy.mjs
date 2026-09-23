@@ -332,16 +332,30 @@ async function handlePatterns(body) {
 async function handleScenario(body) {
   const { topic = "", level = "A2" } = body;
   const out = await callClaude({
-    maxTokens: 300,
+    // 300 token KHÔNG đủ cho JSON bốn trường tiếng Việt: đo thật thì 3/5 lượt bị cắt giữa chừng,
+    // JSON hỏng, hàm này trả scenario=null kèm HTTP 200 — và màn đóng vai đứng im vĩnh viễn.
+    // Vừa nới hạn mức, vừa BẮT NGẮN từng trường: mô tả vai dài 200 ký tự thì trên điện thoại cũng
+    // không ai đọc.
+    maxTokens: 700,
     system:
       'Bạn thiết kế MỘT tình huống đóng vai (roleplay) để luyện NÓI tiếng Anh xoay quanh chủ đề "' + topic + '" (CEFR ' + level + "). " +
-      "Tình huống phải ĐỜI THƯỜNG, cụ thể, có nhiệm vụ/xung đột nhỏ buộc học viên phải nói nhiều và dùng từ vựng của chủ đề. " +
-      'CHỈ trả JSON: {"title":"tên tình huống ngắn (tiếng Việt)","aiRole":"vai của AI — người đối thoại (mô tả tiếng Việt)",' +
-      '"userRole":"vai học viên (tiếng Việt)","goal":"mục tiêu học viên phải đạt — cụ thể, đo được (tiếng Việt)"}. KHÔNG thêm gì ngoài JSON.',
+      "Tình huống phải ĐỜI THƯỜNG, cụ thể, có nhiệm vụ hoặc xung đột nhỏ buộc học viên phải nói nhiều. " +
+      'CHỈ trả JSON: {"title":"..","aiRole":"..","userRole":"..","goal":".."}. Tất cả bằng tiếng Việt. ' +
+      "NGẮN: title tối đa 8 từ, aiRole và userRole mỗi vai tối đa 15 từ, goal tối đa 25 từ. " +
+      "goal phải cụ thể và đo được (làm xong thì biết ngay là xong). KHÔNG thêm gì ngoài JSON.",
     messages: [{ role: "user", content: "chủ đề: " + topic }],
   });
   const o = extractJsonObject(out) || {};
-  return { scenario: o.title && o.aiRole && o.userRole && o.goal ? { id: "gen", ...o } : null };
+  const du = o.title && o.aiRole && o.userRole && o.goal;
+  // Nói rõ vì sao hỏng thay vì trả null im lặng — client phân biệt được "model trả rác" với
+  // "mạng hỏng", và log của proxy có dấu vết để lần sau còn tra.
+  if (!du) {
+    console.warn("⚠ /scenario: JSON không đủ trường, có thể bị cắt. Dài " + out.length + " ký tự.");
+    const err = new Error("Claude trả tình huống không đủ trường (có thể bị cắt) — thử lại.");
+    err.status = 502;
+    throw err;
+  }
+  return { scenario: { id: "gen", ...o } };
 }
 
 // ── TTS (Kokoro local) ──
