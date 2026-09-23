@@ -102,9 +102,19 @@ export default function AskSheet({
           </button>
         </div>
 
+        {mic?.phase === "error" && (
+          <div className="err">
+            {mic.error}
+            <div style={{ marginTop: 10 }}>
+              <button className="btn btn-sm" onClick={mic.reset}>Bỏ qua, tôi gõ</button>
+            </div>
+          </div>
+        )}
+
         {/* Transcript sai thì phải biết sai ở đâu: mic thu tệ, hay thu tốt mà model nghe nhầm.
-            Nghe lại bản ghi là cách duy nhất phân biệt — và hai nguyên nhân đó sửa khác hẳn nhau. */}
-        {mic?.clip && !ghiAm && !dangNghe && mic.phase !== "error" && (
+            Nghe lại bản ghi là cách duy nhất phân biệt — hai nguyên nhân đó sửa khác hẳn nhau.
+            PHẢI hiện cả khi đang báo lỗi: đó chính là lúc cần nó nhất. */}
+        {mic?.clip && !ghiAm && !dangNghe && (
           <p className="ask-label" style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <button className="btn-link" onClick={() => new Audio(mic.clip.url).play()}>
               🔊 Nghe lại bản ghi
@@ -113,15 +123,6 @@ export default function AskSheet({
               {mic.clip.seconds}s · {mic.clip.kbps} kbps
             </span>
           </p>
-        )}
-
-        {mic?.phase === "error" && (
-          <div className="err">
-            {mic.error}
-            <div style={{ marginTop: 10 }}>
-              <button className="btn btn-sm" onClick={mic.reset}>Bỏ qua, tôi gõ</button>
-            </div>
-          </div>
         )}
 
         {busy && (

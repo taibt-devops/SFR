@@ -4,6 +4,7 @@ import { useCallback, useState } from "react";
 import AskSheet from "./AskSheet.jsx";
 import { askEnglish } from "../ai/ask.js";
 import { useRecorder } from "../hooks/useRecorder.js";
+import { isAsrJunk } from "../utils/viAsr.js";
 import { addAsk, loadAsk, recentAsks, sanitizeAnswer, saveAsk } from "../srs/ask.js";
 
 // Người học không cần biết "proxy lỗi 500" nghĩa là gì — họ cần biết NÊN LÀM GÌ tiếp.
@@ -20,9 +21,15 @@ function loiTiengViet(e) {
 // Câu mồi cho bộ giải mã Whisper. Nó KHÔNG phải lệnh — model chỉ coi đây là "đoạn văn ngay trước
 // đoạn sắp nghe", nên nó bắt chước kiểu chữ trong này: tiếng Việt, có dấu đầy đủ, câu hỏi đời
 // thường. Không có mồi, model hay trả chữ không dấu hoặc lẫn sang chính tả tiếng Anh.
+// CỐ Ý không đặt vào đây mấy câu gợi ý mồi của tấm trượt: đo được là khi câu nói TRÙNG với câu
+// trong mồi thì model chép lại nguyên văn — nhìn như nhận dạng hoàn hảo trong khi nó chỉ đang
+// nhại. Mồi chỉ nên định KIỂU CHỮ (tiếng Việt có dấu, câu hỏi đời thường), không mớm nội dung.
 const MOI_VI =
-  "Đây là câu hỏi tiếng Việt thường ngày, viết có dấu đầy đủ. " +
-  "Ví dụ: Cho tôi xin hoá đơn. Cái này bao nhiêu tiền? Tôi đi lối nào ạ? Mấy giờ mở cửa?";
+  "Sau đây là một câu hỏi ngắn bằng tiếng Việt thường ngày, viết có dấu đầy đủ và đúng chính tả.";
+
+// Ghi dưới 1 giây gần như chắc chắn là bấm nhầm hoặc chưa kịp nói. Whisper không im lặng khi
+// không nghe ra gì — nó bịa (xem utils/viAsr.js), nên chặn từ đây rẻ hơn là đi lọc kết quả.
+const TOI_THIEU_GIAY = 1;
 
 export default function AskFab({ onAddWord, onAttempt }) {
   const [open, setOpen] = useState(false);
@@ -65,10 +72,28 @@ export default function AskFab({ onAddWord, onAttempt }) {
   // mắt soát trước, mũi tên sáng lên ngay cạnh — sửa rồi bấm là xong.
   //
   // countSpeak: false — nói tiếng Việt để tra KHÔNG phải luyện nói tiếng Anh (xem useRecorder).
-  const mic = useRecorder(
-    useCallback((text) => { if (text) setQ(text); }, []),
-    { lang: "vi", prompt: MOI_VI, countSpeak: false }
-  );
+  //
+  // Và chỉ điền khi kết quả CÓ THỂ TIN. Dán một câu bịa vào ô còn tệ hơn báo không nghe được:
+  // người dùng tưởng máy nghe ra thật rồi đi hỏi một câu mình chưa từng nói.
+  const [micErr, setMicErr] = useState("");
+  const ngheXong = useCallback((text, seconds) => {
+    if (seconds < TOI_THIEU_GIAY) {
+      setMicErr("Đoạn ghi quá ngắn. Bấm mic, nói cả câu, rồi bấm dừng.");
+      return;
+    }
+    if (isAsrJunk(text)) {
+      setMicErr("Chưa nghe rõ. Nói chậm và gần mic hơn một chút, hoặc gõ tay cũng được.");
+      return;
+    }
+    setMicErr("");
+    setQ(text);
+  }, []);
+
+  const micGoc = useRecorder(ngheXong, { lang: "vi", prompt: MOI_VI, countSpeak: false });
+  const mic = {
+    ...micGoc,
+    start: () => { setMicErr(""); return micGoc.start(); },
+  };
 
   // Bấm một ô gợi ý. Có sẵn câu trả lời trong kho (lịch sử) → hiện luôn, KHÔNG gọi mạng.
   // Không có (gợi ý mồi lúc chưa hỏi gì) → hỏi luôn, đỡ bắt người ta bấm thêm một nhát nữa.
@@ -103,7 +128,7 @@ export default function AskFab({ onAddWord, onAttempt }) {
       onPick={pick}
       onSave={save}
       saved={saved}
-      mic={mic}
+      mic={micErr ? { ...mic, phase: "error", error: micErr, reset: () => setMicErr("") } : mic}
       onAttempt={onAttempt}
       onClose={() => { setOpen(false); mic.stop(); reset(); }}
     />
