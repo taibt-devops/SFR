@@ -10,10 +10,15 @@ const WURL = import.meta.env.VITE_WHISPER_URL || "/whisper/asr";
 // màn hình đứng ở "Đang nghe bạn nói…" vĩnh viễn — người học không có đường nào thoát.
 const TIMEOUT_MS = 25_000;
 
-export async function transcribe(blob) {
+// `lang` mặc định "en" — mọi nhịp luyện nói giữ nguyên hành vi cũ. Ô hỏi đáp (Phần 11) truyền "vi"
+// để đọc câu hỏi tiếng Việt. Model large-v3 là đa ngữ nên chỉ cần đổi tham số, không đổi container.
+// Đã đo trên cùng một audio: language=en trả "Cho Toi Zin Ho Don", language=vi trả "Cho tôi dân hồ
+// đoàn." — tham số có tác dụng thật, độ trễ không đổi (~375ms).
+export async function transcribe(blob, { lang = "en" } = {}) {
   const fd = new FormData();
   fd.append("audio_file", blob, "speech.webm");
-  const url = WURL + (WURL.includes("?") ? "&" : "?") + "encode=true&task=transcribe&language=en&output=txt";
+  const url = WURL + (WURL.includes("?") ? "&" : "?") +
+    "encode=true&task=transcribe&language=" + encodeURIComponent(lang) + "&output=txt";
 
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS);

@@ -1116,6 +1116,36 @@ h1, h2 { margin: 0; line-height: 1.2; font-family: var(--font-display); }
   color: var(--lime-ink);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
+/* Nút mic: đề lặng hơn nút gửi (viền, không nền) — nó là cách nhập thay thế, không phải
+   hành động chính. Hai nút cùng màu thì mắt không biết bấm cái nào trước. */
+.ask-mic {
+  flex: none;
+  width: 46px; height: 46px;
+  display: grid; place-items: center;
+  border: 1px solid var(--line-hot);
+  border-radius: 13px;
+  background: var(--ink-2);
+  color: var(--text2);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s, transform 0.12s;
+}
+.ask-mic:hover:not(:disabled) { color: var(--text); border-color: var(--lime); }
+.ask-mic:active:not(:disabled) { transform: scale(0.93); }
+.ask-mic:disabled { opacity: 0.4; cursor: default; }
+/* Đang ghi: đỏ + nhịp đập — phải thấy rõ mic ĐANG MỞ, không để ai lỡ để nó chạy. */
+.ask-mic.is-rec {
+  background: var(--red);
+  border-color: var(--red);
+  color: #fff;
+  animation: micbeat 1.1s ease-in-out infinite;
+}
+@keyframes micbeat {
+  50% { box-shadow: 0 0 0 7px rgba(255, 95, 86, 0.16); }
+}
+.ask-field.is-rec { border-color: rgba(255, 95, 86, 0.5); box-shadow: 0 0 0 4px rgba(255, 95, 86, 0.1); }
+.ask-field input:disabled { color: var(--muted); -webkit-text-fill-color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { .ask-mic.is-rec { animation: none; } }
+
 .spin {
   width: 18px; height: 18px;
   border-radius: 50%;

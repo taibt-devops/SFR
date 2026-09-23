@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react";
 import AskSheet from "./AskSheet.jsx";
 import { askEnglish } from "../ai/ask.js";
+import { useRecorder } from "../hooks/useRecorder.js";
 import { addAsk, loadAsk, recentAsks, sanitizeAnswer, saveAsk } from "../srs/ask.js";
 
 // Người học không cần biết "proxy lỗi 500" nghĩa là gì — họ cần biết NÊN LÀM GÌ tiếp.
@@ -50,6 +51,18 @@ export default function AskFab({ onAddWord, onAttempt }) {
 
   const submit = useCallback(() => run(q.trim()), [run, q]);
 
+  // Mic: đọc câu hỏi bằng TIẾNG VIỆT thay vì gõ. Whisper large-v3 đa ngữ nên chỉ cần đổi `lang`.
+  //
+  // CHỈ điền vào ô, KHÔNG tự gửi luôn. Whisper nghe tiếng Việt chưa chắc chuẩn; tự gửi một câu
+  // nghe nhầm là vừa tốn một lượt gọi Claude vừa trả lời sai câu người ta không hỏi. Điền ra để
+  // mắt soát trước, mũi tên sáng lên ngay cạnh — sửa rồi bấm là xong.
+  //
+  // countSpeak: false — nói tiếng Việt để tra KHÔNG phải luyện nói tiếng Anh (xem useRecorder).
+  const mic = useRecorder(
+    useCallback((text) => { if (text) setQ(text); }, []),
+    { lang: "vi", countSpeak: false }
+  );
+
   // Bấm một ô gợi ý. Có sẵn câu trả lời trong kho (lịch sử) → hiện luôn, KHÔNG gọi mạng.
   // Không có (gợi ý mồi lúc chưa hỏi gì) → hỏi luôn, đỡ bắt người ta bấm thêm một nhát nữa.
   const pick = useCallback((r) => {
@@ -83,8 +96,9 @@ export default function AskFab({ onAddWord, onAttempt }) {
       onPick={pick}
       onSave={save}
       saved={saved}
+      mic={mic}
       onAttempt={onAttempt}
-      onClose={() => { setOpen(false); reset(); }}
+      onClose={() => { setOpen(false); mic.stop(); reset(); }}
     />
   );
 }

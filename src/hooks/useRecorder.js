@@ -6,7 +6,11 @@ import { loadDaily, saveDaily, bumpSpeak } from "../srs/daily.js";
 
 const MAX_SECONDS = 30; // câu drill ngắn; tự dừng để không ghi âm vô tận nếu quên bấm
 
-export function useRecorder(onResult) {
+// `lang`: ngôn ngữ đưa cho Whisper. Mặc định "en" nên mọi nhịp luyện nói không đổi gì.
+// `countSpeak`: có cộng vào "phút nói mỗi ngày" không. Ô hỏi đáp truyền false — nói TIẾNG VIỆT
+// để tra một câu KHÔNG phải luyện nói tiếng Anh. Cộng vào đó là tự thổi phồng đúng cái số liệu
+// đáng lẽ phải trung thực nhất.
+export function useRecorder(onResult, { lang = "en", countSpeak = true } = {}) {
   const [phase, setPhase] = useState("idle"); // idle | recording | thinking | error
   const [error, setError] = useState("");
   const recRef = useRef(null);
@@ -39,10 +43,14 @@ export function useRecorder(onResult) {
       rec.onstop = async () => {
         cleanup();
         const seconds = Math.round((Date.now() - startedAtRef.current) / 1000);
-        saveDaily(bumpSpeak(loadDaily(), seconds, Date.now())); // phút nói/ngày cho biểu đồ 14 ngày
+        // phút nói/ngày cho biểu đồ 14 ngày — chỉ tính khi thật sự đang luyện nói tiếng Anh
+        if (countSpeak) saveDaily(bumpSpeak(loadDaily(), seconds, Date.now()));
         setPhase("thinking");
         try {
-          const text = await transcribe(new Blob(chunksRef.current, { type: rec.mimeType || "audio/webm" }));
+          const text = await transcribe(
+            new Blob(chunksRef.current, { type: rec.mimeType || "audio/webm" }),
+            { lang }
+          );
           setPhase("idle");
           onResult?.(text, seconds);
         } catch (e) {
@@ -59,7 +67,7 @@ export function useRecorder(onResult) {
       setError("Không mở được mic: " + String(e.message || e));
       setPhase("error");
     }
-  }, [cleanup, onResult, stop]);
+  }, [cleanup, onResult, stop, lang, countSpeak]);
 
   const reset = useCallback(() => {
     setError("");

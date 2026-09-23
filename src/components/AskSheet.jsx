@@ -28,6 +28,18 @@ const IcoClose = () => (
     <path d="M6 6l12 12M18 6L6 18" />
   </svg>
 );
+const IcoMic = () => (
+  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
+       strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <rect x="9" y="3" width="6" height="11" rx="3" />
+    <path d="M5 11a7 7 0 0 0 14 0M12 18v3" />
+  </svg>
+);
+const IcoStop = () => (
+  <svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor" aria-hidden="true">
+    <rect x="6" y="6" width="12" height="12" rx="2.5" />
+  </svg>
+);
 
 function Cau({ en, ipa, nho }) {
   return (
@@ -42,10 +54,12 @@ function Cau({ en, ipa, nho }) {
 }
 
 export default function AskSheet({
-  q, onQ, onSubmit, busy, err, answer, recents, onPick, onSave, saved, onAttempt, onClose,
+  q, onQ, onSubmit, busy, err, answer, recents, onPick, onSave, saved, onAttempt, onClose, mic,
 }) {
   const [speaking, setSpeaking] = useState(false);
   const ok = !!q.trim();
+  const ghiAm = mic?.phase === "recording";
+  const dangNghe = mic?.phase === "thinking";
   // Chỉ mời gợi ý khi thật sự chưa có gì để hiện — đã có lịch sử thì lịch sử hữu ích hơn.
   const goiY = !busy && !err && !answer && recents.length === 0;
 
@@ -59,23 +73,43 @@ export default function AskSheet({
           <button className="icon-btn" onClick={onClose} aria-label="Đóng"><IcoClose /></button>
         </div>
 
-        <div className="ask-field">
+        <div className={ghiAm ? "ask-field is-rec" : "ask-field"}>
           <input
             autoFocus
-            placeholder="gõ câu tiếng Việt…"
+            placeholder={ghiAm ? "đang nghe bạn nói…" : dangNghe ? "đang chuyển thành chữ…" : "gõ hoặc bấm mic…"}
             value={q}
+            disabled={ghiAm || dangNghe}
             onChange={(e) => onQ(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && ok && !busy && onSubmit()}
           />
+          {mic && (
+            <button
+              className={ghiAm ? "ask-mic is-rec" : "ask-mic"}
+              disabled={busy || dangNghe}
+              onClick={ghiAm ? mic.stop : mic.start}
+              aria-label={ghiAm ? "Dừng ghi âm" : "Đọc câu hỏi bằng tiếng Việt"}
+            >
+              {dangNghe ? <span className="spin" /> : ghiAm ? <IcoStop /> : <IcoMic />}
+            </button>
+          )}
           <button
             className={busy ? "ask-send is-busy" : "ask-send"}
-            disabled={!ok || busy}
+            disabled={!ok || busy || ghiAm || dangNghe}
             onClick={onSubmit}
             aria-label="Hỏi"
           >
             {busy ? <span className="spin" /> : <IcoSend />}
           </button>
         </div>
+
+        {mic?.phase === "error" && (
+          <div className="err">
+            {mic.error}
+            <div style={{ marginTop: 10 }}>
+              <button className="btn btn-sm" onClick={mic.reset}>Bỏ qua, tôi gõ</button>
+            </div>
+          </div>
+        )}
 
         {busy && (
           <div className="ask-skel" aria-label="Đang tìm cách nói tự nhiên nhất">
