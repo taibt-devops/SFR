@@ -102,6 +102,19 @@ export default function AskSheet({
           </button>
         </div>
 
+        {/* Transcript sai thì phải biết sai ở đâu: mic thu tệ, hay thu tốt mà model nghe nhầm.
+            Nghe lại bản ghi là cách duy nhất phân biệt — và hai nguyên nhân đó sửa khác hẳn nhau. */}
+        {mic?.clip && !ghiAm && !dangNghe && mic.phase !== "error" && (
+          <p className="ask-label" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <button className="btn-link" onClick={() => new Audio(mic.clip.url).play()}>
+              🔊 Nghe lại bản ghi
+            </button>
+            <span style={{ textTransform: "none", letterSpacing: 0 }}>
+              {mic.clip.seconds}s · {mic.clip.kbps} kbps
+            </span>
+          </p>
+        )}
+
         {mic?.phase === "error" && (
           <div className="err">
             {mic.error}

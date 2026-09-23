@@ -14,11 +14,17 @@ const TIMEOUT_MS = 25_000;
 // để đọc câu hỏi tiếng Việt. Model large-v3 là đa ngữ nên chỉ cần đổi tham số, không đổi container.
 // Đã đo trên cùng một audio: language=en trả "Cho Toi Zin Ho Don", language=vi trả "Cho tôi dân hồ
 // đoàn." — tham số có tác dụng thật, độ trễ không đổi (~375ms).
-export async function transcribe(blob, { lang = "en" } = {}) {
+export async function transcribe(blob, { lang = "en", prompt = "" } = {}) {
   const fd = new FormData();
   fd.append("audio_file", blob, "speech.webm");
+  // vad_filter: cắt các đoạn không có tiếng nói trước khi giải mã. Với câu ngắn (mọi thứ trong app
+  // này đều ngắn) nó vừa nhanh hơn vừa giảm hẳn kiểu Whisper "bịa" chữ ra từ khoảng lặng.
+  // initial_prompt: mồi ngữ cảnh cho bộ giải mã. Với tiếng Việt đây là nút vặn có tác dụng nhất —
+  // không có nó, model hay trả chữ KHÔNG DẤU hoặc lẫn sang chính tả tiếng Anh.
   const url = WURL + (WURL.includes("?") ? "&" : "?") +
-    "encode=true&task=transcribe&language=" + encodeURIComponent(lang) + "&output=txt";
+    "encode=true&task=transcribe&vad_filter=true&output=txt" +
+    "&language=" + encodeURIComponent(lang) +
+    (prompt ? "&initial_prompt=" + encodeURIComponent(prompt) : "");
 
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS);

@@ -17,6 +17,13 @@ function loiTiengViet(e) {
   return "Chưa hỏi được, thử lại nhé. (" + raw + ")";
 }
 
+// Câu mồi cho bộ giải mã Whisper. Nó KHÔNG phải lệnh — model chỉ coi đây là "đoạn văn ngay trước
+// đoạn sắp nghe", nên nó bắt chước kiểu chữ trong này: tiếng Việt, có dấu đầy đủ, câu hỏi đời
+// thường. Không có mồi, model hay trả chữ không dấu hoặc lẫn sang chính tả tiếng Anh.
+const MOI_VI =
+  "Đây là câu hỏi tiếng Việt thường ngày, viết có dấu đầy đủ. " +
+  "Ví dụ: Cho tôi xin hoá đơn. Cái này bao nhiêu tiền? Tôi đi lối nào ạ? Mấy giờ mở cửa?";
+
 export default function AskFab({ onAddWord, onAttempt }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
@@ -60,7 +67,7 @@ export default function AskFab({ onAddWord, onAttempt }) {
   // countSpeak: false — nói tiếng Việt để tra KHÔNG phải luyện nói tiếng Anh (xem useRecorder).
   const mic = useRecorder(
     useCallback((text) => { if (text) setQ(text); }, []),
-    { lang: "vi", countSpeak: false }
+    { lang: "vi", prompt: MOI_VI, countSpeak: false }
   );
 
   // Bấm một ô gợi ý. Có sẵn câu trả lời trong kho (lịch sử) → hiện luôn, KHÔNG gọi mạng.
