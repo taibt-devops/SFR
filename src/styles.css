@@ -243,10 +243,9 @@ button { font: inherit; color: inherit; cursor: pointer; }
   .cta-hero { padding: 16px; }
 }
 
-@media (min-height: 720px) {
-  .screen-home { justify-content: center; padding-top: 68px; }
-  .screen-home .hud { position: absolute; top: 22px; left: var(--gutter); right: var(--gutter); }
-}
+/* Màn chờ CŨ căn giữa theo chiều dọc vì nó có `.hud` đặt tuyệt đối và một `.spacer` co giãn.
+   Bản mới có header nằm trong luồng, nên căn giữa chỉ đẻ ra một khoảng trống lớn ở đầu màn —
+   đúng thứ cần tránh. Nội dung chảy từ trên xuống. */
 
 .spacer { flex: 1; min-height: 8px; }
 
