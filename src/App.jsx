@@ -248,6 +248,8 @@ function AppMain({ L }) {
       week={L.week}
       weekCount={L.weekCount}
       wordCount={L.wordCount}
+      nghi={L.nghi}
+      coOn={L.reviewQueue.length > 0}
       last={learnedPatterns(L.lessons, L.progress)[0] || null}
       lastDone={L.lastDone}
       onStart={L.start}

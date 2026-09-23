@@ -1,84 +1,120 @@
 // Ngọn núi của bạn — chỉ số chính của app: TỔNG số ngày đã học.
 //
-// Vì sao là núi chứ không phải một con số: streak tụt về 0 sau một ngày nghỉ, còn núi thì KHÔNG
-// BAO GIỜ THẤP ĐI. Nghỉ một tuần quay lại, núi vẫn đúng chiều cao bạn đã xây.
+// Streak tụt về 0 sau một ngày nghỉ; núi thì KHÔNG BAO GIỜ THẤP ĐI. Nghỉ một tuần quay lại, núi
+// vẫn đúng chiều cao bạn đã xây. Đó là điều cần nói vào đúng lúc người ta dễ bỏ cuộc nhất.
 //
-// CHỈ vẽ phần đã tích luỹ — không có viền "núi đầy đủ" phía trước, vì viền đó biến thành tin nhắn
-// "còn xa lắm" ngay trên màn ăn mừng.
+// Mỗi ngày là một LỚP VỎ bọc quanh núi cũ, chung chân núi — như vân gỗ. Bản trước xếp chồng lên
+// đỉnh, nên lớp hôm nay càng ngày càng mỏng và tới ngày 300 thì biến mất. Bọc quanh thì lớp hôm
+// nay LUÔN ở mép ngoài cùng.
 //
-// Lớp: gần đây đếm theo NGÀY, xa hơn gộp theo TUẦN rồi THÁNG (xem `utils/nuiLop.js`). Hai sắc
-// lime/teal xen kẽ để đếm được bằng mắt. Lớp trên cùng là hôm nay: luôn sáng, có độ dày tối thiểu
-// nên ở ngày thứ 300 nó vẫn thấy được chứ không mỏng thành một nét kẻ.
-import { chiaLop } from "../utils/nuiLop.js";
+// Hình học thuần nằm ở `utils/nuiLop.js` (có test). File này chỉ dựng SVG.
+import { caoNui, chonMocGop, vanhLop, tiLe, DANG } from "../utils/nuiLop.js";
 
-const W = 240;
-const LE = 8;          // lề dưới chừa cho đường chân trời
-const CAO_MIN = 30;    // ngày đầu tiên vẫn phải là một quả đồi thấy được, không phải vạch kẻ
-const CAO_MAX = 112;   // trần cứng: 365 ngày cũng không được phá vỡ bố cục
-const DOC = 1.15;      // độ dốc — nửa chân núi = cao × DOC
-const DAY_NAY = 8;     // độ dày TỐI THIỂU của lớp hôm nay
-// Chân trời của chiều cao: MỘT NĂM, không phải độ dài khoá học.
-// Lấy mốc 72 ngày làm trần thì học xong khoá là núi ngừng cao — ngày 100 và ngày 365 trông y hệt
-// ngày 72, chỉ khác mật độ vạch. Thấy được điều đó nhờ trang `?debug=nui`; với một app nói "núi
-// của bạn không bao giờ thấp đi" thì việc nó NGỪNG LỚN phá hỏng đúng lời hứa ấy.
-const CHAN_TROI = 365;
+const f = (v) => Number(v).toFixed(2);
 
-export default function Mountain({ days = 0, total = 72, celebrate = false }) {
-  void total; // giữ prop cho chỗ gọi cũ; chiều cao nay đo theo CHAN_TROI, không theo độ dài khoá
-  const n = Math.max(0, Math.floor(days));
-  if (n === 0) {
-    return (
-      <svg className="nui" viewBox={`0 0 ${W} ${CAO_MIN}`} width="100%" height={CAO_MIN}
-           preserveAspectRatio="xMidYMax meet" role="img" aria-label="Chưa có ngày nào">
-        <line className="nui-dat" x1="0" y1={CAO_MIN - 0.5} x2={W} y2={CAO_MIN - 0.5} />
-      </svg>
-    );
-  }
+// Đa giác dáng núi ở bán kính `h`, đã thu phóng.
+function dang(h, cx, gy, s) {
+  return DANG.map(([x, y]) => `${f(cx + x * h * s)},${f(gy - y * h * s)}`).join(" ");
+}
 
-  // Căn bậc hai: những ngày ĐẦU cho thấy thay đổi rõ nhất. Tăng tuyến tính thì 30 ngày đầu gần
-  // như không nhúc nhích — đúng giai đoạn người học cần thấy mình đang đi lên.
-  const cao = Math.min(CAO_MAX, CAO_MIN + (CAO_MAX - CAO_MIN) * Math.sqrt(Math.min(1, n / CHAN_TROI)));
-  // Khung CO THEO núi thay vì cao cố định, nếu không thì ngày thứ 2 là một quả đồi trôi giữa
-  // khoảng trống — nhìn như lỗi hiển thị.
-  const H = Math.ceil(cao) + LE;
-  const giua = W / 2;
-  const chan = Math.min(giua - 4, cao * DOC);
-
-  const lop = chiaLop(n);
-  // Lớp hôm nay lấy phần dày tối thiểu TRƯỚC, phần còn lại chia đều cho các lớp cũ. Chia đều theo
-  // SỐ LỚP chứ không theo số ngày: chia theo ngày thì một lớp "tháng" dày gấp 30 lần lớp "ngày",
-  // và mọi lớp gần đây teo thành nét kẻ — đúng thứ việc gộp lớp sinh ra để tránh.
-  const dayNay = Math.max(DAY_NAY, cao / lop.length);
-  const dayCu = lop.length > 1 ? (cao - dayNay) / (lop.length - 1) : 0;
-
-  const nua = (y) => (chan * (y - (H - cao))) / cao; // nửa chiều rộng ở độ cao y
-
-  const hinh = [];
-  let y = H; // đi từ mặt đất lên
-  for (let i = 0; i < lop.length; i++) {
-    const homNay = i === lop.length - 1;
-    const d = homNay ? dayNay : dayCu;
-    const yT = y;
-    const yD = y - d;
-    hinh.push(
+// Cây thông giữ KÍCH THƯỚC THẬT qua mọi mốc — nó là cái thước. Núi lớn lên thì cây nhỏ đi so với
+// núi, và người xem đọc ra ngay là mình đã đi được bao xa.
+function Thong({ x, gy, h, k }) {
+  const w = h * 0.36;
+  return (
+    <g key={k}>
+      <polygon points={`${f(x - w)},${f(gy)} ${f(x)},${f(gy - h)} ${f(x + w)},${f(gy)}`} fill="#2B3631" />
       <polygon
-        key={i}
-        className={`nui-lop ${i % 2 ? "b" : "a"}${homNay ? " nay" : ""}`}
-        points={`${giua - nua(yD)},${yD} ${giua + nua(yD)},${yD} ${giua + nua(yT)},${yT} ${giua - nua(yT)},${yT}`}
+        points={`${f(x - w * 0.72)},${f(gy - h * 0.38)} ${f(x)},${f(gy - h * 1.12)} ${f(x + w * 0.72)},${f(gy - h * 0.38)}`}
+        fill="#37463D"
       />
-    );
-    y = yD;
-  }
+    </g>
+  );
+}
+
+export default function Mountain({
+  days = 0,
+  vw = 324,
+  vh = 124,
+  hmax = 110,
+  today = false,   // lớp hôm nay vẽ riêng: sáng + quầng + viền
+  ghost = false,   // lớp nét đứt "+1": phần thưởng đang chờ, KHÔNG phải lời nhắc nhở
+  trees = true,
+  celebrate = false,
+}) {
+  const n = Math.max(0, Math.floor(days));
+  const gy = vh - 14;
+  const cx = vw / 2;
+  const nDinh = n + (ghost ? 1 : 0);
+  const s = tiLe(nDinh, { rongKhung: vw, caoToiDa: hmax, coCay: trees });
+
+  // Hôm nay vẽ riêng nên phần "vành cũ" chỉ tính tới hôm qua.
+  const cu = today ? n - 1 : n;
+  const g = chonMocGop(Math.max(1, cu), s);
+  const vanh = vanhLop(cu, g);
+
+  const id = `nui${n}-${vw}`;
+  const Ht = caoNui(n);
+  const gian = 1.25 * Ht;
 
   return (
-    <svg
-      className={celebrate ? "nui is-celebrate" : "nui"}
-      viewBox={`0 0 ${W} ${H}`} width="100%" height={H}
-      preserveAspectRatio="xMidYMax meet"
-      role="img" aria-label={`Núi của bạn: ${n} ngày, xếp thành ${lop.length} lớp`}
-    >
-      <g className="nui-than">{hinh}</g>
-      <line className="nui-dat" x1="0" y1={H - 0.5} x2={W} y2={H - 0.5} />
+    <svg className={celebrate ? "nui is-celebrate" : "nui"} viewBox={`0 0 ${vw} ${vh}`}
+         width="100%" height={vh} role="img" aria-label={`Núi của bạn: ${n} ngày`}>
+      {today && (
+        <defs>
+          <filter id={`${id}b`} x="-60%" y="-60%" width="220%" height="220%">
+            <feGaussianBlur stdDeviation={f(Math.max(5, Ht * s * 0.12))} />
+          </filter>
+          <radialGradient id={`${id}r`}>
+            <stop offset="0" stopColor="#C6F432" stopOpacity=".22" />
+            <stop offset="1" stopColor="#C6F432" stopOpacity="0" />
+          </radialGradient>
+        </defs>
+      )}
+
+      {today && n > 0 && (
+        <circle cx={cx} cy={f(gy - Ht * s * 0.55)}
+                r={f(Math.min(Math.max(62, Ht * s * 1.1), gy - Ht * s * 0.55 - 2, vw / 2))}
+                fill={`url(#${id}r)`} />
+      )}
+
+      <line x1="8" x2={vw - 8} y1={gy} y2={gy} stroke="#2A2F35" strokeWidth="1" />
+
+      {trees && n > 0 && (
+        <>
+          <Thong k="p1" x={cx + (gian + 18) * s} gy={gy} h={22 * s} />
+          <Thong k="p2" x={cx - (gian + 26) * s} gy={gy} h={15 * s} />
+        </>
+      )}
+
+      {/* Lớp hôm nay: vẽ TRƯỚC, các vành cũ đè lên trên, nên phần còn thấy chính là viền ngoài. */}
+      {today && n > 0 && (
+        <g className="nui-nay" style={{ "--r": n > 1 ? Math.sqrt((n - 1) / n).toFixed(3) : "0.3" }}>
+          <polygon className="nui-quang" points={dang(Ht, cx, gy, s)} fill="#C6F432" opacity=".55" filter={`url(#${id}b)`} />
+          <polygon points={dang(Ht, cx, gy, s)} fill="#C6F432" />
+          <polyline points={dang(Ht, cx, gy, s)} fill="none" stroke="#E6FF9C" strokeWidth="1.6" strokeLinejoin="round" />
+        </g>
+      )}
+
+      {/* Vành cũ: NGOÀI vào TRONG, hai sắc lime/teal xen kẽ, càng vào trong càng tối. */}
+      {vanh.map((b, i) => {
+        const j = vanh.length - 1 - i;
+        const t = vanh.length > 1 ? j / (vanh.length - 1) : 1;
+        const lime = j % 2 === 0;
+        return (
+          <polygon key={b} points={dang(caoNui(b), cx, gy, s)}
+                   fill={`hsl(${lime ? 82 : 162}, ${lime ? 42 : 30}%, ${(12 + t * 14).toFixed(1)}%)`} />
+        );
+      })}
+
+      {ghost && (
+        <>
+          <polyline points={dang(caoNui(n + 1), cx, gy, s)} fill="none" stroke="#C6F432"
+                    strokeOpacity=".75" strokeWidth="1.5" strokeDasharray="4 4" strokeLinejoin="round" />
+          <text x={f(cx + 13)} y={f(gy - caoNui(n + 1) * s + 9)} fill="#C6F432"
+                fontSize="12" fontWeight="700">+1</text>
+        </>
+      )}
     </svg>
   );
 }

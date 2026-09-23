@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import {
   loadCourse, saveCourse, purgeLegacy, streakFor, doneToday,
   recordSaid, saidFor, learnedPatterns, completedCount, recentDays,
-  weekDays, weekCount, sentencesOf, saidOf, learnedWords, countLearnedWords, WEEK_LABELS,
+  weekDays, weekCount, sentencesOf, saidOf, ngayNghi, learnedWords, countLearnedWords, WEEK_LABELS,
   COURSE_KEY, RESET_FLAG, LEGACY_KEYS,
 } from "./course.js";
 
@@ -384,5 +384,24 @@ describe("saidOf — dọn dữ liệu sai đã lỡ lưu từ bản cũ", () =>
     expect(saidOf({}, bai2)).toBeNull();
     expect(saidOf({ 6: { saidBest: "x" } }, { day: 6, review: true })).toBeNull();
     expect(saidOf(null, null)).toBeNull();
+  });
+});
+
+describe("ngayNghi — quãng trống trước khi quay lại", () => {
+  const D = 86400000;
+  const T = new Date(2026, 8, 23, 12, 0, 0).getTime(); // thứ Tư
+
+  it("học hôm nay → 0", () => expect(ngayNghi({ 1: done(T) }, T)).toBe(0));
+  it("học hôm qua → 0, vẫn là liền mạch", () => expect(ngayNghi({ 1: done(T - D) }, T)).toBe(0));
+  it("nghỉ đúng một ngày → 1", () => expect(ngayNghi({ 1: done(T - 2 * D) }, T)).toBe(1));
+  it("nghỉ bốn ngày → 4", () => expect(ngayNghi({ 1: done(T - 5 * D) }, T)).toBe(4));
+
+  it("tính từ lần học GẦN NHẤT, không phải lần đầu", () => {
+    expect(ngayNghi({ 1: done(T - 30 * D), 2: done(T - 3 * D) }, T)).toBe(2);
+  });
+
+  it("chưa học gì bao giờ → 0, không coi người mới là người bỏ cuộc", () => {
+    expect(ngayNghi({}, T)).toBe(0);
+    expect(ngayNghi({ 1: { core: false } }, T)).toBe(0);
   });
 });

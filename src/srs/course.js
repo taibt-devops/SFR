@@ -199,6 +199,16 @@ export function countLearnedWords(lessons, progress, myWords) {
   return learnedWords(lessons, progress, myWords).filter((x) => x.inSrs).length;
 }
 
+// Số ngày TRỐNG kể từ lần học gần nhất. 0 = học hôm nay hoặc hôm qua (liền mạch).
+// Dùng để chào đón người quay lại sau một quãng nghỉ — KHÔNG dùng để trách móc: app không có
+// chỗ nào đếm ngược hay cảnh báo, con số này chỉ đổi CÂU CHÀO.
+export function ngayNghi(progress = {}, now = Date.now()) {
+  const days = [...doneDays(progress)];
+  if (!days.length) return 0;
+  const gan = Math.max(...days);
+  return Math.max(0, Math.round((dayStart(now) - gan) / DAY) - 1);
+}
+
 // ── Tuần này (dải 7 ô T2…CN) ───────────────────────────────
 // ĐẾM SỐ NGÀY HỌC TRONG TUẦN, không phải chuỗi liên tiếp. Nghỉ thứ Tư rồi học lại thứ Năm thì
 // vẫn là 3/7 — không có gì bị xoá. Đây là điểm khác cốt lõi với streak: nó không bao giờ trừng
