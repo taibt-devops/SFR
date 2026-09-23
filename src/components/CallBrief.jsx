@@ -1,22 +1,25 @@
 // Màn brief — thứ duy nhất đứng giữa bạn và cuộc gọi. Chỉ hiện cái cần biết TRƯỚC khi mở miệng,
 // rồi biến mất hẳn. Trước đây 7 khối chrome này nằm đè lên màn hội thoại suốt cả buổi.
 import TtsControls from "./TtsControls.jsx";
-import { IcoMasks, IcoChat, IcoShuffle } from "./Icon.jsx";
+import { IcoMasks, IcoChat, IcoShuffle, IcoClose, IcoWarn } from "./Icon.jsx";
 import { TALK_TOPICS } from "../data/talkTopics.js";
 
-export default function CallBrief({ roleplay, scn, scnLoading, patterns, chosen, onPickTopic, busy, onSwap, onStart, onBack }) {
+export default function CallBrief({ roleplay, scn, scnLoading, scnWarn, patterns, chosen, onPickTopic, busy, onSwap, onStart, onBack }) {
   const waitingScn = roleplay && (scnLoading || !scn);
 
   return (
     <div className="screen">
       <div className="hud">
         <span className="inline-ic">{roleplay ? <><IcoMasks size={15} /> Đóng vai</> : <><IcoChat size={15} /> Trò chuyện</>}</span>
-        <button className="hud-mute" onClick={onBack}>✕</button>
+        <button className="hud-mute" onClick={onBack} aria-label="Đóng"><IcoClose size={15} /></button>
       </div>
 
       {roleplay ? (
         <>
           <div className="eyebrow">Tình huống</div>
+          {scnWarn && (
+            <p className="warn inline-ic"><IcoWarn size={15} /> {scnWarn}</p>
+          )}
           {waitingScn ? (
             <h1 className="t-hero-title pulse">Đang dựng tình huống…</h1>
           ) : (

@@ -1630,3 +1630,14 @@ button.btn, button.btn2, button.cta, button.ask-act, .btn-link, .lnk {
 .dbg-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
 /* Lớp hôm nay LUÔN sáng, không chỉ lúc vừa hoàn thành — nó là "bạn đang ở đây". */
 .nui-lop.nay { filter: drop-shadow(0 0 6px rgba(200, 250, 60, 0.55)); }
+
+/* Cảnh báo nhẹ — có chuyện xảy ra nhưng vẫn đi tiếp được. Khác `.err` (đường cụt, phải xử lý). */
+.warn {
+  align-items: flex-start;
+  font-size: 14px; line-height: 1.5;
+  color: var(--ember);
+  border-left: 2px solid var(--ember);
+  padding-left: 10px;
+  margin: 0;
+}
+.warn svg { margin-top: 3px; }

@@ -42,6 +42,7 @@ export function useCall({ dueWords = [], level = "A2", topic = "", roleplay = fa
   const [saving, setSaving] = useState(null); // { word, m, en, mLoading }
   const [scn, setScn] = useState(() => (roleplay && !topic ? pickScenario() : null));
   const [scnLoading, setScnLoading] = useState(false);
+  const [scnWarn, setScnWarn] = useState(""); // dựng hỏng → nói ra, đừng im lặng
 
   // Điểm yếu từ hồ sơ gia sư (§10.6c) ưu tiên hơn hồ sơ CEFR — nó tươi hơn, cập nhật hằng ngày.
   const profileFocus = useMemo(buildFocus, []);
@@ -61,9 +62,17 @@ export function useCall({ dueWords = [], level = "A2", topic = "", roleplay = fa
   const genScn = useCallback(() => {
     setScnLoading(true);
     setError("");
+    setScnWarn("");
     genScenario(topic, level)
-      .then(setScn)
-      .catch((e) => setError("Không tạo được tình huống: " + String(e.message || e)))
+      .then((x) => { setScn(x); setScnWarn(""); })
+      .catch((e) => {
+        // KHÔNG để màn brief chết. Trước đây lỗi chỉ được set vào `error`, mà CallBrief không hề
+        // vẽ `error` — nên mọi hỏng hóc đều thành "Đang dựng tình huống…" đứng im vĩnh viễn, nút
+        // bắt đầu bị khoá, không có đường nào đi tiếp. Có sẵn một rổ tình huống viết tay thì dùng
+        // nó: buổi học vẫn diễn ra, chỉ là tình huống không được may đo theo bài hôm nay.
+        setScn(pickScenario());
+        setScnWarn("Không dựng được tình huống riêng (" + String(e.message || e) + ") — dùng tình huống có sẵn.");
+      })
       .finally(() => setScnLoading(false));
   }, [topic, level]);
   useEffect(() => { if (roleplay && topic) genScn(); }, [roleplay, topic, genScn]);
@@ -216,7 +225,7 @@ export function useCall({ dueWords = [], level = "A2", topic = "", roleplay = fa
 
   return {
     history, phase, error, spoken, shadow, summary, lookup, saving,
-    scn, scnLoading, focus, started, busy, shadowing,
+    scn, scnLoading, scnWarn, focus, started, busy, shadowing,
     begin, startRecording, stopRecording, redoLast, endSession, newSession,
     swapScn, lookupTerm, setLookup, openSave, setSaving, autoMeaning, saveWord,
     setError,

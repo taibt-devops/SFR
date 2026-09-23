@@ -38,6 +38,7 @@ export default function Call({ dueWords = [], level = "A2", topic = "", roleplay
         chosen={chosen}
         onPickTopic={setChosen}
         busy={c.busy}
+        scnWarn={c.scnWarn}
         onSwap={c.swapScn}
         onStart={c.begin}
         onBack={onBack}
