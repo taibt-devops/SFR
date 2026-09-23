@@ -1478,3 +1478,21 @@ h1, h2 { margin: 0; line-height: 1.2; font-family: var(--font-display); }
   .wk-lbl { font-size: 10px; }
   .btn2 { font-size: 14px; gap: 6px; }
 }
+
+/* ── Chữ đi kèm icon nét ───────────────────────────────────────
+   Icon nét cao bằng cỡ chữ nên nếu để chảy như chữ thường nó tụt xuống dưới đường chân chữ.
+   Một quy tắc dùng chung, thay cho việc mỗi chỗ tự canh lại một kiểu. */
+.inline-ic { display: inline-flex; align-items: center; gap: 6px; }
+button.btn, button.btn2, button.cta, button.ask-act, .btn-link, .lnk {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+}
+.btn-row .btn, .lt-row .btn2 { justify-content: center; }
+/* Nút chính của các nhịp học vẫn là nút chính của MÀN đó — một gradient mỗi màn, không hơn. */
+.login-mark {
+  width: 56px; height: 56px;
+  display: grid; place-items: center;
+  margin: 0 auto 10px;
+  border: 1px solid var(--line-hot);
+  border-radius: 50%;
+  color: var(--lime);
+}

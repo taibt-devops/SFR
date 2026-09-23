@@ -6,6 +6,7 @@ import StepShell from "./StepShell.jsx";
 import SpeakCheck from "./SpeakCheck.jsx";
 import { tick } from "../utils/sfx.js";
 import { speak } from "../utils/tts.js";
+import { IcoVolume } from "./Icon.jsx";
 
 export default function StepWords({ lesson, bar, onDone, onAttempt }) {
   const [i, setI] = useState(0);
@@ -40,7 +41,7 @@ export default function StepWords({ lesson, bar, onDone, onAttempt }) {
               setHeard(true);
             }}
           >
-            🔊 Nghe câu mẫu
+            <IcoVolume size={19} /> Nghe câu mẫu
           </button>
           <div className="spacer" />
         </>

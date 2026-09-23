@@ -22,6 +22,8 @@ const pickTask = () => TASKS[Math.floor(Math.random() * TASKS.length)];
 
 const DIM_LABEL = { fluency: "Trôi chảy", lexical: "Vốn từ", grammar: "Ngữ pháp", pronunciation: "Phát âm" };
 
+import { IcoMic, IcoStop, IcoBack, IcoCheck, IcoWarn, IcoWrench } from "./Icon.jsx";
+
 export default function SpeakingAssess({ dueWords, topic, topicId = "", scopeLabel, onBack }) {
   const [task, setTask] = useState(() => (topic ? "Talk about: " + topic : pickTask()));
   const [phase, setPhase] = useState("ready"); // ready | recording | working | result | error
@@ -101,7 +103,7 @@ export default function SpeakingAssess({ dueWords, topic, topicId = "", scopeLab
     <div className="app">
       <div className="study-top">
         <span className="app-title">Đánh giá nói (CEFR)</span>
-        <button className="btn-back" onClick={onBack}>← Về</button>
+        <button className="btn-back" onClick={onBack}><IcoBack size={15} /> Về</button>
       </div>
       {scopeLabel && <ContextBar label={scopeLabel} />}
       {last && <p className="app-sub" style={{ marginTop: 6 }}>Trình độ gần nhất: <b style={{ color: "var(--teal)" }}>{last}</b></p>}
@@ -128,11 +130,11 @@ export default function SpeakingAssess({ dueWords, topic, topicId = "", scopeLab
       <div className="spacer" />
 
       {phase === "ready" && (
-        <button className="cta" onClick={startRecording}><span className="cta-main">🎤 Ghi câu trả lời</span></button>
+        <button className="cta" onClick={startRecording}><span className="cta-main"><IcoMic size={17} /> Ghi câu trả lời</span></button>
       )}
       {phase === "recording" && (
         <button className="cta" style={{ background: "var(--red)" }} onClick={stopRecording}>
-          <span className="cta-main">■ Dừng & chấm</span>
+          <span className="cta-main"><IcoStop size={15} /> Dừng và chấm</span>
         </button>
       )}
       {phase === "result" && (
@@ -161,9 +163,9 @@ function Result({ result, transcript }) {
         )
       ))}
 
-      <Section title="✅ Điểm mạnh" items={result.strengths} color="var(--green)" />
-      <Section title="⚠️ Điểm yếu" items={result.weaknesses} color="var(--amber)" />
-      <Section title="🔧 Cần sửa" items={result.fixes} color="var(--blue)" />
+      <Section icon={<IcoCheck size={15} />} title="Điểm mạnh" items={result.strengths} color="var(--green)" />
+      <Section icon={<IcoWarn size={15} />} title="Điểm yếu" items={result.weaknesses} color="var(--amber)" />
+      <Section icon={<IcoWrench size={15} />} title="Cần sửa" items={result.fixes} color="var(--blue)" />
 
       {transcript && (
         <details style={{ marginTop: 14 }}>
@@ -175,11 +177,11 @@ function Result({ result, transcript }) {
   );
 }
 
-function Section({ title, items, color }) {
+function Section({ icon, title, items, color }) {
   if (!items || !items.length) return null;
   return (
     <>
-      <div className="sec-lab" style={{ color }}>{title}</div>
+      <div className="sec-lab inline-ic" style={{ color }}>{icon}{title}</div>
       <ul className="assess-list">
         {items.map((x, i) => <li key={i}>{x}</li>)}
       </ul>

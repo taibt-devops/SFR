@@ -3,6 +3,7 @@
 //
 // Chạm vào một TỪ vẫn tra nghĩa được ngay, không cần mở công cụ (giữ nguyên hành vi cũ).
 import { useState } from "react";
+import { IcoVolume, IcoTranslate, IcoTarget } from "./Icon.jsx";
 import { speak } from "../utils/tts.js";
 
 // Mỗi từ là một vùng chạm để tra nghĩa.
@@ -35,9 +36,9 @@ export default function CallBubble({ role, text, onWord, onShadow, onAddWord }) 
 
       {!mine && open && (
         <div className="turn-tools">
-          <button className="btn btn-sm" onClick={() => speak(text)}>🔊 Nghe</button>
-          <button className="btn btn-sm" onClick={() => onWord(text, text)}>🌐 Dịch</button>
-          <button className="btn btn-sm" onClick={() => onShadow(text)}>🎯 Đọc theo</button>
+          <button className="btn btn-sm" onClick={() => speak(text)}><IcoVolume size={15} /> Nghe</button>
+          <button className="btn btn-sm" onClick={() => onWord(text, text)}><IcoTranslate size={15} /> Dịch</button>
+          <button className="btn btn-sm" onClick={() => onShadow(text)}><IcoTarget size={15} /> Đọc theo</button>
           <button className="btn btn-sm" onClick={() => onAddWord({ en: text })}>＋ Từ</button>
         </div>
       )}

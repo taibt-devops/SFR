@@ -4,6 +4,7 @@
 import StepShell from "./StepShell.jsx";
 import { speak } from "../utils/tts.js";
 import { tick } from "../utils/sfx.js";
+import { IcoVolume } from "./Icon.jsx";
 
 export default function StepPattern({ lesson, bar, onDone }) {
   return (
@@ -24,8 +25,8 @@ export default function StepPattern({ lesson, bar, onDone }) {
               <div className="ex-en">{e.en}</div>
               <div className="ex-vi">{e.vi}</div>
             </div>
-            <button className="btn btn-sm" onClick={() => speak(e.en)} aria-label={`Nghe: ${e.en}`}>
-              🔊
+            <button className="ic-btn" onClick={() => speak(e.en)} aria-label={`Nghe: ${e.en}`}>
+              <IcoVolume size={16} />
             </button>
           </div>
         ))}

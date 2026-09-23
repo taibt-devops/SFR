@@ -7,39 +7,12 @@
 import { useState } from "react";
 import SpeakCheck from "./SpeakCheck.jsx";
 import { speak } from "../utils/tts.js";
+import { IcoSend, IcoClose, IcoMic, IcoStop, IcoVolume, IcoStar, IcoCheck } from "./Icon.jsx";
 
 // Mồi cho lần đầu mở, khi chưa có lịch sử. Không có nó thì tấm trượt chỉ là một ô trống lửng lơ —
 // người mới không biết nên gõ ở "tầm" nào (một từ? cả đoạn?). Ba câu này trả lời điều đó mà không
 // cần một dòng hướng dẫn nào.
 const MOI = ["cho tôi xin hoá đơn", "cái này bao nhiêu tiền", "tôi đi lối nào ạ"];
-
-// Mũi tên và dấu ✕ vẽ bằng SVG chứ không dùng ký tự "→" / "✕": ký tự phụ thuộc vào font, nét
-// mảnh teo và lệch tâm trong nút 46px. SVG cho nét dày đều và canh giữa chuẩn ở mọi máy.
-// Các biểu tượng NỘI DUNG (🔊 🎙️ ⭐) vẫn để emoji cho đồng bộ với phần còn lại của app.
-const IcoSend = () => (
-  <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor"
-       strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <path d="M4 12h14M12 5l7 7-7 7" />
-  </svg>
-);
-const IcoClose = () => (
-  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
-       strokeWidth="2.6" strokeLinecap="round" aria-hidden="true">
-    <path d="M6 6l12 12M18 6L6 18" />
-  </svg>
-);
-const IcoMic = () => (
-  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
-       strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <rect x="9" y="3" width="6" height="11" rx="3" />
-    <path d="M5 11a7 7 0 0 0 14 0M12 18v3" />
-  </svg>
-);
-const IcoStop = () => (
-  <svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor" aria-hidden="true">
-    <rect x="6" y="6" width="12" height="12" rx="2.5" />
-  </svg>
-);
 
 function Cau({ en, ipa, nho }) {
   return (
@@ -48,7 +21,7 @@ function Cau({ en, ipa, nho }) {
         <p className={nho ? "ask-en-sm" : "ask-en"}>{en}</p>
         {ipa && <p className="ask-ipa">{ipa}</p>}
       </div>
-      <button className="icon-btn" onClick={() => speak(en)} aria-label={"Nghe: " + en}>🔊</button>
+      <button className="icon-btn" onClick={() => speak(en)} aria-label={"Nghe: " + en}><IcoVolume size={16} /></button>
     </div>
   );
 }
@@ -117,7 +90,7 @@ export default function AskSheet({
         {mic?.clip && !ghiAm && !dangNghe && (
           <p className="ask-label" style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <button className="btn-link" onClick={() => new Audio(mic.clip.url).play()}>
-              🔊 Nghe lại bản ghi
+              <IcoVolume size={15} /> Nghe lại bản ghi
             </button>
             <span style={{ textTransform: "none", letterSpacing: 0 }}>
               {mic.clip.seconds}s · {mic.clip.kbps} kbps
@@ -188,9 +161,9 @@ export default function AskSheet({
               />
             ) : (
               <div className="ask-acts">
-                <button className="ask-act ask-act-go" onClick={() => setSpeaking(true)}>🎙️ Nói thử</button>
+                <button className="ask-act ask-act-go" onClick={() => setSpeaking(true)}><IcoMic size={18} /> Nói thử</button>
                 <button className="ask-act ask-act-save" disabled={saved} onClick={onSave}>
-                  {saved ? "✓ Đã lưu" : "⭐ Lưu vào ôn"}
+                  {saved ? <><IcoCheck size={16} /> Đã lưu</> : <><IcoStar size={16} /> Lưu vào ôn</>}
                 </button>
               </div>
             )}

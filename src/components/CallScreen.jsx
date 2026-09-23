@@ -2,6 +2,7 @@
 // không bộ chọn giọng, không thẻ tình huống — tất cả đã xong ở màn brief.
 // Không có đồng hồ: chủ dự án chốt bỏ, đếm giờ khi đang nói tạo áp lực không cần thiết.
 import { useEffect, useRef } from "react";
+import { IcoMic, IcoStop, IcoRedo, IcoCheck } from "./Icon.jsx";
 import CallBubble from "./CallBubble.jsx";
 
 export default function CallScreen({
@@ -61,7 +62,7 @@ export default function CallScreen({
         <div className="call-goals">
           {dueWords.map((w) => (
             <span key={w} className={`goal-chip ${spoken.has(w) ? "on" : ""}`}>
-              {spoken.has(w) ? "✓ " : ""}{w}
+              {spoken.has(w) && <IcoCheck size={12} />}{w}
             </span>
           ))}
         </div>
@@ -70,15 +71,15 @@ export default function CallScreen({
       {shadowing && <p className="muted center small">Đang đọc theo… bấm Dừng khi xong.</p>}
 
       {phase === "recording" ? (
-        <button className="btn btn-rec rec-live cta-hero" onClick={onStop}>■ Dừng</button>
+        <button className="btn btn-rec rec-live cta-hero" onClick={onStop}><IcoStop size={16} /> Dừng</button>
       ) : (
         <button className="btn btn-primary cta-hero" disabled={busy} onClick={onRec}>
-          🎙️ Nói
+          <IcoMic size={19} /> Nói
         </button>
       )}
 
       {started && phase === "idle" && (
-        <button className="btn-link" onClick={onRedo}>↺ Nói lại lượt vừa rồi</button>
+        <button className="btn-link" onClick={onRedo}><IcoRedo size={15} /> Nói lại lượt vừa rồi</button>
       )}
     </div>
   );

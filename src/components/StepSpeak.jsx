@@ -5,6 +5,7 @@ import { useState } from "react";
 import StepShell from "./StepShell.jsx";
 import SpeakCheck, { PASS } from "./SpeakCheck.jsx";
 import { tick } from "../utils/sfx.js";
+import { IcoWrench } from "./Icon.jsx";
 
 export default function StepSpeak({ lesson, bar, drills, kicker, onDone, onSaid, onAttempt, fixCount = 0 }) {
   const [i, setI] = useState(0);
@@ -32,7 +33,7 @@ export default function StepSpeak({ lesson, bar, drills, kicker, onDone, onSaid,
             <p className="muted small" style={{ marginBottom: 0 }}>Nói câu này bằng tiếng Anh:</p>
             <p className="prompt-vi">{d.vi}</p>
             <p className="muted small">
-              {isFix ? "🔧 Sửa lỗi hôm qua" : <>Mẫu: <b>{lesson.pat}</b></>}
+              {isFix ? <><IcoWrench size={14} /> Sửa lỗi hôm qua</> : <>Mẫu: <b>{lesson.pat}</b></>}
             </p>
           </>
         }

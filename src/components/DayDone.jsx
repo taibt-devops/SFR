@@ -8,6 +8,7 @@ import { useEffect } from "react";
 import Burst from "./Burst.jsx";
 import { done } from "../utils/sfx.js";
 import { useCountUp } from "../hooks/useCountUp.js";
+import { IcoCheck, IcoStar } from "./Icon.jsx";
 
 export default function DayDone({ lesson, streak, saidBest, extDone, canExt, onExt, onExit }) {
   // Hợp âm rải + pháo giấy: phần thưởng duy nhất trong ngày, chạy đúng một lần khi vào màn.
@@ -19,7 +20,7 @@ export default function DayDone({ lesson, streak, saidBest, extDone, canExt, onE
   return (
     <div className="screen screen-mid">
       <Burst />
-      <div className="done-mark">✓</div>
+      <div className="done-mark"><IcoCheck size={30} /></div>
 
       {lesson?.review ? (
         <div className="reveal" style={{ "--d": "180ms" }}>
@@ -56,7 +57,7 @@ export default function DayDone({ lesson, streak, saidBest, extDone, canExt, onE
             Học thêm 10 phút · 6 từ mới
           </button>
         )}
-        {extDone && <p className="muted small" style={{ marginTop: 0 }}>★ Hôm nay làm cả phần mở rộng</p>}
+        {extDone && <p className="muted small inline-ic" style={{ marginTop: 0 }}><IcoStar size={14} /> Hôm nay làm cả phần mở rộng</p>}
         <button className="btn btn-primary" onClick={onExit}>Xong hôm nay</button>
       </div>
     </div>

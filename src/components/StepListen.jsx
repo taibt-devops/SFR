@@ -4,6 +4,7 @@
 import { useMemo, useState } from "react";
 import StepShell from "./StepShell.jsx";
 import { speak } from "../utils/tts.js";
+import { IcoVolume, IcoCheck } from "./Icon.jsx";
 import { good, miss, tick } from "../utils/sfx.js";
 
 const N = 4; // nghe 4 câu (2026-09-22: trước là 2, buổi học đầu khoá hụt so với 15 phút)
@@ -38,7 +39,7 @@ export default function StepListen({ lesson, bar, onDone }) {
     <StepShell bar={bar} kicker={`Nghe trước · câu ${qi + 1}/${N}`} title="Nghe rồi đoán nghĩa">
       <p className="muted small">Chưa cần hiểu hết. Nghe lấy âm trước, lát nữa mới lộ cấu trúc.</p>
 
-      <button className="btn btn-primary" onClick={() => speak(ex.en)}>🔊 Nghe câu này</button>
+      <button className="btn btn-primary" onClick={() => speak(ex.en)}><IcoVolume size={19} /> Nghe câu này</button>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         {options.map((vi) => (
@@ -57,7 +58,7 @@ export default function StepListen({ lesson, bar, onDone }) {
         <>
           <div className="card">
             <div className={`verdict ${correct ? "verdict-ok" : "verdict-bad"}`}>
-              {correct ? "✓ Đúng" : "Chưa đúng — nghe lại một lần nữa"}
+              {correct ? <><IcoCheck size={16} /> Đúng</> : "Chưa đúng — nghe lại một lần nữa"}
             </div>
             <p className="ex-en" style={{ marginBottom: 2 }}>{ex.en}</p>
             <p className="ex-vi" style={{ margin: 0 }}>{ex.vi}</p>

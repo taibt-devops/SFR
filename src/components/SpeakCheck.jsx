@@ -8,6 +8,7 @@ import { useRecorder } from "../hooks/useRecorder.js";
 import { diffWords } from "../utils/voiceMatch.js";
 import { speak } from "../utils/tts.js";
 import { good, miss } from "../utils/sfx.js";
+import { IcoMic, IcoStop, IcoVolume, IcoRedo, IcoCheck } from "./Icon.jsx";
 
 export const PASS = 0.8; // tỉ lệ từ khớp coi là đạt
 
@@ -70,10 +71,10 @@ export default function SpeakCheck({ target, prompt, footer, autoHint = false, o
           {rec.phase === "thinking" && <Waiting />}
           {rec.phase === "recording" ? (
             // Nhịp đập để người học thấy máy ĐANG nghe thật, không phải treo.
-            <button className="btn btn-rec rec-live" onClick={rec.stop}>■ Dừng — tôi nói xong rồi</button>
+            <button className="btn btn-rec rec-live" onClick={rec.stop}><IcoStop size={15} /> Dừng — tôi nói xong rồi</button>
           ) : (
             rec.phase !== "thinking" && (
-              <button className="btn btn-primary" onClick={rec.start}>🎙️ Nói câu này</button>
+              <button className="btn btn-primary" onClick={rec.start}><IcoMic size={19} /> Nói câu này</button>
             )
           )}
           {autoHint && (
@@ -86,7 +87,7 @@ export default function SpeakCheck({ target, prompt, footer, autoHint = false, o
         <>
           <div className="card">
             <div className={`verdict ${passed ? "verdict-ok" : "verdict-bad"}`}>
-              {passed ? "✓ Khớp — nói tốt" : "Gần đúng — xem chỗ lệch"}
+              {passed ? <><IcoCheck size={16} /> Khớp — nói tốt</> : "Gần đúng — xem chỗ lệch"}
             </div>
             <p className="heard" style={{ marginBottom: 6 }}>
               {result.diff.map((d, i) => (
@@ -99,8 +100,8 @@ export default function SpeakCheck({ target, prompt, footer, autoHint = false, o
           </div>
 
           <div className="btn-row">
-            <button className="btn" onClick={() => speak(target)}>🔊 Nghe mẫu</button>
-            <button className="btn" onClick={retry}>↻ Nói lại</button>
+            <button className="btn" onClick={() => speak(target)}><IcoVolume size={17} /> Nghe mẫu</button>
+            <button className="btn" onClick={retry}><IcoRedo size={17} /> Nói lại</button>
           </div>
 
           {footer?.(result)}

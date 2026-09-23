@@ -11,6 +11,8 @@ const SPEEDS = [
   { v: 1.15, label: "Nhanh" },
 ];
 
+import { IcoVolume, IcoPlay } from "./Icon.jsx";
+
 export default function TtsControls() {
   const [voices, setVoices] = useState(englishVoices());
   const [prefs, setLocal] = useState(getPrefs());
@@ -34,7 +36,7 @@ export default function TtsControls() {
   if (!open) {
     return (
       <button className="link-exit" style={{ alignSelf: "flex-start", marginTop: 8 }} onClick={() => setOpen(true)}>
-        🔊 Giọng đọc
+        <IcoVolume size={16} /> Giọng đọc
       </button>
     );
   }
@@ -81,7 +83,7 @@ export default function TtsControls() {
       </label>
       <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
         <button className="cta-ghost" style={{ marginTop: 0 }} onClick={() => speak("Hello! This is how I sound. Let's practice together.")}>
-          ▶ Nghe thử
+          <IcoPlay size={14} /> Nghe thử
         </button>
         <button className="cta-ghost" style={{ marginTop: 0 }} onClick={() => setOpen(false)}>Xong</button>
       </div>

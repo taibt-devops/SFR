@@ -50,7 +50,7 @@ export default function Progress({ lessons, progress, streak, onBack }) {
               )}
               <div className="learned-meta">
                 Ngày {l.day} · tuần {l.week} · {fmt(l.doneAt)}
-                {l.ext ? " · ★ có phần mở rộng" : ""}
+                {l.ext ? " · có phần mở rộng" : ""}
               </div>
             </div>
           ))}

@@ -2,6 +2,8 @@
 // Ô nhập chữ ở đây KHÔNG phá C10: C10 cấm gõ chữ THAY CHO việc nói ở các nhịp luyện nói — còn đây
 // là ghi lại một từ để ôn sau, không phải bài kiểm tra phát âm.
 
+import { IcoTranslate } from "./Icon.jsx";
+
 export default function AddWordModal({ value, onChange, onAuto, onSave, onClose }) {
   const set = (patch) => onChange({ ...value, ...patch });
   const ok = !!value.word.trim();
@@ -29,7 +31,7 @@ export default function AddWordModal({ value, onChange, onAuto, onSave, onClose 
             onKeyDown={(e) => e.key === "Enter" && ok && onSave()}
           />
           <button className="btn btn-sm" title="Tự dịch nghĩa" disabled={!ok || value.mLoading} onClick={onAuto}>
-            {value.mLoading ? "…" : "🌐"}
+            {value.mLoading ? "…" : <IcoTranslate size={16} />}
           </button>
         </div>
 

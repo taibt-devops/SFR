@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { verify, setSecret } from "../ai/auth.js";
 
+import { IcoMic } from "./Icon.jsx";
+
 export default function Login({ onSuccess }) {
   const [pw, setPw] = useState("");
   const [state, setState] = useState("idle"); // idle | checking | error
@@ -31,7 +33,7 @@ export default function Login({ onSuccess }) {
   return (
     <div className="app">
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: "22vh" }}>
-        <div style={{ fontSize: 40, marginBottom: 8 }}>🗣️</div>
+        <div className="login-mark"><IcoMic size={30} /></div>
         <div className="app-title" style={{ fontSize: 22 }}>Luyện nói tiếng Anh</div>
         <p className="app-sub" style={{ marginTop: 6, marginBottom: 24 }}>Nhập mật khẩu để bắt đầu</p>
         <form onSubmit={submit} style={{ width: "100%", maxWidth: 320 }}>

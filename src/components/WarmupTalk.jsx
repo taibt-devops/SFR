@@ -15,6 +15,8 @@ const PROMPTS = [
 ];
 const LIMIT = 60; // giây
 
+import { IcoMic, IcoStop, IcoBack, IcoUp, IcoDown } from "./Icon.jsx";
+
 export default function WarmupTalk({ onBack }) {
   const [prompt] = useState(() => PROMPTS[Math.floor(Math.random() * PROMPTS.length)]);
   const [phase, setPhase] = useState("idle"); // idle | recording | thinking | done | error
@@ -93,8 +95,8 @@ export default function WarmupTalk({ onBack }) {
   return (
     <div className="app">
       <div className="study-top">
-        <span className="app-title">🎤 Khởi động 1 phút</span>
-        <button className="btn-back" onClick={onBack}>← Về</button>
+        <span className="app-title inline-ic"><IcoMic size={16} /> Khởi động 1 phút</span>
+        <button className="btn-back" onClick={onBack}><IcoBack size={15} /> Về</button>
       </div>
       <p className="app-sub" style={{ marginTop: 6 }}>Nói tiếng Anh tự do, không cần hoàn hảo — chỉ đo tốc độ & độ mượt.</p>
 
@@ -116,7 +118,9 @@ export default function WarmupTalk({ onBack }) {
           <div className="stat-grid" style={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
             <div className="stat stat-due">
               <div className="stat-num">{result.stats.wpm}</div>
-              <div className="stat-lab">từ/phút{diff != null && diff !== 0 ? (diff > 0 ? ` · ▲${diff}` : ` · ▼${-diff}`) : ""}</div>
+              <div className="stat-lab inline-ic">từ/phút{diff != null && diff !== 0 && (diff > 0
+                ? <><IcoUp size={12} />{diff}</>
+                : <><IcoDown size={12} />{-diff}</>)}</div>
             </div>
             <div className="stat"><div className="stat-num">{result.stats.words}</div><div className="stat-lab">từ đã nói</div></div>
             <div className="stat"><div className="stat-num">{result.stats.fillers}</div><div className="stat-lab">filler (um, uh…)</div></div>
@@ -141,11 +145,11 @@ export default function WarmupTalk({ onBack }) {
       <div className="spacer" />
       {phase === "recording" ? (
         <button className="cta" style={{ background: "var(--red)" }} onClick={stop}>
-          <span className="cta-main">■ Dừng sớm</span>
+          <span className="cta-main"><IcoStop size={15} /> Dừng sớm</span>
         </button>
       ) : (
         <button className="cta" disabled={phase === "thinking"} onClick={start}>
-          <span className="cta-main">🎤 {result ? "Nói lại lần nữa" : "Bắt đầu nói (60s)"}</span>
+          <span className="cta-main"><IcoMic size={17} /> {result ? "Nói lại lần nữa" : "Bắt đầu nói (60s)"}</span>
         </button>
       )}
       {result && <button className="cta-ghost" onClick={onBack}>Xong — về trang chủ</button>}

@@ -1,6 +1,7 @@
 // Màn brief — thứ duy nhất đứng giữa bạn và cuộc gọi. Chỉ hiện cái cần biết TRƯỚC khi mở miệng,
 // rồi biến mất hẳn. Trước đây 7 khối chrome này nằm đè lên màn hội thoại suốt cả buổi.
 import TtsControls from "./TtsControls.jsx";
+import { IcoMasks, IcoChat, IcoShuffle } from "./Icon.jsx";
 import { TALK_TOPICS } from "../data/talkTopics.js";
 
 export default function CallBrief({ roleplay, scn, scnLoading, patterns, chosen, onPickTopic, busy, onSwap, onStart, onBack }) {
@@ -9,7 +10,7 @@ export default function CallBrief({ roleplay, scn, scnLoading, patterns, chosen,
   return (
     <div className="screen">
       <div className="hud">
-        <span>{roleplay ? "🎭 ĐÓNG VAI" : "💬 TRÒ CHUYỆN"}</span>
+        <span className="inline-ic">{roleplay ? <><IcoMasks size={15} /> Đóng vai</> : <><IcoChat size={15} /> Trò chuyện</>}</span>
         <button className="hud-mute" onClick={onBack}>✕</button>
       </div>
 
@@ -27,7 +28,7 @@ export default function CallBrief({ roleplay, scn, scnLoading, patterns, chosen,
                 <div className="brief-row"><span>Nhiệm vụ</span><b>{scn.goal}</b></div>
               </div>
               <button className="btn-link" disabled={scnLoading} onClick={onSwap}>
-                {scnLoading ? "Đang dựng…" : "🎲 Đổi tình huống khác"}
+                {scnLoading ? "Đang dựng…" : <><IcoShuffle size={16} /> Đổi tình huống khác</>}
               </button>
             </>
           )}
