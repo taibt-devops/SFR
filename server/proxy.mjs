@@ -284,6 +284,36 @@ async function handleIpa(body) {
   return { ipa: text.trim() };
 }
 
+// Việt → Anh (spec Phần 11). Ngược chiều với /translate (Anh → Việt, dùng khi bấm vào từ lúc nói).
+// Trả JSON cứng để giao diện không phải đoán; srs/ask.js:sanitizeAnswer làm sạch lần nữa ở client.
+async function handleAsk(body) {
+  const { vi = "" } = body;
+  const out = await callClaude({
+    maxTokens: 300,
+    system:
+      "Bạn là gia sư tiếng Anh cho người Việt. Người học đưa một câu TIẾNG VIỆT, bạn cho biết người " +
+      "bản xứ THẬT SỰ nói câu đó thế nào. " +
+      'CHỈ trả JSON: {"en":"..","ipa":"/../","use":"..","say":"..","alt":{"en":"..","ipa":"/../","note":".."}}. ' +
+      "en = ĐÚNG MỘT câu tự nhiên nhất người bản xứ dùng — KHÔNG dịch sát từng chữ. " +
+      "ipa = IPA General American, đặt trong /.../. " +
+      "use = tối đa 2 câu TIẾNG VIỆT: trang trọng hay thân mật, dùng ở đâu, khác biệt Anh–Mỹ nếu có. " +
+      // Bản đầu chỉ ghi "chỉ khi có bẫy thật" — gọi thử 3 câu thì CẢ 3 đều có mẹo, trong đó một
+      // mẹo sai hẳn ("check" khác "czech", thật ra hai từ đọc giống nhau). Bảo model đưa mẹo thì
+      // nó luôn đưa. Phải nói rõ MẶC ĐỊNH là rỗng và liệt kê đúng loại bẫy được tính.
+      'say = MẶC ĐỊNH là "" (chuỗi rỗng). Phần lớn câu KHÔNG có bẫy — đừng cố tìm cho ra. ' +
+      "Chỉ điền khi chính câu này có một lỗi NGƯỜI VIỆT thật sự hay mắc: nuốt âm cuối (s/z/t/d/k), " +
+      "âm /θ/ /ð/, nguyên âm dài–ngắn dễ lẫn (/ʊ/ với /uː/, /ɪ/ với /iː/), trọng âm đặt sai, chữ câm. " +
+      "KHÔNG so sánh với một từ tiếng Anh khác. KHÔNG nhắc điều hiển nhiên. Một câu ngắn tiếng Việt. " +
+      "alt = ĐÚNG MỘT cách nói khác, ở mức trang trọng KHÁC với en; note ≤ 5 từ tiếng Việt. " +
+      "Người học lỡ gõ tiếng Anh → VẪN trả lời: coi như họ muốn kiểm câu đó, sửa lại cho tự nhiên. " +
+      "Câu tiếng Việt mơ hồ → chọn cách hiểu phổ biến nhất VÀ nói rõ ngữ cảnh đã chọn trong use. " +
+      "KHÔNG markdown, KHÔNG thêm gì ngoài JSON.",
+    messages: [{ role: "user", content: String(vi).slice(0, 300) }],
+  });
+  const o = extractJsonObject(out) || {};
+  return { en: "", ipa: "", use: "", say: "", alt: null, ...o };
+}
+
 // Mẫu câu/cấu trúc hữu ích để NÓI về một chủ đề, ở đúng trình độ — cho màn Chi tiết chủ đề.
 async function handlePatterns(body) {
   const { topic = "", level = "A2" } = body;
@@ -426,6 +456,7 @@ const ROUTES = {
   "/summary": handleSummary,
   "/translate": handleTranslate,
   "/ipa": handleIpa,
+  "/ask": handleAsk,
   "/patterns": handlePatterns,
   "/tutor": handleTutor,
 };

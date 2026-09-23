@@ -998,3 +998,78 @@ ngắn là chuyện thường.
 - Kiểm tay: nói sai cố ý một lỗi ngữ pháp rõ (bỏ mạo từ) → hôm sau thấy đúng lỗi đó + 2 câu sửa.
 - Kiểm tay: nói ĐÚNG nhưng để Whisper nghe nhầm → gia sư KHÔNG báo đó là lỗi ngữ pháp.
 - `hintFor` chỉ trả gợi ý cho lần gặp SAU, và bị xoá sau khi dùng một lần (có test).
+
+---
+
+# Phần 11 — Hỏi đáp Việt→Anh
+
+> Thiết kế đầy đủ: [`docs/superpowers/specs/2026-09-23-hoi-dap-viet-anh-design.md`](docs/superpowers/specs/2026-09-23-hoi-dap-viet-anh-design.md)
+> Kế hoạch thực thi: [`docs/superpowers/plans/2026-09-23-hoi-dap-viet-anh.md`](docs/superpowers/plans/2026-09-23-hoi-dap-viet-anh.md)
+
+## 11.1 Vì sao
+
+App đi một chiều: chương trình đưa câu, người học nói theo. Nhu cầu thật hay đến ngược lại — đang ở
+nhà hàng, trong đầu bật ra tiếng Việt, **không biết tiếng Anh nói sao**. `/translate` đã có nhưng là
+Anh→Việt (bấm vào từ lúc luyện nói). Chiều Việt→Anh trước đây không tồn tại.
+
+## 11.2 Đường đi
+
+Nút 💬 nổi ở **mọi màn** (gắn một lần ở tầng `AppShell`, xem §11.5) → tấm trượt → gõ tiếng Việt →
+`POST /ask` → một câu tiếng Anh + IPA + cách dùng + một cách nói khác.
+
+Khuôn JSON của `/ask`, cố định:
+
+```json
+{ "en": "..", "ipa": "/../", "use": "..", "say": "", "alt": { "en": "..", "ipa": "/../", "note": ".." } }
+```
+
+`say` là mẹo phát âm và **mặc định rỗng** — xem §11.6 vì sao chỗ này phải nói mạnh.
+
+## 11.3 Kho `srf-ask-v1`
+
+`[{ vi, a, at }]`, mới nhất đầu, tối đa **20**. Lưu **kèm câu trả lời** nên mở lại câu cũ từ chip
+không tốn một lượt gọi Claude nào (đã đo: 0 request). `sanitizeAnswer` là lớp phòng thủ duy nhất
+giữa LLM và giao diện — nhờ nó `AskSheet` không có một câu `if` kiểm kiểu nào.
+
+## 11.4 Nối vào phần đã có — không đẻ thêm kho
+
+Nút ⭐ gọi `addWord({ w: câu EN, m: câu VN, en: câu EN })`, đi đúng đường cũ:
+
+```
+addMyWord → myWords[ngày] → itemsFor → myWordItems → variants [{ vi, en }] → nhịp ôn
+```
+
+Nên hôm sau nhịp ôn hiện **câu tiếng Việt** và bắt nói ra **câu tiếng Anh** — đúng chiều lúc cần
+dùng thật. Nút 🎙️ dùng lại `SpeakCheck` với `kind: "ask"`, attempt chảy vào hồ sơ gia sư (§10.3).
+
+Không store mới, không đụng `sm2.js`.
+
+## 11.5 `AppShell`
+
+`AppMain` có ~15 chỗ `return` sớm. Thay vì gom chúng vào hàm lồng (phải thụt lề lại ~130 dòng),
+chèn tầng `AppShell` gọi `useLesson()` rồi truyền `L` xuống. Sáu dòng, không đổi một dòng điều hướng
+nào. `useLesson()` phải gọi **đúng một lần** — hai lần là hai kho trạng thái tách rời.
+
+## 11.6 Hai điều chỉnh sau khi gọi thật
+
+**Prompt bảo "chỉ đưa mẹo khi có bẫy thật" là chưa đủ.** Gọi thử 3 câu thì **cả 3** đều có `say`,
+trong đó một mẹo sai hẳn: nó bảo "check" khác "czech", thật ra hai từ đọc giống nhau. Bảo model đưa
+mẹo thì nó luôn tìm ra một cái để đưa. Phải ghi **mặc định là chuỗi rỗng** và liệt kê đúng loại bẫy
+được tính (nuốt âm cuối, /θ/ /ð/, dài–ngắn, trọng âm, chữ câm), cấm so sánh với từ khác. Sau khi
+siết: 3/5 câu trả rỗng, hai mẹo còn lại đều là bẫy thật của người Việt.
+
+**Câu lỗi phải nói tiếng người.** Bản đầu hiện thẳng `Lỗi: proxy lỗi 500` cho người học. Giờ mỗi
+nhánh nói rõ nên làm gì: 401 → đăng nhập lại · 5xx → máy chủ trục trặc, đợi chút · mất mạng → kiểm
+tra mạng · quá 20s → máy chủ không trả lời. Chuỗi kỹ thuật lùi vào trong ngoặc.
+
+## 11.7 Xong khi — đã đo
+
+- Gõ tiếng Việt ra câu tiếng Anh + IPA + cách dùng, nghe được cả hai câu. ✓ (5 câu qua `/ask` thật)
+- Bấm ⭐ → `srf-mywords-v1` có `w` = tiếng Anh, `m` = tiếng Việt. ✓ (đọc thẳng localStorage)
+- Chip mở lại: 0 request. ✓
+- Lỗi mạng/500/401: câu tiếng Việt + nút thử lại trong ~100ms, app không đơ. ✓
+- FAB có ở màn chờ và mọi nhịp học, không đè nút nào, không tràn ngang. ✓
+- 201 test pass. ✓
+
+**Chưa kiểm:** nút 🎙️ trong tấm trượt — headless không có mic. Chuỗi Whisper đã dùng chung với 4
+nhịp kia nên rủi ro thấp, nhưng chưa ai nói thật vào đó.

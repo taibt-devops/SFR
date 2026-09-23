@@ -21,17 +21,30 @@ import Call from "./components/Call.jsx";
 import SpeakingAssess from "./components/SpeakingAssess.jsx";
 import WeekReport from "./components/WeekReport.jsx";
 import WarmupTalk from "./components/WarmupTalk.jsx";
+import AskFab from "./components/AskFab.jsx";
 
 const TRACK_VI = { daily: "Đời thường & du lịch", work: "Công việc & phỏng vấn" };
 
 export default function App() {
   const [authed, setAuthed] = useState(isAuthed);
   if (!authed) return <Login onSuccess={() => setAuthed(true)} />;
-  return <AppMain />;
+  return <AppShell />;
 }
 
-function AppMain() {
+// Tầng này tồn tại để nút hỏi đáp có mặt ở MỌI màn mà không phải sửa 15 chỗ `return` trong AppMain.
+// `useLesson()` chuyển lên đây và truyền xuống — gọi hook ở hai nơi là hai kho trạng thái khác nhau,
+// câu lưu từ nút ⭐ sẽ không bao giờ hiện ra ở nhịp ôn.
+function AppShell() {
   const L = useLesson();
+  return (
+    <>
+      <AppMain L={L} />
+      <AskFab onAddWord={L.addWord} onAttempt={L.attempt} />
+    </>
+  );
+}
+
+function AppMain({ L }) {
   const [view, setView] = useState("today"); // today | progress | warmup | roleplay | chat
   const home = () => setView("today");
 
