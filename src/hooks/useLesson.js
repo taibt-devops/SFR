@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { lessons, lessonByDay } from "../data/course/index.js";
 import { todayLesson, nextStep, completeStep, stepProgress, lastCompleted, isWeekClose } from "../srs/lesson.js";
-import { loadCourse, saveCourse, purgeLegacy, streakFor, doneToday, recordSaid, saidFor, recentDays, weekDays, weekCount } from "../srs/course.js";
+import { loadCourse, saveCourse, purgeLegacy, streakFor, doneToday, recordSaid, saidFor, recentDays, weekDays, weekCount, learnedWords } from "../srs/course.js";
 import { itemsFor, promptFor } from "../srs/items.js";
 import { loadMyWords, saveMyWords, addMyWord, countMyWords } from "../srs/myWords.js";
 import { buildSession, review } from "../srs/sm2.js";
@@ -183,6 +183,7 @@ export function useLesson() {
     days: recentDays(progress, 14, Date.now()),
     week: weekDays(progress, Date.now()),
     weekCount: weekCount(progress, Date.now()),
+    wordCount: learnedWords(lessons, progress, myWords).length,
     saidBest: lesson ? saidFor(progress, lesson.day) : null,
     lastDone: lastCompleted(lessons, progress),
     myWords,

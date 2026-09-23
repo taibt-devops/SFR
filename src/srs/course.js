@@ -140,6 +140,41 @@ export function completedCount(progress = {}) {
   return Object.values(progress).filter((e) => e?.core).length;
 }
 
+// Danh sách TỪ VỰNG đã học, mới nhất lên đầu (spec §4.3).
+//
+// Hai nguồn, cố ý gộp chung một danh sách:
+//  • Từ CỦA BÀI — chỉ tính khi đã làm phần mở rộng của ngày đó. Cùng đúng một luật với hàng đợi
+//    ôn (§2.3): chưa học nhịp 3 thì từ chưa ra đời, nên cũng chưa được coi là "đã học".
+//  • Từ TỰ THÊM ở màn nói và câu lưu từ ô hỏi đáp — vào ngay, không cần điều kiện gì.
+//
+// Gộp chung vì người học không nghĩ theo kiểu "từ hệ thống" với "từ của tôi"; họ chỉ muốn biết
+// mình đang có bao nhiêu chữ trong tay. Cột `mine` để giao diện phân biệt nguồn khi cần.
+export function learnedWords(lessons = [], progress = {}, myWords = {}) {
+  const out = [];
+  for (const l of lessons) {
+    const p = progress?.[l.day];
+    if (!p?.core || !p.ext || l.review || !Array.isArray(l.words)) continue;
+    for (const w of l.words) {
+      out.push({ w: w.w, ipa: w.ipa || "", m: w.m || "", en: w.en || "", day: l.day, week: l.week, mine: false });
+    }
+  }
+  for (const [day, list] of Object.entries(myWords || {})) {
+    for (const x of Array.isArray(list) ? list : []) {
+      // Cắt khoảng trắng rồi mới kiểm, chứ không chỉ kiểm truthy: chuỗi toàn dấu cách VẪN truthy
+      // và đã lọt qua một lần — nó hiện ra thành một dòng trống giữa danh sách.
+      const w = String(x?.w || "").trim();
+      if (!w) continue;
+      out.push({ w, ipa: "", m: x.m || "", en: x.en || "", day: Number(day), week: null, mine: true, at: x.at || 0 });
+    }
+  }
+  // Ngày mới lên đầu; trong cùng một ngày, từ tự thêm đứng trước vì đó là thứ bạn chủ động nhặt.
+  return out.sort((a, b) => b.day - a.day || Number(b.mine) - Number(a.mine));
+}
+
+export function countLearnedWords(lessons, progress, myWords) {
+  return learnedWords(lessons, progress, myWords).length;
+}
+
 // ── Tuần này (dải 7 ô T2…CN) ───────────────────────────────
 // ĐẾM SỐ NGÀY HỌC TRONG TUẦN, không phải chuỗi liên tiếp. Nghỉ thứ Tư rồi học lại thứ Năm thì
 // vẫn là 3/7 — không có gì bị xoá. Đây là điểm khác cốt lõi với streak: nó không bao giờ trừng

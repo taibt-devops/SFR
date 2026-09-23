@@ -1540,3 +1540,53 @@ button.btn, button.btn2, button.cta, button.ask-act, .btn-link, .lnk {
 .cta-hero, .cta { flex-direction: column; gap: 2px; }
 .cta-hero > span, .cta > span { display: flex; align-items: center; justify-content: center; gap: 7px; }
 .cta-hero span { letter-spacing: 0; text-transform: none; }
+
+/* ── Tiến bộ: hai tab, danh sách từ vựng ──────────────────────── */
+.tabs { display: flex; gap: 8px; }
+.tab {
+  flex: 1;
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+  font: inherit;
+  padding: 14px 16px;
+  background: var(--ink-2);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  cursor: pointer;
+  text-align: left;
+  /* Tab đang chọn đánh dấu bằng VIỀN + quầng, không đổi kích thước — đổi kích thước làm cả
+     hàng nhảy mỗi lần bấm. */
+  transition: border-color 0.15s, background 0.15s;
+}
+.tab b {
+  font-family: var(--font-display);
+  font-size: 26px; font-weight: 800; line-height: 1.1;
+  color: var(--muted);
+}
+.tab span { font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.tab.on { border-color: rgba(200, 250, 60, 0.45); background: var(--surface); box-shadow: 0 0 0 3px rgba(200, 250, 60, 0.07); }
+.tab.on b { color: var(--lime); }
+.tab.on span { color: var(--text2); }
+
+/* Chip lọc ở trạng thái đang chọn — dùng chung lớp .chip của ô hỏi đáp. */
+.chip-on { border-color: rgba(200, 250, 60, 0.5); background: var(--lime-dim); color: var(--lime); }
+.chip-on:hover { color: var(--lime); }
+
+.vocab { display: flex; flex-direction: column; gap: 8px; }
+.vocab-item {
+  background: var(--ink-2);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 12px 14px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.vocab-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.vocab-w {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--font-display);
+  font-size: 18px; font-weight: 700; line-height: 1.3;
+  min-width: 0; word-break: break-word;
+}
+.vocab-w svg { color: var(--lime); }
+.vocab-sub { display: flex; flex-wrap: wrap; gap: 8px; font-size: 14px; color: var(--text2); }
+.vocab-ipa { color: var(--mint); }
+.vocab-ex { font-size: 14px; color: var(--text2); font-style: italic; }

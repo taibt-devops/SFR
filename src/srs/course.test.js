@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import {
   loadCourse, saveCourse, purgeLegacy, streakFor, doneToday,
   recordSaid, saidFor, learnedPatterns, completedCount, recentDays,
-  weekDays, weekCount, sentencesOf, WEEK_LABELS,
+  weekDays, weekCount, sentencesOf, learnedWords, countLearnedWords, WEEK_LABELS,
   COURSE_KEY, RESET_FLAG, LEGACY_KEYS,
 } from "./course.js";
 
@@ -293,4 +293,50 @@ describe("weekDays / weekCount — dải 7 ô T2…CN", () => {
   });
 
   it("chưa học gì → 0", () => expect(weekCount({}, THU4)).toBe(0));
+});
+
+describe("learnedWords — từ vựng đã học", () => {
+  const lessons = [
+    { day: 1, week: 1, pat: "P1", words: [{ w: "refill", ipa: "/r/", m: "rót thêm", en: "A refill." }] },
+    { day: 2, week: 1, pat: "P2", words: [{ w: "spell", ipa: "/s/", m: "đánh vần", en: "Spell it." }] },
+    { day: 6, week: 1, review: true },
+  ];
+  const xong = (t, ext) => ({ steps: {}, core: true, ext: !!ext, doneAt: t });
+
+  it("CHƯA làm phần mở rộng thì từ của bài chưa tính", () => {
+    expect(learnedWords(lessons, { 1: xong(NOW, false) }, {})).toEqual([]);
+  });
+
+  it("làm phần mở rộng rồi thì từ của bài vào danh sách", () => {
+    const r = learnedWords(lessons, { 1: xong(NOW, true) }, {});
+    expect(r).toHaveLength(1);
+    expect(r[0]).toMatchObject({ w: "refill", ipa: "/r/", m: "rót thêm", day: 1, mine: false });
+  });
+
+  it("từ tự thêm vào NGAY, không cần điều kiện gì", () => {
+    const r = learnedWords(lessons, {}, { 3: [{ w: "How much is this?", m: "cái này bao nhiêu" }] });
+    expect(r).toHaveLength(1);
+    expect(r[0]).toMatchObject({ w: "How much is this?", mine: true, day: 3 });
+  });
+
+  it("ngày mới lên đầu; cùng ngày thì từ tự thêm đứng trước", () => {
+    const p = { 1: xong(NOW, true), 2: xong(NOW, true) };
+    const r = learnedWords(lessons, p, { 2: [{ w: "mine2" }] });
+    expect(r.map((x) => x.w)).toEqual(["mine2", "spell", "refill"]);
+  });
+
+  it("ngày chốt tuần không có từ", () => {
+    expect(learnedWords(lessons, { 6: xong(NOW, true) }, {})).toEqual([]);
+  });
+
+  it("dữ liệu rỗng/hỏng an toàn", () => {
+    expect(learnedWords()).toEqual([]);
+    expect(learnedWords(lessons, {}, { 1: null })).toEqual([]);
+    expect(learnedWords(lessons, {}, { 1: [{ w: "  " }, {}] })).toEqual([]);
+  });
+
+  it("countLearnedWords khớp độ dài danh sách", () => {
+    const p = { 1: xong(NOW, true), 2: xong(NOW, true) };
+    expect(countLearnedWords(lessons, p, { 2: [{ w: "x" }] })).toBe(3);
+  });
 });

@@ -89,7 +89,7 @@ function AppMain({ L }) {
   }, [L.tutor]);
 
   if (view === "progress") {
-    return <Progress lessons={L.lessons} progress={L.progress} streak={L.streak} onBack={home} />;
+    return <Progress lessons={L.lessons} progress={L.progress} onBack={home} />;
   }
   if (view === "warmup") return <WarmupTalk onBack={home} />;
 
@@ -232,6 +232,7 @@ function AppMain({ L }) {
       completed={completedCount(L.progress)}
       week={L.week}
       weekCount={L.weekCount}
+      wordCount={L.wordCount}
       last={learnedPatterns(L.lessons, L.progress)[0] || null}
       lastDone={L.lastDone}
       onStart={L.start}
