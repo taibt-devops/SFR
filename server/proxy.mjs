@@ -284,6 +284,31 @@ async function handleIpa(body) {
   return { ipa: text.trim() };
 }
 
+// Việt → Anh (spec Phần 11). Ngược chiều với /translate (Anh → Việt, dùng khi bấm vào từ lúc nói).
+// Trả JSON cứng để giao diện không phải đoán; srs/ask.js:sanitizeAnswer làm sạch lần nữa ở client.
+async function handleAsk(body) {
+  const { vi = "" } = body;
+  const out = await callClaude({
+    maxTokens: 300,
+    system:
+      "Bạn là gia sư tiếng Anh cho người Việt. Người học đưa một câu TIẾNG VIỆT, bạn cho biết người " +
+      "bản xứ THẬT SỰ nói câu đó thế nào. " +
+      'CHỈ trả JSON: {"en":"..","ipa":"/../","use":"..","say":"..","alt":{"en":"..","ipa":"/../","note":".."}}. ' +
+      "en = ĐÚNG MỘT câu tự nhiên nhất người bản xứ dùng — KHÔNG dịch sát từng chữ. " +
+      "ipa = IPA General American, đặt trong /.../. " +
+      "use = tối đa 2 câu TIẾNG VIỆT: trang trọng hay thân mật, dùng ở đâu, khác biệt Anh–Mỹ nếu có. " +
+      "say = mẹo phát âm TIẾNG VIỆT, CHỈ khi có bẫy thật (chữ câm, trọng âm hay đặt sai, âm người Việt " +
+      'hay nuốt). Không có bẫy thì trả "" — thà bỏ trống còn hơn bịa ra mẹo vô nghĩa. ' +
+      "alt = ĐÚNG MỘT cách nói khác, ở mức trang trọng KHÁC với en; note ≤ 5 từ tiếng Việt. " +
+      "Người học lỡ gõ tiếng Anh → VẪN trả lời: coi như họ muốn kiểm câu đó, sửa lại cho tự nhiên. " +
+      "Câu tiếng Việt mơ hồ → chọn cách hiểu phổ biến nhất VÀ nói rõ ngữ cảnh đã chọn trong use. " +
+      "KHÔNG markdown, KHÔNG thêm gì ngoài JSON.",
+    messages: [{ role: "user", content: String(vi).slice(0, 300) }],
+  });
+  const o = extractJsonObject(out) || {};
+  return { en: "", ipa: "", use: "", say: "", alt: null, ...o };
+}
+
 // Mẫu câu/cấu trúc hữu ích để NÓI về một chủ đề, ở đúng trình độ — cho màn Chi tiết chủ đề.
 async function handlePatterns(body) {
   const { topic = "", level = "A2" } = body;
@@ -426,6 +451,7 @@ const ROUTES = {
   "/summary": handleSummary,
   "/translate": handleTranslate,
   "/ipa": handleIpa,
+  "/ask": handleAsk,
   "/patterns": handlePatterns,
   "/tutor": handleTutor,
 };
