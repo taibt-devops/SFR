@@ -1496,3 +1496,40 @@ button.btn, button.btn2, button.cta, button.ask-act, .btn-link, .lnk {
   border-radius: 50%;
   color: var(--lime);
 }
+
+/* ── Hệ thống hoá lại: MỘT cấp nhãn, MỘT gradient mỗi màn ──────
+   Hai luật này trước đây bị phá dần theo từng đợt thêm màn, nên gom lại một chỗ thay vì sửa rải
+   rác 17 nơi. Đặt ở cuối file để đè lên các khai báo cũ mà không phải xoá chúng. */
+
+/* 1. Một cấp nhãn duy nhất.
+   Đo được trước khi sửa: 16 lớp nhãn, cỡ chữ từ 11 đến 18px, giãn chữ từ 0.04 đến 0.18em — trên
+   một màn có tới BA cấp chữ hoa, mắt không biết cái nào quan trọng hơn cái nào. */
+.hud, .eyebrow, .step-kicker, .ring-lab, .stat span, .streak-big span, .learned-meta,
+.turn-who, .ask-label, .ask-alt-tag, .hd-label, .pc-head, .lt-head,
+.sec-lab, .stat-lab, .pchart-head {
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+/* Nhãn NÚT là câu lệnh, không phải nhãn phân mục — viết thường. */
+.cta-hero, .cta-hero span, .btn, .cta, .btn2, .ask-act, .chip, .lnk {
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* 2. Gradient chỉ cho nút chính chạy hết chiều ngang.
+   Nút nhỏ và huy hiệu dùng màu đặc: vẫn rõ là điểm nhấn, mà không tranh chỗ với nút chính. */
+.stat b { background: none; -webkit-text-fill-color: currentColor; color: var(--lime); }
+.goal-chip.on {
+  background: var(--lime-dim);
+  border-color: rgba(200, 250, 60, 0.5);
+  color: var(--lime);
+}
+.ask-send { background: var(--lime); }
+.ask-send:disabled { background: var(--surface-2); }
+.assess-level, .trend-bar { background: var(--lime); }
+
+/* 3. Mặt phẳng là mặt phẳng — bỏ mấy dải chuyển nền mờ chỉ tổ đếm thành "gradient thứ hai". */
+.card, .t-last, .story-text { background: var(--ink-2); }
+/* Tấm trượt tách khỏi nền bằng một vạch sáng ở mép, thay cho quầng gradient. */
+.sheet-card { background: var(--surface); border-top: 1px solid rgba(200, 250, 60, 0.3); }
