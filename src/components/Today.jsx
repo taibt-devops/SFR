@@ -62,7 +62,9 @@ function TheBai({ lesson, coOn, daoThuTu, nhan, onStart }) {
     <section className="card lesson">
       <div className="eb">Bài {lesson.day}</div>
       <div className="lt">{lesson.title}</div>
-      <div className="lnote">{daoThuTu ? "Ôn trước, học sau · " : ""}khoảng 15 phút</div>
+      {/* Chỉ hứa "ôn trước" khi thật sự CÓ dòng ôn trong danh sách. Ghi câu đó trong khi hàng
+          đợi rỗng là tự mâu thuẫn ngay trên cùng một thẻ. */}
+      <div className="lnote">{daoThuTu && coOn ? "Ôn trước, học sau · " : ""}khoảng 15 phút</div>
       <ul className="steps">
         {buoc.map(({ ic: Ic, b, s }) => (
           <li key={b}>
