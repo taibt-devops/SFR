@@ -14,7 +14,6 @@ import { useState } from "react";
 import Mountain from "./Mountain.jsx";
 import { IcoVolume, IcoVolumeOff, IcoPlay, IcoMasks, IcoChat, IcoArrow, IcoCheck } from "./Icon.jsx";
 import { isMuted, setMuted, tick } from "../utils/sfx.js";
-import { useCountUp } from "../hooks/useCountUp.js";
 import { speak } from "../utils/tts.js";
 import { TOTAL_DAYS } from "../data/course/outline.js";
 
@@ -118,7 +117,6 @@ export default function Today({
   onStart, onProgress, onWarmup, onRoleplay, onChat,
 }) {
   const [mute, setMute] = useState(isMuted);
-  const nNgay = useCountUp(completed, { delay: 300 });
 
   const toggleMute = () => {
     const next = !mute;
@@ -153,8 +151,11 @@ export default function Today({
         <section className="hero hero-done">
           <Mountain days={completed} total={TOTAL_DAYS} celebrate />
           <p className="done-tag"><IcoCheck size={16} /> Xong 1% hôm nay</p>
+          {/* Số ngày hiện THẲNG, không đếm lên. Đây là THÔNG TIN chứ không phải trang trí: hiệu
+              ứng đếm mà không chạy thì người dùng đọc được "0 ngày" — sai, chứ không phải kém
+              sinh động. Đếm số để ở màn đóng ngày, đúng khoảnh khắc hoàn thành. */}
           <p className="done-sub">
-            Núi của bạn: <b>{nNgay}</b> ngày <i>·</i> Hẹn mai nhé!
+            Núi của bạn: <b>{completed}</b> ngày <i>·</i> Hẹn mai nhé!
           </p>
         </section>
 
