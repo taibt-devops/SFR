@@ -5,6 +5,17 @@ import AskSheet from "./AskSheet.jsx";
 import { askEnglish } from "../ai/ask.js";
 import { addAsk, loadAsk, recentAsks, sanitizeAnswer, saveAsk } from "../srs/ask.js";
 
+// Người học không cần biết "proxy lỗi 500" nghĩa là gì — họ cần biết NÊN LÀM GÌ tiếp.
+// Chuỗi kỹ thuật chỉ còn nằm ở cuối, trong ngoặc, cho lúc cần báo lỗi.
+function loiTiengViet(e) {
+  const raw = String(e?.message || e);
+  if (e?.name === "AbortError") return "Máy chủ không trả lời (quá 20 giây). Thử lại nhé.";
+  if (/\b401\b|\b403\b/.test(raw)) return "Mật khẩu không còn hiệu lực — đăng nhập lại giúp tôi.";
+  if (/\b5\d\d\b/.test(raw)) return "Máy chủ đang trục trặc. Đợi một chút rồi thử lại.";
+  if (/failed to fetch|networkerror|load failed/i.test(raw)) return "Không kết nối được máy chủ. Kiểm tra mạng nhé.";
+  return "Chưa hỏi được, thử lại nhé. (" + raw + ")";
+}
+
 export default function AskFab({ onAddWord, onAttempt }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
@@ -33,14 +44,7 @@ export default function AskFab({ onAddWord, onAttempt }) {
         setAskedVi(vi);
         setStore((prev) => { const next = addAsk(prev, vi, a, Date.now()); saveAsk(next); return next; });
       })
-      .catch((e) => {
-        // AbortController báo lỗi tên "AbortError" — dịch sang tiếng Việt người dùng hiểu được,
-        // đừng để nguyên chuỗi tiếng Anh của trình duyệt.
-        const msg = e?.name === "AbortError"
-          ? "Máy chủ không trả lời (quá 20 giây)."
-          : "Lỗi: " + String(e?.message || e);
-        setErr(msg);
-      })
+      .catch((e) => setErr(loiTiengViet(e)))
       .finally(() => setBusy(false));
   }, [q]);
 
