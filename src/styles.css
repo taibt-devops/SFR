@@ -1533,3 +1533,10 @@ button.btn, button.btn2, button.cta, button.ask-act, .btn-link, .lnk {
 .card, .t-last, .story-text { background: var(--ink-2); }
 /* Tấm trượt tách khỏi nền bằng một vạch sáng ở mép, thay cho quầng gradient. */
 .sheet-card { background: var(--surface); border-top: 1px solid rgba(200, 250, 60, 0.3); }
+
+/* Nút CTA có nhãn phụ phải xếp DỌC. Quy tắc `display: inline-flex` thêm ở trên (để icon nét thẳng
+   hàng với chữ) vô tình kéo nhãn phụ lên cùng dòng với nhãn chính — regression do chính tôi gây ra,
+   thấy trên màn "Bắt đầu gọi". Nút nào có <span> con thì xếp cột. */
+.cta-hero, .cta { flex-direction: column; gap: 2px; }
+.cta-hero > span, .cta > span { display: flex; align-items: center; justify-content: center; gap: 7px; }
+.cta-hero span { letter-spacing: 0; text-transform: none; }
