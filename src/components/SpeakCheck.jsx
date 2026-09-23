@@ -43,7 +43,7 @@ function NhipNoi({ n }) {
   return (
     <p className="nhip-noi">
       {y.map((x, i) => <span key={i}>{i > 0 && <i> · </i>}{x}</span>)}
-      {n.wpm ? <span className="nhip-wpm"> {n.wpm} từ/phút</span> : null}
+      {n.wpm ? <span className="nhip-wpm"><i> · </i>{n.wpm} từ/phút</span> : null}
     </p>
   );
 }
