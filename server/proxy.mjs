@@ -297,8 +297,13 @@ async function handleAsk(body) {
       "en = ĐÚNG MỘT câu tự nhiên nhất người bản xứ dùng — KHÔNG dịch sát từng chữ. " +
       "ipa = IPA General American, đặt trong /.../. " +
       "use = tối đa 2 câu TIẾNG VIỆT: trang trọng hay thân mật, dùng ở đâu, khác biệt Anh–Mỹ nếu có. " +
-      "say = mẹo phát âm TIẾNG VIỆT, CHỈ khi có bẫy thật (chữ câm, trọng âm hay đặt sai, âm người Việt " +
-      'hay nuốt). Không có bẫy thì trả "" — thà bỏ trống còn hơn bịa ra mẹo vô nghĩa. ' +
+      // Bản đầu chỉ ghi "chỉ khi có bẫy thật" — gọi thử 3 câu thì CẢ 3 đều có mẹo, trong đó một
+      // mẹo sai hẳn ("check" khác "czech", thật ra hai từ đọc giống nhau). Bảo model đưa mẹo thì
+      // nó luôn đưa. Phải nói rõ MẶC ĐỊNH là rỗng và liệt kê đúng loại bẫy được tính.
+      'say = MẶC ĐỊNH là "" (chuỗi rỗng). Phần lớn câu KHÔNG có bẫy — đừng cố tìm cho ra. ' +
+      "Chỉ điền khi chính câu này có một lỗi NGƯỜI VIỆT thật sự hay mắc: nuốt âm cuối (s/z/t/d/k), " +
+      "âm /θ/ /ð/, nguyên âm dài–ngắn dễ lẫn (/ʊ/ với /uː/, /ɪ/ với /iː/), trọng âm đặt sai, chữ câm. " +
+      "KHÔNG so sánh với một từ tiếng Anh khác. KHÔNG nhắc điều hiển nhiên. Một câu ngắn tiếng Việt. " +
       "alt = ĐÚNG MỘT cách nói khác, ở mức trang trọng KHÁC với en; note ≤ 5 từ tiếng Việt. " +
       "Người học lỡ gõ tiếng Anh → VẪN trả lời: coi như họ muốn kiểm câu đó, sửa lại cho tự nhiên. " +
       "Câu tiếng Việt mơ hồ → chọn cách hiểu phổ biến nhất VÀ nói rõ ngữ cảnh đã chọn trong use. " +
