@@ -106,7 +106,7 @@ Hỏi lại câu đã có (so sánh sau khi chuẩn hoá khoảng trắng + ch�
 `AskFab` giữ trạng thái đóng/mở và bơm câu trả lời; `AskSheet` chỉ vẽ. Biên giới này để `AskSheet`
 kiểm được bằng cách truyền props, không cần giả mạng.
 
-`.screen` thêm `padding-bottom: 72px` — nút nổi 48px + lề sẽ không bao giờ đè lên nội dung hay nút
+`.screen` nới đáy lên `90px` — nút nổi 52px + lề an toàn sẽ không bao giờ đè lên nội dung hay nút
 ở cuối màn. Sửa một chỗ, đúng cho mọi màn.
 
 Trạng thái lỗi: proxy chết / token hết hạn / quá 20s → hiện câu tiếng Việt dễ hiểu + nút "Thử lại".
@@ -116,14 +116,26 @@ chết mà không biết chuyện gì.
 ### 3.4 Gắn vào `App.jsx`
 
 `AppMain` hiện có nhiều lệnh `return` sớm (progress / warmup / roleplay / chat / done / switch các
-nhịp). Gom toàn bộ phần đó vào một hàm lồng `screen()`, rồi:
+nhịp). Gom chúng vào một hàm lồng sẽ phải thụt lề lại ~130 dòng — diff to, dễ lọt lỗi.
+
+Thay vào đó chèn một tầng `AppShell` mỏng: nó gọi `useLesson()` rồi truyền `L` xuống `AppMain` như
+một prop, và đặt `AskFab` cạnh đó.
 
 ```jsx
-return (<>{screen()}<AskFab onAddWord={L.addWord} onAttempt={L.attempt} /></>);
+function AppShell() {
+  const L = useLesson();
+  return (<><AppMain L={L} /><AskFab onAddWord={L.addWord} onAttempt={L.attempt} /></>);
+}
 ```
 
-Thuần cắt-dán, không đổi logic điều hướng. **Mọi hook phải ở nguyên chỗ cũ — trên `screen()`.**
-Nhét hook vào trong `screen()` là tái phạm đúng lỗi Rules of Hooks đã sửa ở Phần 10.
+Sáu dòng, **không thụt lề lại dòng nào**, và `AppMain` chỉ đổi đúng chữ ký hàm.
+
+`useLesson()` phải được gọi **đúng một lần** — gọi ở hai nơi là hai kho trạng thái tách rời, câu
+lưu từ nút ⭐ sẽ không bao giờ hiện ra ở nhịp ôn.
+
+Mọi hook còn lại của `AppMain` giữ **nguyên vị trí**, trên mọi `return` có điều kiện. Đẩy hook
+xuống dưới là tái phạm đúng lỗi Rules of Hooks đã sửa ở Phần 10 (app crash khi chuyển từ nhịp nói
+sang màn đóng ngày).
 
 ### 3.5 Nối vào phần đã có — không đẻ thêm kho
 
