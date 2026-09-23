@@ -303,14 +303,29 @@ describe("learnedWords — từ vựng đã học", () => {
   ];
   const xong = (t, ext) => ({ steps: {}, core: true, ext: !!ext, doneAt: t });
 
-  it("CHƯA làm phần mở rộng thì từ của bài chưa tính", () => {
-    expect(learnedWords(lessons, { 1: xong(NOW, false) }, {})).toEqual([]);
+  it("xong LÕI là từ của bài đã hiện, nhưng đánh dấu chưa vào hàng đợi ôn", () => {
+    const r = learnedWords(lessons, { 1: xong(NOW, false) }, {});
+    expect(r).toHaveLength(1);
+    expect(r[0]).toMatchObject({ w: "refill", day: 1, mine: false, inSrs: false });
   });
 
-  it("làm phần mở rộng rồi thì từ của bài vào danh sách", () => {
+  it("làm phần mở rộng rồi thì từ vào hàng đợi ôn", () => {
     const r = learnedWords(lessons, { 1: xong(NOW, true) }, {});
-    expect(r).toHaveLength(1);
-    expect(r[0]).toMatchObject({ w: "refill", ipa: "/r/", m: "rót thêm", day: 1, mine: false });
+    expect(r[0]).toMatchObject({ w: "refill", ipa: "/r/", m: "rót thêm", day: 1, inSrs: true });
+  });
+
+  it("chưa học xong lõi thì không hiện gì", () => {
+    expect(learnedWords(lessons, { 1: { steps: {}, core: false } }, {})).toEqual([]);
+  });
+
+  it("id khớp id item của hàng đợi ôn, để tra được mức thuộc", () => {
+    expect(learnedWords(lessons, { 1: xong(NOW, true) }, {})[0].id).toBe("word::1::refill");
+  });
+
+  it("countLearnedWords CHỈ đếm từ đang thật sự được ôn", () => {
+    const p = { 1: xong(NOW, false), 2: xong(NOW, true) };
+    expect(learnedWords(lessons, p, {})).toHaveLength(2);
+    expect(countLearnedWords(lessons, p, {})).toBe(1);
   });
 
   it("từ tự thêm vào NGAY, không cần điều kiện gì", () => {
@@ -335,7 +350,7 @@ describe("learnedWords — từ vựng đã học", () => {
     expect(learnedWords(lessons, {}, { 1: [{ w: "  " }, {}] })).toEqual([]);
   });
 
-  it("countLearnedWords khớp độ dài danh sách", () => {
+  it("từ tự thêm luôn nằm trong hàng đợi ôn", () => {
     const p = { 1: xong(NOW, true), 2: xong(NOW, true) };
     expect(countLearnedWords(lessons, p, { 2: [{ w: "x" }] })).toBe(3);
   });

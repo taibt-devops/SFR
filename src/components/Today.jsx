@@ -79,7 +79,7 @@ function Week({ days, count }) {
 // ── Card mẫu câu gần nhất ──
 // `example` do course.js dựng và LUÔN thuộc đúng bài của `pat`. Trước đây màn này ghép mẫu câu của
 // hôm nay với câu của hôm qua, vì câu sửa lỗi do gia sư sinh ra cũng bị ghi làm "câu nói được".
-function PatternCard({ last, count, wordCount, onProgress }) {
+function PatternCard({ last, count, wordCount, onProgress, onVocab }) {
   if (!last) return null;
   return (
     <section className="pc">
@@ -95,9 +95,14 @@ function PatternCard({ last, count, wordCount, onProgress }) {
           </button>
         </div>
       )}
-      <button className="lnk" onClick={onProgress}>
-        Xem tất cả <IcoArrow size={15} />
-      </button>
+      <div className="pc-links">
+        <button className="lnk" onClick={onProgress}>
+          Xem tất cả <IcoArrow size={15} />
+        </button>
+        <button className="lnk" onClick={onVocab}>
+          Từ vựng của tôi <IcoArrow size={15} />
+        </button>
+      </div>
     </section>
   );
 }
@@ -116,7 +121,7 @@ function LuyenThem({ onRoleplay, onChat }) {
 
 export default function Today({
   lesson, doneToday, completed, week, weekCount, wordCount, last, lastDone,
-  onStart, onProgress, onWarmup, onRoleplay, onChat,
+  onStart, onProgress, onVocab, onWarmup, onRoleplay, onChat,
 }) {
   const [mute, setMute] = useState(isMuted);
 
@@ -136,13 +141,16 @@ export default function Today({
         <p className="h-sub">Các chủ đề sau chưa có nội dung — soạn tiếp rồi quay lại.</p>
         <div className="spacer" />
         <LuyenThem onRoleplay={onRoleplay} onChat={onChat} />
-        <button className="lnk" onClick={onProgress}>Xem tất cả mẫu câu <IcoArrow size={15} /></button>
+        <div className="pc-links">
+          <button className="lnk" onClick={onProgress}>Xem tất cả mẫu câu <IcoArrow size={15} /></button>
+          <button className="lnk" onClick={onVocab}>Từ vựng của tôi <IcoArrow size={15} /></button>
+        </div>
       </div>
     );
   }
 
   const wk = <Week days={week} count={weekCount} />;
-  const pc = <PatternCard last={last} count={completed} wordCount={wordCount} onProgress={onProgress} />;
+  const pc = <PatternCard last={last} count={completed} wordCount={wordCount} onProgress={onProgress} onVocab={onVocab} />;
 
   // ── ĐÃ XONG: phần thưởng, không mời gọi ──
   if (doneToday) {

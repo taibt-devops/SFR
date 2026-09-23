@@ -17,6 +17,7 @@ import StepSpeak from "./components/StepSpeak.jsx";
 import StepWords from "./components/StepWords.jsx";
 import DayDone from "./components/DayDone.jsx";
 import Progress from "./components/Progress.jsx";
+import Vocab from "./components/Vocab.jsx";
 import Call from "./components/Call.jsx";
 import SpeakingAssess from "./components/SpeakingAssess.jsx";
 import WeekReport from "./components/WeekReport.jsx";
@@ -89,8 +90,9 @@ function AppMain({ L }) {
   }, [L.tutor]);
 
   if (view === "progress") {
-    return <Progress lessons={L.lessons} progress={L.progress} onBack={home} />;
+    return <Progress lessons={L.lessons} progress={L.progress} onBack={home} onVocab={() => setView("vocab")} />;
   }
+  if (view === "vocab") return <Vocab words={L.words} getState={L.getState} onBack={home} />;
   if (view === "warmup") return <WarmupTalk onBack={home} />;
 
   // ── Nói tự do (vào thẳng từ màn chờ, không cần học xong) ──
@@ -237,6 +239,7 @@ function AppMain({ L }) {
       lastDone={L.lastDone}
       onStart={L.start}
       onProgress={() => setView("progress")}
+      onVocab={() => setView("vocab")}
       onWarmup={() => setView("warmup")}
       onRoleplay={() => setView("roleplay")}
       onChat={() => setView("chat")}

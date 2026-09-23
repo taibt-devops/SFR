@@ -1590,3 +1590,22 @@ button.btn, button.btn2, button.cta, button.ask-act, .btn-link, .lnk {
 .vocab-sub { display: flex; flex-wrap: wrap; gap: 8px; font-size: 14px; color: var(--text2); }
 .vocab-ipa { color: var(--mint); }
 .vocab-ex { font-size: 14px; color: var(--text2); font-style: italic; }
+
+/* Hai lối đi ra khỏi card mẫu câu: danh sách mẫu, và từ vựng. */
+.pc-links { display: flex; flex-wrap: wrap; gap: 4px 18px; }
+
+/* Nhãn mức thuộc — lấy thẳng từ trạng thái SM-2, không tự đếm lại. */
+.vocab-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.vocab-tag {
+  font-size: 11.5px; font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 99px;
+  border: 1px solid var(--line-hot);
+  color: var(--muted);
+}
+.tag-thuoc { color: var(--lime); border-color: rgba(200, 250, 60, 0.45); background: var(--lime-dim); }
+.tag-on { color: var(--mint); border-color: rgba(78, 240, 192, 0.35); }
+.tag-moi { color: var(--text2); }
+.tag-cho { color: var(--muted); border-style: dashed; }
+
+.h-sub-inline { font-family: var(--font-body); font-size: 16px; font-weight: 400; color: var(--muted); }

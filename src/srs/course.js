@@ -140,22 +140,28 @@ export function completedCount(progress = {}) {
   return Object.values(progress).filter((e) => e?.core).length;
 }
 
-// Danh sách TỪ VỰNG đã học, mới nhất lên đầu (spec §4.3).
+// Danh sách TỪ VỰNG của khoá — dùng cho màn "Từ vựng của tôi".
 //
-// Hai nguồn, cố ý gộp chung một danh sách:
-//  • Từ CỦA BÀI — chỉ tính khi đã làm phần mở rộng của ngày đó. Cùng đúng một luật với hàng đợi
-//    ôn (§2.3): chưa học nhịp 3 thì từ chưa ra đời, nên cũng chưa được coi là "đã học".
-//  • Từ TỰ THÊM ở màn nói và câu lưu từ ô hỏi đáp — vào ngay, không cần điều kiện gì.
+// Hai nguồn, cố ý gộp chung một danh sách vì người học không nghĩ vốn từ của mình chia làm
+// "từ hệ thống" với "từ của tôi"; họ chỉ muốn biết mình đang có bao nhiêu chữ trong tay.
 //
-// Gộp chung vì người học không nghĩ theo kiểu "từ hệ thống" với "từ của tôi"; họ chỉ muốn biết
-// mình đang có bao nhiêu chữ trong tay. Cột `mine` để giao diện phân biệt nguồn khi cần.
+//  • Từ CỦA BÀI — hiện ngay khi học xong phần LÕI của ngày đó. Cờ `inSrs` cho biết nó đã vào
+//    hàng đợi ôn chưa (chỉ vào sau khi làm phần mở rộng, đúng luật §2.3).
+//    Bản đầu tôi CHỈ liệt kê từ đã vào hàng đợi, nên ai chỉ học phần lõi sẽ thấy danh sách rỗng
+//    và không hiểu vì sao — trong khi bài học rõ ràng có dạy từ. Thà hiện đủ rồi ghi rõ trạng
+//    thái, còn hơn giấu đi.
+//  • Từ TỰ THÊM ở màn nói và câu lưu từ ô hỏi đáp — vào ngay và luôn nằm trong hàng đợi ôn.
 export function learnedWords(lessons = [], progress = {}, myWords = {}) {
   const out = [];
   for (const l of lessons) {
     const p = progress?.[l.day];
-    if (!p?.core || !p.ext || l.review || !Array.isArray(l.words)) continue;
+    if (!p?.core || l.review || !Array.isArray(l.words)) continue;
     for (const w of l.words) {
-      out.push({ w: w.w, ipa: w.ipa || "", m: w.m || "", en: w.en || "", day: l.day, week: l.week, mine: false });
+      out.push({
+        id: `word::${l.day}::${w.w}`,
+        w: w.w, ipa: w.ipa || "", m: w.m || "", en: w.en || "",
+        day: l.day, week: l.week, mine: false, inSrs: !!p.ext,
+      });
     }
   }
   for (const [day, list] of Object.entries(myWords || {})) {
@@ -164,15 +170,21 @@ export function learnedWords(lessons = [], progress = {}, myWords = {}) {
       // và đã lọt qua một lần — nó hiện ra thành một dòng trống giữa danh sách.
       const w = String(x?.w || "").trim();
       if (!w) continue;
-      out.push({ w, ipa: "", m: x.m || "", en: x.en || "", day: Number(day), week: null, mine: true, at: x.at || 0 });
+      out.push({
+        id: `word::${day}::${w}`,
+        w, ipa: "", m: x.m || "", en: x.en || "",
+        day: Number(day), week: null, mine: true, inSrs: true, at: x.at || 0,
+      });
     }
   }
   // Ngày mới lên đầu; trong cùng một ngày, từ tự thêm đứng trước vì đó là thứ bạn chủ động nhặt.
   return out.sort((a, b) => b.day - a.day || Number(b.mine) - Number(a.mine));
 }
 
+// Đếm những từ THẬT SỰ đang được ôn — con số này đi lên màn chờ nên phải trung thực, không
+// gộp cả những từ mới chỉ được liệt kê ra mà chưa luyện lần nào.
 export function countLearnedWords(lessons, progress, myWords) {
-  return learnedWords(lessons, progress, myWords).length;
+  return learnedWords(lessons, progress, myWords).filter((x) => x.inSrs).length;
 }
 
 // ── Tuần này (dải 7 ô T2…CN) ───────────────────────────────
