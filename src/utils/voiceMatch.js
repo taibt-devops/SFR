@@ -19,12 +19,28 @@ export function matchSpoken(transcript, words = []) {
   });
 }
 
+// Tách một token thành các mảnh so sánh được: cắt ở dấu gạch nối.
+//
+// Whisper KHÔNG xuất dấu gạch nối. Người học đọc đúng hoàn toàn "I've been binge-watching movies."
+// thì Whisper trả "I've been binge watching movies." — bản cũ ghép thành khoá "bingewatching",
+// không thấy trong lời nghe được, nên tô đỏ và báo "Gần đúng". Người dùng thật gặp lỗi này, và nó
+// đánh cả vào nội dung chính thức: `double-check` (tuần 1) và `sci-fi` (tuần 2).
+function manh(tok) {
+  return String(tok).split(/[-–—]/).map(key).filter(Boolean);
+}
+
 // So câu người học nói (heard) với câu mục tiêu (target) ở mức từ (bag-of-words, "tương đối").
 // Trả mảng { word, ok } theo thứ tự từ trong target — từ nào không nghe thấy → ok=false.
+// `word` GIỮ NGUYÊN dấu gạch nối để hiển thị; chỉ khâu SO SÁNH mới nới lỏng.
 export function diffWords(target, heard) {
-  const heardSet = new Set(String(heard).split(/\s+/).map(key).filter(Boolean));
+  const heardSet = new Set(String(heard).split(/\s+/).flatMap(manh));
   return String(target)
     .split(/\s+/)
     .filter(Boolean)
-    .map((tok) => ({ word: tok, ok: heardSet.has(key(tok)) }));
+    .map((tok) => {
+      const ms = manh(tok);
+      // Từ ghép chỉ đúng khi nghe đủ MỌI mảnh — nghe "watching" mà thiếu "binge" thì vẫn là
+      // nói thiếu, phải báo sai.
+      return { word: tok, ok: ms.length > 0 && ms.every((m) => heardSet.has(m)) };
+    });
 }
