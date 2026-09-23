@@ -8,7 +8,7 @@
 // Mỗi ngày là MỘT LỚP, hai sắc lime/teal xen kẽ nên đếm được bằng mắt là mình đã xếp bao nhiêu.
 
 const W = 240;
-const H = 132;
+const LE = 8;          // lề dưới chừa cho đường chân trời
 const CAO_MIN = 30;    // ngày đầu tiên vẫn phải là một quả đồi thấy được, không phải vạch kẻ
 const CAO_MAX = 112;   // trần cứng: 72 ngày cũng không được phá vỡ bố cục
 const DOC = 1.15;      // độ dốc — nửa chân núi = cao × DOC
@@ -17,9 +17,9 @@ export default function Mountain({ days = 0, total = 72, celebrate = false }) {
   const n = Math.max(0, Math.floor(days));
   if (n === 0) {
     return (
-      <svg className="nui" viewBox={`0 0 ${W} ${H}`} width="100%" height={H}
+      <svg className="nui" viewBox={`0 0 ${W} ${CAO_MIN}`} width="100%" height={CAO_MIN}
            preserveAspectRatio="xMidYMax meet" role="img" aria-label="Chưa có ngày nào">
-        <line className="nui-dat" x1="0" y1={H - 0.5} x2={W} y2={H - 0.5} />
+        <line className="nui-dat" x1="0" y1={CAO_MIN - 0.5} x2={W} y2={CAO_MIN - 0.5} />
       </svg>
     );
   }
@@ -27,6 +27,10 @@ export default function Mountain({ days = 0, total = 72, celebrate = false }) {
   // Căn bậc hai: những ngày ĐẦU cho thấy thay đổi rõ nhất. Tăng tuyến tính thì 30 ngày đầu gần
   // như không nhúc nhích — đúng giai đoạn người học cần thấy mình đang đi lên.
   const cao = Math.min(CAO_MAX, CAO_MIN + (CAO_MAX - CAO_MIN) * Math.sqrt(Math.min(1, n / total)));
+  // Khung CO THEO núi thay vì cao cố định. Bản trước khung luôn 132px nên ngày thứ 2 là một quả
+  // đồi 44px trôi giữa 88px trống — nhìn như lỗi hiển thị. Khung co thì không còn chỗ trống, và
+  // núi cao dần lên thật sự chứ không chỉ "lớn hơn một chút bên trong cái hộp cũ".
+  const H = Math.ceil(cao) + LE;
   const giua = W / 2;
   const chan = Math.min(giua - 4, cao * DOC);
   const dayLop = cao / n;
