@@ -1370,6 +1370,7 @@ h1, h2 { margin: 0; line-height: 1.2; font-family: var(--font-display); }
 .wk { display: flex; flex-direction: column; gap: 8px; }
 .wk-head { font-size: 14px; color: var(--text2); margin: 0; }
 .wk-head b { color: var(--text); font-weight: 700; }
+.wk-head { display: flex; align-items: center; gap: 5px; }
 .wk-head.ok, .wk-head.ok b { color: var(--lime); }
 
 .wk-row { display: flex; gap: 4px; }
@@ -1380,13 +1381,13 @@ h1, h2 { margin: 0; line-height: 1.2; font-family: var(--font-display); }
   border: 1px solid transparent;   /* giữ sẵn chỗ để lúc viền lên layout không nhảy */
   border-radius: 12px;
 }
-.wk-dot { width: 10px; height: 10px; border-radius: 50%; box-sizing: border-box; }
-/* Đã học */
-.wk-day.is-on .wk-dot { background: var(--lime); }
-/* Đã qua mà không học — chấm RỖNG mờ. Không đỏ, không cảnh báo: bỏ một ngày không mất gì cả. */
-.wk-day.is-past .wk-dot { background: none; border: 2px solid var(--line-hot); opacity: 0.75; }
-/* Chưa tới lượt — viền nhạt nhất. */
-.wk-day.is-next .wk-dot { background: none; border: 1px solid var(--line); }
+/* Chấm MẶC ĐỊNH = chưa học, bất kể đã qua hay chưa tới. Một style duy nhất cho mọi ngày không
+   học: tách riêng "đã qua mà bỏ" là ngầm đánh dấu chỗ còn thiếu, tức là trách móc. */
+.wk-dot {
+  width: 10px; height: 10px; border-radius: 50%; box-sizing: border-box;
+  background: none; border: 1px solid var(--line-hot);
+}
+.wk-day.is-on .wk-dot { background: var(--lime); border-color: var(--lime); }
 
 .wk-lbl { font-size: 11px; letter-spacing: 0.04em; color: var(--muted); }
 .wk-day.is-on .wk-lbl { color: var(--text2); }
@@ -1618,3 +1619,14 @@ button.btn, button.btn2, button.cta, button.ask-act, .btn-link, .lnk {
 .tag-cho { color: var(--muted); border-style: dashed; }
 
 .h-sub-inline { font-family: var(--font-body); font-size: 16px; font-weight: 400; color: var(--muted); }
+
+/* Trang debug ngọn núi (`?debug=nui`) — không phải màn của người học. */
+.dbg-item {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 12px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.dbg-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+/* Lớp hôm nay LUÔN sáng, không chỉ lúc vừa hoàn thành — nó là "bạn đang ở đây". */
+.nui-lop.nay { filter: drop-shadow(0 0 6px rgba(200, 250, 60, 0.55)); }

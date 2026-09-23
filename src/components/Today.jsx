@@ -50,28 +50,27 @@ function Header({ lesson, completed, mute, onToggleMute }) {
 
 // ── Dải tuần: 7 ô có nhãn, hôm nay viền sáng ──
 // Hôm nay đánh dấu bằng VIỀN chứ không đổi kích thước ô — đổi kích thước làm cả dải nhảy layout.
-// BA trạng thái tách bạch, vì chúng có ý nghĩa khác hẳn nhau:
-//   đã học        → chấm lime đặc
-//   đã qua, bỏ lỡ → chấm rỗng mờ (KHÔNG tô đỏ, không cảnh báo: bỏ một ngày không mất gì)
-//   tương lai     → viền nhạt, chưa tới lượt
-// Bản trước "đã qua chưa học" và "tương lai" trông gần giống nhau nên dải tuần không kể được
-// chuyện gì. Hôm nay có khung sáng bao quanh, dùng viền chứ không đổi cỡ ô — đổi cỡ làm cả dải
-// nhảy mỗi ngày.
+// CHỈ ngày đã học có màu. Ngày đã qua mà không học trông giống hệt ngày chưa tới — cố ý: phân
+// biệt chúng là ngầm nói "chỗ này đáng lẽ phải có", tức là trách móc. Ở đây bỏ một ngày không
+// mất gì, nên dải tuần chỉ đếm cái ĐÃ CÓ, không đánh dấu cái thiếu.
+// Hôm nay có khung sáng bao quanh, dùng viền chứ không đổi cỡ ô — đổi cỡ làm cả dải nhảy mỗi ngày.
 function Week({ days, count }) {
   const dat = count >= MUC_TIEU_TUAN;
-  const trangThai = (d) => (d.done ? "on" : d.future ? "next" : "past");
+  const du = count - MUC_TIEU_TUAN;
   return (
     <section className="wk">
       <p className={`wk-head${dat ? " ok" : ""}`}>
-        Tuần này <b>{count}/{MUC_TIEU_TUAN}</b>
-        {dat && " · đủ rồi"}
+        {dat
+          // KHÔNG hiện "5/4": mẫu số là MỤC TIÊU, vượt qua rồi thì nó hết là thước đo.
+          ? <>Đủ tuần <IcoCheck size={14} />{du > 0 ? ` +${du}` : ""}</>
+          : <>Tuần này <b>{count}/{MUC_TIEU_TUAN}</b></>}
       </p>
       <div className="wk-row" role="list" aria-label={`Tuần này ${count} trên ${MUC_TIEU_TUAN} ngày`}>
         {days.map((d) => (
           <div
             key={d.at}
             role="listitem"
-            className={`wk-day is-${trangThai(d)}${d.today ? " now" : ""}`}
+            className={`wk-day${d.done ? " is-on" : ""}${d.today ? " now" : ""}`}
           >
             <span className="wk-dot" />
             <span className="wk-lbl">{d.label}</span>
@@ -89,9 +88,7 @@ function PatternCard({ last, count, wordCount, onProgress, onVocab }) {
   if (!last) return null;
   return (
     <section className="pc">
-      <h2 className="pc-head">
-        Bạn nói được {count} mẫu câu{wordCount > 0 ? ` · ${wordCount} từ` : ""}
-      </h2>
+      <h2 className="pc-head">Bạn nói được {count} mẫu câu</h2>
       <p className="pc-pat">{last.pat}</p>
       {last.example && (
         <div className="pc-ex">
@@ -103,10 +100,10 @@ function PatternCard({ last, count, wordCount, onProgress, onVocab }) {
       )}
       <div className="pc-links">
         <button className="lnk" onClick={onProgress}>
-          Xem tất cả <IcoArrow size={15} />
+          Mẫu câu <IcoArrow size={15} />
         </button>
         <button className="lnk" onClick={onVocab}>
-          Từ vựng của tôi <IcoArrow size={15} />
+          Từ vựng ({wordCount}) <IcoArrow size={15} />
         </button>
       </div>
     </section>

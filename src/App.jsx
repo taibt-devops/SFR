@@ -18,6 +18,7 @@ import StepWords from "./components/StepWords.jsx";
 import DayDone from "./components/DayDone.jsx";
 import Progress from "./components/Progress.jsx";
 import Vocab from "./components/Vocab.jsx";
+import MountainDebug from "./components/MountainDebug.jsx";
 import Call from "./components/Call.jsx";
 import SpeakingAssess from "./components/SpeakingAssess.jsx";
 import WeekReport from "./components/WeekReport.jsx";
@@ -26,8 +27,20 @@ import AskFab from "./components/AskFab.jsx";
 
 const TRACK_VI = { daily: "Đời thường & du lịch", work: "Công việc & phỏng vấn" };
 
+// Trang debug ngọn núi — chỉ mở bằng `?debug=nui`, không có nút nào dẫn tới. Đặt TRƯỚC cả màn
+// đăng nhập vì nó không đọc dữ liệu người học, chỉ vẽ hình ở các mốc giả định.
+function debugNui() {
+  try {
+    return new URLSearchParams(window.location.search).get("debug") === "nui";
+  } catch {
+    return false;
+  }
+}
+
 export default function App() {
+  const [dbg, setDbg] = useState(debugNui);
   const [authed, setAuthed] = useState(isAuthed);
+  if (dbg) return <MountainDebug onBack={() => setDbg(false)} />;
   if (!authed) return <Login onSuccess={() => setAuthed(true)} />;
   return <AppShell />;
 }
