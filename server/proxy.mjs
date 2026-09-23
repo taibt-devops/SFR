@@ -314,6 +314,37 @@ async function handleAsk(body) {
   return { en: "", ipa: "", use: "", say: "", alt: null, ...o };
 }
 
+// Thêm câu ví dụ cho MỘT từ vựng (spec Phần 12).
+// Giới hạn phạm vi rất hẹp — một từ, vài câu — nên đây là chỗ AI sinh nội dung ÍT rủi ro nhất:
+// sai một câu ví dụ thì thấy ngay và bỏ qua được, khác hẳn sai trình tự cả giáo trình.
+async function handleExamples(body) {
+  const { word = "", meaning = "", level = "A2", have = [] } = body;
+  const tranh = (Array.isArray(have) ? have : []).filter(Boolean).slice(0, 6);
+  const out = await callClaude({
+    maxTokens: 500,
+    system:
+      'Bạn soạn câu ví dụ cho người Việt đang học nói tiếng Anh, trình độ CEFR ' + level + '. ' +
+      'CHỈ trả JSON: {"items":[{"en":"..","vi":".."}]} — ĐÚNG 3 câu. ' +
+      "en = câu tiếng Anh NGẮN (tối đa 12 từ), đời thường, dùng được ngay trong tình huống thật. " +
+      "vi = bản dịch tiếng Việt tự nhiên của chính câu đó. " +
+      "MỖI CÂU một tình huống KHÁC nhau, và khác cả những câu đã có. " +
+      "Dùng đúng từ được cho, giữ nguyên dạng hoặc chia đúng ngữ pháp. " +
+      (tranh.length ? "ĐÃ CÓ (không lặp lại, không diễn đạt lại): " + tranh.join(" | ") + ". " : "") +
+      "KHÔNG markdown, KHÔNG thêm gì ngoài JSON.",
+    messages: [{ role: "user", content: "từ: " + String(word).slice(0, 80) + (meaning ? " — nghĩa: " + String(meaning).slice(0, 120) : "") }],
+  });
+  const o = extractJsonObject(out) || {};
+  const items = (Array.isArray(o.items) ? o.items : [])
+    .map((x) => ({ en: String(x?.en || "").trim(), vi: String(x?.vi || "").trim() }))
+    .filter((x) => x.en);
+  if (!items.length) {
+    const err = new Error("Claude không trả được câu ví dụ nào — thử lại.");
+    err.status = 502;
+    throw err;
+  }
+  return { items };
+}
+
 // Mẫu câu/cấu trúc hữu ích để NÓI về một chủ đề, ở đúng trình độ — cho màn Chi tiết chủ đề.
 async function handlePatterns(body) {
   const { topic = "", level = "A2" } = body;
@@ -484,6 +515,7 @@ const ROUTES = {
   "/translate": handleTranslate,
   "/ipa": handleIpa,
   "/ask": handleAsk,
+  "/examples": handleExamples,
   "/patterns": handlePatterns,
   "/tutor": handleTutor,
 };

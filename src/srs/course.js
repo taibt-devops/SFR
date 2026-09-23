@@ -171,7 +171,9 @@ export function learnedWords(lessons = [], progress = {}, myWords = {}) {
     for (const w of l.words) {
       out.push({
         id: `word::${l.day}::${w.w}`,
-        w: w.w, ipa: w.ipa || "", m: w.m || "", en: w.en || "",
+        // `vi` = nghĩa tiếng Việt CỦA CÂU VÍ DỤ (khác `m` là nghĩa của từ). Trước đây bị bỏ rơi
+        // nên màn từ vựng hiện câu tiếng Anh mà không nói nó nghĩa là gì.
+        w: w.w, ipa: w.ipa || "", m: w.m || "", en: w.en || "", vi: w.vi || "",
         day: l.day, week: l.week, mine: false, inSrs: !!p.ext,
       });
     }
@@ -184,7 +186,7 @@ export function learnedWords(lessons = [], progress = {}, myWords = {}) {
       if (!w) continue;
       out.push({
         id: `word::${day}::${w}`,
-        w, ipa: "", m: x.m || "", en: x.en || "",
+        w, ipa: "", m: x.m || "", en: x.en || "", vi: "",
         day: Number(day), week: null, mine: true, inSrs: true, at: x.at || 0,
       });
     }

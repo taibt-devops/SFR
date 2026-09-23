@@ -405,3 +405,19 @@ describe("ngayNghi — quãng trống trước khi quay lại", () => {
     expect(ngayNghi({ 1: { core: false } }, T)).toBe(0);
   });
 });
+
+describe("learnedWords — nghĩa của câu ví dụ", () => {
+  it("mang theo `vi` của câu ví dụ, tách bạch với `m` là nghĩa của từ", () => {
+    const ls = [{ day: 1, week: 1, pat: "P", words: [
+      { w: "refill", ipa: "/r/", m: "(n) lần rót thêm", en: "I'd like a refill.", vi: "Cho tôi rót thêm." },
+    ] }];
+    const r = learnedWords(ls, { 1: { steps: {}, core: true, ext: true, doneAt: NOW } }, {})[0];
+    expect(r.m).toBe("(n) lần rót thêm");
+    expect(r.vi).toBe("Cho tôi rót thêm.");
+  });
+
+  it("từ tự thêm không có câu ví dụ → vi rỗng, không undefined", () => {
+    const r = learnedWords([], {}, { 2: [{ w: "abc", m: "x" }] })[0];
+    expect(r.vi).toBe("");
+  });
+});

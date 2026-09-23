@@ -6,9 +6,12 @@
 // Mức thuộc lấy thẳng từ trạng thái SM-2 (`reps`, `interval`) chứ không tự đếm lại — nó là cùng
 // một con số mà hàng đợi ôn đang dùng để quyết khi nào hỏi lại bạn. Hai nơi tự đếm riêng là hai
 // nơi sẽ lệch nhau.
-import { useMemo, useState } from "react";
-import { IcoVolume, IcoBack, IcoStar } from "./Icon.jsx";
+import { useCallback, useMemo, useState } from "react";
+import { IcoVolume, IcoBack, IcoStar, IcoPlus, IcoArrow } from "./Icon.jsx";
 import { speak } from "../utils/tts.js";
+import { genExamples } from "../ai/examples.js";
+import { addEx, exFor, loadEx, saveEx } from "../srs/examples.js";
+import { loiTiengViet } from "../utils/loiMang.js";
 
 // Ngưỡng "đã thuộc": SM-2 giãn tới 21 ngày nghĩa là nó tin bạn nhớ được ba tuần.
 const THUOC_NGAY = 21;
@@ -29,8 +32,64 @@ const LOC = [
   { ma: "mine", nhan: "Tôi tự thêm" },
 ];
 
-export default function Vocab({ words, getState, onBack }) {
+// Câu ví dụ thêm cho một từ. Mở ra mới gọi mạng — không ai muốn màn từ vựng nạp 60 lượt
+// Claude chỉ để cuộn qua. Xin xong thì LƯU, lần sau xem lại không tốn gì và đọc được cả khi
+// mất mạng.
+function ThemViDu({ w, level, kho, onXong }) {
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  const daCo = exFor(kho, w.w);
+
+  const xin = useCallback(() => {
+    setBusy(true); setErr("");
+    genExamples({
+      word: w.w,
+      meaning: w.m,
+      level,
+      // Gửi kèm câu ĐÃ CÓ để Claude khỏi trả lại y hệt — hỏi lần hai mà ra cùng ba câu thì
+      // nút này vô dụng.
+      have: [w.en, ...daCo.map((x) => x.en)].filter(Boolean),
+    })
+      .then((items) => onXong(w.w, items))
+      .catch((e) => {
+        setErr(loiTiengViet(e, "Chưa lấy được ví dụ"));
+      })
+      .finally(() => setBusy(false));
+  }, [w, level, daCo, onXong]);
+
+  return (
+    <>
+      {daCo.length > 0 && (
+        <div className="vd-list">
+          {daCo.map((x) => (
+            <div className="vd" key={x.en}>
+              <div className="vd-en">
+                <span>{x.en}</span>
+                <button className="ic-btn" onClick={() => speak(x.en)} aria-label={"Nghe: " + x.en}>
+                  <IcoVolume size={14} />
+                </button>
+              </div>
+              {x.vi && <div className="vd-vi">{x.vi}</div>}
+            </div>
+          ))}
+        </div>
+      )}
+      {err && <p className="warn inline-ic">{err}</p>}
+      <button className="vd-them" disabled={busy} onClick={xin}>
+        {busy ? "Đang soạn…" : <><IcoPlus size={14} /> {daCo.length ? "Thêm ví dụ nữa" : "Thêm ví dụ"}</>}
+      </button>
+    </>
+  );
+}
+
+export default function Vocab({ words, getState, level = "A2", onBack }) {
   const [loc, setLoc] = useState("all");
+  const [mo, setMo] = useState(null);          // từ đang mở
+  const [kho, setKho] = useState(loadEx);
+
+  const luu = useCallback((w, items) => {
+    setKho((cu) => { const moi = addEx(cu, w, items, Date.now()); saveEx(moi); return moi; });
+  }, []);
 
   // Gắn mức thuộc MỘT lần rồi lọc trên kết quả đó — lọc và đếm phải nhìn cùng một dữ liệu, nếu
   // không thì con số trên nút lọc sẽ không khớp với số dòng hiện ra.
@@ -100,11 +159,25 @@ export default function Vocab({ words, getState, onBack }) {
                     {w.m}
                   </div>
                 )}
-                {w.en && <div className="vocab-ex">{w.en}</div>}
+                {w.en && (
+                  <div className="vocab-ex">
+                    {w.en}
+                    {/* Câu ví dụ có sẵn giờ hiện CẢ nghĩa — trước đây chỉ có câu tiếng Anh trơ trọi. */}
+                    {w.vi && <span className="vocab-ex-vi">{w.vi}</span>}
+                  </div>
+                )}
                 <div className="vocab-foot">
                   <span className={`vocab-tag tag-${w.muc.ma}`}>{w.muc.nhan}</span>
                   <span className="learned-meta">{w.mine ? `Tự thêm · ngày ${w.day}` : `Bài ${w.day}`}</span>
                 </div>
+                <button
+                  className="vd-mo"
+                  aria-expanded={mo === w.id}
+                  onClick={() => setMo(mo === w.id ? null : w.id)}
+                >
+                  {mo === w.id ? "Thu gọn" : "Xem thêm ví dụ"} <IcoArrow size={13} />
+                </button>
+                {mo === w.id && <ThemViDu w={w} level={level} kho={kho} onXong={luu} />}
               </div>
             ))}
           </div>

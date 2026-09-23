@@ -89,6 +89,9 @@ export const IcoDown = (p) => (
 export const IcoDot = (p) => (
   <Svg {...p} fill="currentColor" strokeWidth="0"><circle cx="12" cy="12" r="3.5" /></Svg>
 );
+export const IcoPlus = (p) => (
+  <Svg {...p}><path d="M5 12h14M12 5v14" /></Svg>
+);
 export const IcoClock = (p) => (
   <Svg {...p}><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" /></Svg>
 );

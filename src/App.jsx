@@ -105,7 +105,7 @@ function AppMain({ L }) {
   if (view === "progress") {
     return <Progress lessons={L.lessons} progress={L.progress} onBack={home} onVocab={() => setView("vocab")} />;
   }
-  if (view === "vocab") return <Vocab words={L.words} getState={L.getState} onBack={home} />;
+  if (view === "vocab") return <Vocab words={L.words} getState={L.getState} level={latestLevel(loadSpeaking()) || "A2"} onBack={home} />;
   if (view === "warmup") return <WarmupTalk onBack={home} />;
 
   // ── Nói tự do (vào thẳng từ màn chờ, không cần học xong) ──
