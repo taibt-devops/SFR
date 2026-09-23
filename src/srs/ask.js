@@ -29,6 +29,27 @@ export function saveAsk(list) {
   }
 }
 
+// Ép câu trả lời của LLM về đúng khuôn. Đây là lớp phòng thủ DUY NHẤT giữa Claude và giao diện —
+// nhờ nó mà AskSheet không cần một câu `if` kiểm kiểu nào.
+// Không có `en` thì cả câu trả lời vô dụng → null, gọi chỗ khác biết mà báo lỗi.
+export function sanitizeAnswer(raw) {
+  const s = (v) => (typeof v === "string" ? v.trim() : "");
+  const obj = (v) => (v && typeof v === "object" && !Array.isArray(v) ? v : null);
+  const o = obj(raw);
+  if (!o) return null;
+  const en = s(o.en);
+  if (!en) return null;
+  const a = obj(o.alt);
+  const altEn = a ? s(a.en) : "";
+  return {
+    en,
+    ipa: s(o.ipa),
+    use: s(o.use),
+    say: s(o.say),
+    alt: altEn ? { en: altEn, ipa: s(a.ipa), note: s(a.note) } : null,
+  };
+}
+
 // Thêm một lần hỏi. Trả mảng MỚI, mới nhất đứng đầu, tối đa MAX_ASKS.
 // Hỏi lại câu cũ → đẩy lên đầu + cập nhật câu trả lời, không nhân đôi.
 export function addAsk(store = [], vi, answer, now = Date.now()) {
@@ -36,10 +57,11 @@ export function addAsk(store = [], vi, answer, now = Date.now()) {
   // Hỏi lại cùng một câu viết khác kiểu → bản ghi mang cách viết MỚI NHẤT.
   const q = String(vi || "").trim().replace(/\s+/g, " ");
   const list = Array.isArray(store) ? store : [];
-  if (!q) return list;
+  const a = sanitizeAnswer(answer);
+  if (!q || !a) return list;
   const key = normVi(q);
   const rest = list.filter((x) => normVi(x?.vi) !== key);
-  return [{ vi: q, a: answer, at: now }, ...rest].slice(0, MAX_ASKS);
+  return [{ vi: q, a, at: now }, ...rest].slice(0, MAX_ASKS);
 }
 
 export function recentAsks(store = [], n = MAX_ASKS) {

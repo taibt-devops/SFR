@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { loadAsk, saveAsk, addAsk, recentAsks, normVi, ASK_KEY, MAX_ASKS } from "./ask.js";
+import { loadAsk, saveAsk, addAsk, recentAsks, sanitizeAnswer, normVi, ASK_KEY, MAX_ASKS } from "./ask.js";
 
 function mockLocalStorage() {
   let store = {};
@@ -94,4 +94,73 @@ describe("recentAsks", () => {
 
 describe("normVi", () => {
   it("bỏ hoa thường, gộp khoảng trắng", () => expect(normVi("  Cho  TÔI xin ")).toBe("cho tôi xin"));
+});
+
+describe("sanitizeAnswer", () => {
+  const full = {
+    en: "  Could I get the bill?  ",
+    ipa: "/kʊd aɪ ɡet ðə bɪl/",
+    use: "Lịch sự.",
+    say: "",
+    alt: { en: "Check, please.", ipa: "/tʃek pliːz/", note: "thân mật" },
+  };
+
+  it("ép kiểu và cắt khoảng trắng", () => {
+    expect(sanitizeAnswer(full)).toEqual({
+      en: "Could I get the bill?",
+      ipa: "/kʊd aɪ ɡet ðə bɪl/",
+      use: "Lịch sự.",
+      say: "",
+      alt: { en: "Check, please.", ipa: "/tʃek pliːz/", note: "thân mật" },
+    });
+  });
+
+  it("thiếu en → null (không có gì để hiện)", () => {
+    expect(sanitizeAnswer({ ipa: "/x/", use: "abc" })).toBeNull();
+    expect(sanitizeAnswer({ en: "   " })).toBeNull();
+  });
+
+  it("không phải object → null", () => {
+    expect(sanitizeAnswer(null)).toBeNull();
+    expect(sanitizeAnswer("Could I get the bill?")).toBeNull();
+    expect(sanitizeAnswer([{ en: "x" }])).toBeNull();
+  });
+
+  it("trường thiếu → chuỗi rỗng, không phải undefined", () => {
+    expect(sanitizeAnswer({ en: "Hi." })).toEqual({ en: "Hi.", ipa: "", use: "", say: "", alt: null });
+  });
+
+  it("trường là số / object → chuỗi rỗng", () => {
+    const r = sanitizeAnswer({ en: "Hi.", ipa: 42, use: { a: 1 }, say: ["x"] });
+    expect(r).toEqual({ en: "Hi.", ipa: "", use: "", say: "", alt: null });
+  });
+
+  it("alt là mảng / chuỗi / thiếu en → alt = null", () => {
+    expect(sanitizeAnswer({ en: "Hi.", alt: ["Hey."] }).alt).toBeNull();
+    expect(sanitizeAnswer({ en: "Hi.", alt: "Hey." }).alt).toBeNull();
+    expect(sanitizeAnswer({ en: "Hi.", alt: { ipa: "/heɪ/" } }).alt).toBeNull();
+  });
+
+  it("alt chỉ có en → ipa/note rỗng", () => {
+    expect(sanitizeAnswer({ en: "Hi.", alt: { en: "Hey." } }).alt).toEqual({ en: "Hey.", ipa: "", note: "" });
+  });
+
+  it("KHÔNG mutate tham số", () => {
+    const before = JSON.stringify(full);
+    sanitizeAnswer(full);
+    expect(JSON.stringify(full)).toBe(before);
+  });
+});
+
+describe("addAsk + sanitizeAnswer", () => {
+  it("câu trả lời không dùng được → trả store cũ nguyên vẹn", () => {
+    const s = addAsk([], "câu một", { en: "Hi." }, NOW);
+    expect(addAsk(s, "câu hai", { ipa: "/x/" }, NOW + 1)).toBe(s);
+    expect(addAsk(s, "câu hai", null, NOW + 1)).toBe(s);
+  });
+
+  it("lưu bản ĐÃ làm sạch, không lưu bản thô", () => {
+    const s = addAsk([], "câu một", { en: " Hi. ", ipa: 9 }, NOW);
+    expect(s[0].a).toEqual({ en: "Hi.", ipa: "", use: "", say: "", alt: null });
+  });
 });
