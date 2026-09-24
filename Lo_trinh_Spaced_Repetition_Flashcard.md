@@ -1086,3 +1086,140 @@ cần thêm model nào.
 nhịp luyện nói ghi `spk: 2` vào `phrasal-daily-v1`, ô hỏi đáp để nguyên `null`.
 
 Chi tiết + phần chưa kiểm: [`docs/superpowers/specs/2026-09-23-hoi-dap-viet-anh-design.md`](docs/superpowers/specs/2026-09-23-hoi-dap-viet-anh-design.md) §9.
+
+---
+
+# Phần 12 — Nhiều người dùng: đăng nhập Google + lưu tiến độ trên server
+
+> **TRẠNG THÁI: BẢN NHÁP — chờ chủ dự án duyệt (2026-09-24).** Chưa có dòng code nào theo phần này.
+> Khi được duyệt: cập nhật §0.4, §1.5, §2.4, Phần 6 và bảng constraint trong CLAUDE.md cho khớp.
+
+## 12.1 Vì sao
+
+Chủ dự án quyết (2026-09-24): mở app cho **bất kỳ ai có tài khoản Google**. Mỗi người có tiến độ,
+lịch ôn, hồ sơ gia sư riêng, lưu trên server — đổi máy, xoá trình duyệt không mất bài.
+
+Hệ quả: §0.4 "một người dùng duy nhất, không đồng bộ đám mây" không còn đúng. Phần 0.2 (ma sát bằng
+không, nói bắt buộc…) và Phần 1–5 giữ nguyên — đổi AI ĐƯỢC HỌC, không đổi CÁCH HỌC.
+
+## 12.2 Ràng buộc mới / thay thế
+
+| # | Constraint | Thay cho |
+|---|---|---|
+| **C4′** | Server (SQLite, theo `user_id`) là nơi lưu thật. `localStorage` là **bộ đệm** để app chạy nhanh và chịu được mạng chập chờn. Tên key giữ nguyên. | C4 |
+| **C7′** | Frontend KHÔNG giữ token Claude và KHÔNG giữ secret dùng chung nào. Xác thực = **cookie phiên httpOnly** do proxy cấp. `VITE_PROXY_SECRET` bị bỏ. | C7 |
+| **C8′** | Ra internet: Anthropic API + bộ khoá công khai của Google (`googleapis.com/oauth2/v3/certs`, có cache). Trình duyệt tải script Google Identity Services. | C8 |
+| **C13** | **Cổng Claude.** Khi proxy còn dùng token Claude Max (gói cá nhân), mọi route gọi Claude chỉ mở cho email trong `CLAUDE_ALLOW`. Người khác dùng được phần KHÔNG cần Claude. Chuyển sang API key thì đặt `CLAUDE_ALLOW=*`. | — |
+| **C14** | **Cách ly dữ liệu.** `user_id` CHỈ lấy từ phiên phía server, KHÔNG BAO GIỜ từ body/query của client. Mọi câu SQL có `WHERE user_id = ?`. | — |
+
+### Vì sao có C13
+
+Token Claude Max là gói đăng ký **cá nhân**. Dùng nó để phục vụ người khác trái điều khoản của
+Anthropic — đó là lý do phải chuyển sang API key trước khi phát hành thật. C13 cho phép làm hạ tầng
+nhiều người ngay bây giờ mà không để người lạ tiêu token cá nhân: người khác vẫn học được trọn phần
+lõi 15', vì phần lõi không cần Claude:
+
+| Cần Claude (khoá theo C13) | KHÔNG cần Claude (mở cho mọi người) |
+|---|---|
+| Đóng vai, trò chuyện, chấm CEFR, gia sư phân tích cuối buổi, hỏi đáp Việt→Anh, câu ví dụ, IPA | Nhịp 0–4 + 4b, SM-2, Whisper (chấm bằng `voiceMatch`), Kokoro, streak, màn Tiến bộ, từ vựng |
+
+Người chưa được mở: các nhịp cần Claude **tự bỏ qua** (roleplay ở phần mở rộng; `assess`/`chat` ở
+ngày chốt tuần). Không hiện nút chết, không hiện thông báo "tính năng bị khoá" giữa buổi học (C9).
+Cờ đi vào `lesson.js` dưới dạng tham số `{ claude }` của `coreStepsFor`/`extStepsFor` — hàm vẫn
+thuần, có test.
+
+## 12.3 Đăng nhập
+
+```
+Nút Google (GIS) ─▶ ID token (JWT RS256) ─▶ POST /api/auth/google
+proxy: kiểm chữ ký bằng khoá Google (node:crypto, KHÔNG thêm dependency),
+       kiểm iss · aud = GOOGLE_CLIENT_ID · exp · email_verified
+     ─▶ upsert user ─▶ tạo phiên ─▶ Set-Cookie: srf_sid (HttpOnly; Secure; SameSite=Lax; 30 ngày)
+```
+
+- `GET /api/me` → `{ email, name, picture, claude: bool }`. 401 → hiện màn đăng nhập.
+- `POST /api/auth/logout` → xoá phiên ở server + xoá cookie.
+- Phiên lưu trong bảng `sessions` (thu hồi được). Id phiên = 32 byte ngẫu nhiên.
+- Màn đăng nhập: đúng một nút "Đăng nhập bằng Google". Không hỏi trình độ, không hỏi mục tiêu (C9).
+- `/whisper/` và `/api/tts` cũng phải có phiên: nginx dùng `auth_request` gọi `/api/auth/check`.
+  (Hiện `/whisper/` đang MỞ cho bất kỳ ai biết URL — lỗ hổng có sẵn, vá trong phần này.)
+
+## 12.4 Lưu trữ server
+
+SQLite qua `node:sqlite` có sẵn trong Node 22 — không thêm dependency. File DB nằm trên volume Docker.
+
+```sql
+users    (id TEXT PK /* Google sub */, email, name, picture, created_at, last_seen)
+sessions (id TEXT PK, user_id, expires_at)
+state    (user_id, key, json TEXT, version INT, updated_at, PRIMARY KEY (user_id, key))
+usage    (user_id, day, claude_calls, whisper_calls, PRIMARY KEY (user_id, day))
+```
+
+Chỉ đồng bộ các key trong danh sách trắng — dữ liệu học của người dùng:
+`srf-course-v1` · `phrasal-srs-v1` · `srf-mywords-v1` · `srf-tutor-v1` · `srf-ask-v1` ·
+`phrasal-speaking-v1` · `phrasal-coach-v1` · `phrasal-daily-v1` · `phrasal-warmup-v1`.
+KHÔNG đồng bộ: bộ đệm (`phrasal-ipa-v1`, `phrasal-patterns-v1`, `srf-ex-v1`), cài đặt thiết bị
+(`phrasal-tts-v1`, `srf-sfx-v1`), cờ `srf-reset-v1`. Mỗi `json` ≤ 512 KB.
+
+## 12.5 Đồng bộ — local-first, KHÔNG sửa module giữ nguyên
+
+Các module ở §7.1 (`storage.js`, `daily.js`, `speaking.js`…) tự ghi localStorage. Lớp đồng bộ
+**không chen vào chúng**. Nó đứng ngoài và nhìn vào localStorage:
+
+1. **Kéo về trước khi vẽ.** Sau khi `/api/me` trả OK, gọi `GET /api/state` → ghi từng key vào
+   localStorage → RỒI mới mount `AppShell`. Các `useState(load…)` đọc đúng dữ liệu của người này.
+2. **Đẩy lên khi đổi.** Chụp chuỗi JSON của các key trong danh sách trắng; key nào khác lần chụp trước
+   thì `PUT /api/state/:key { json, base }`. Chụp mỗi 3 giây, khi `visibilitychange → hidden`, và
+   khi đóng ngày.
+3. **Xung đột.** `base` ≠ `version` trên server → 409 kèm bản server. **Bản server thắng**, ghi đè
+   local, rồi tải lại trạng thái React. Chấp nhận mất tối đa vài giây thao tác khi học CÙNG LÚC trên
+   hai máy — trường hợp hiếm với app học một mình.
+4. **Mất mạng.** Học tiếp bình thường trên localStorage; key bẩn đẩy lại lúc có mạng.
+
+**Nhiều người chung một trình duyệt.** Key `srf-owner-v1` ghi `user_id` của dữ liệu đang nằm trong
+localStorage. Đăng nhập người khác → xoá sạch các key trong danh sách trắng rồi mới kéo về. Đăng xuất
+→ đẩy nốt những gì chưa đẩy, rồi xoá.
+
+**Chuyển dữ liệu sẵn có (chủ dự án).** Lần đăng nhập đầu tiên trên một trình duyệt CHƯA có
+`srf-owner-v1` mà localStorage đang có tiến độ, và server chưa có gì cho người này → đẩy toàn bộ lên
+làm dữ liệu của người vừa đăng nhập. Nhờ vậy tiến độ đang học hiện nay không mất.
+
+## 12.6 Hạn mức & lạm dụng
+
+- Mỗi người mỗi ngày: `CLAUDE_DAILY` lượt gọi Claude (mặc định 150), `WHISPER_DAILY` lượt nghe
+  (mặc định 600). Quá hạn → 429 kèm câu tiếng Việt dễ hiểu. Hạn mức áp dụng cho cả chủ dự án.
+- CORS: bỏ `*`. Mọi thứ cùng origin qua nginx nên không cần CORS nào.
+- Body JSON tối đa 1 MB; audio giữ giới hạn 25 MB hiện có.
+
+## 12.7 Quyền riêng tư
+
+Server sẽ lưu **câu người dùng đã nói** (qua hồ sơ gia sư). Vì vậy:
+- `DELETE /api/me` xoá user + phiên + toàn bộ `state` + `usage`. Có nút trong màn Tiến bộ, hỏi xác
+  nhận hai lần.
+- Audio KHÔNG lưu — Whisper nghe xong là bỏ, như hiện nay.
+- Chỉ lưu từ Google: `sub`, email, tên, ảnh đại diện.
+
+## 12.8 Lộ trình commit
+
+| # | Task | Xong khi |
+|---|---|---|
+| U0 | CLAUDE.md + §0.4/§1.5/§2.4/Phần 6 khớp phần này | Hai file không mâu thuẫn |
+| U1 | `server/db.mjs` — schema + truy vấn theo `user_id` + test | Test cách ly: user A không đọc được state của B |
+| U2 | `server/google.mjs` — kiểm ID token bằng `node:crypto` + test | JWT sai chữ ký / sai `aud` / hết hạn đều bị từ chối |
+| U3 | Route `/auth/google` · `/auth/logout` · `/auth/check` · `/me` + cookie phiên | curl đăng nhập được bằng token thật |
+| U4 | Mọi route cũ đòi phiên; C13 chặn route Claude; bỏ `PROXY_SECRET` | Không cookie → 401; không có trong `CLAUDE_ALLOW` → 403 |
+| U5 | nginx `auth_request` cho `/whisper/` | Gọi `/whisper/asr` không cookie → 401 |
+| U6 | Route `/state` (GET, PUT có `base`/409) + hạn mức `usage` | Test 409, test giới hạn kích thước |
+| U7 | `src/sync/cloud.js` — kéo/đẩy/chủ sở hữu, thuần + test | Giả localStorage + fetch, tất định |
+| U8 | `Login.jsx` → nút Google; `App.jsx` kéo dữ liệu trước khi mount | Đăng nhập → thấy đúng tiến độ của mình |
+| U9 | `lesson.js` nhận `{ claude }`; UI ẩn phần cần Claude | Tài khoản không có trong `CLAUDE_ALLOW` học trọn lõi, không gặp lỗi 403 nào |
+| U10 | Xoá tài khoản + đăng xuất | Xoá xong, đăng nhập lại = người mới |
+| U11 | Deploy: volume DB, env `GOOGLE_CLIENT_ID`/`CLAUDE_ALLOW`, sao lưu DB | Chủ dự án đăng nhập Google, tiến độ cũ còn nguyên |
+
+## 12.9 Việc chủ dự án phải làm tay
+
+1. Google Cloud Console → tạo **OAuth Client ID** (Web), origin `https://english.forbible.org`
+   (thêm `http://localhost:5173` để dev). Client ID không phải bí mật, được phép nằm trong bundle.
+2. Điền `GOOGLE_CLIENT_ID` và `CLAUDE_ALLOW=<email của bạn>` vào `.env` trên cura-dev.
+3. Trước khi phát hành thật: đổi `CLAUDE_TOKEN` sang API key (`x-api-key`, bỏ khối "You are Claude
+   Code…"), rồi đặt `CLAUDE_ALLOW=*`.
